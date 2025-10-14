@@ -1,7 +1,7 @@
 import { getDomain } from "src/Components/axiosCall";
 
 const authSettings = {
-  authority: 'https://localhost:7000',
+  authority: process.env.IDENTITY_URL,
   client_id: 'VIEW.APP',
   client_secret: '901564A5-E7FE-42CB-B10D-61EF6A8F3658',
   redirect_uri: getDomain() + 'oauth/callback',
