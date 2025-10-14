@@ -320,3 +320,8 @@ export const UrlTranEn = async string => {
 
   return ''
 }
+
+
+export const getDomain = () => {
+  return process.env.DEV_MODE ? 'http://localhost:3001/' : process.env.DOMAIN
+}
