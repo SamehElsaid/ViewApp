@@ -1,3 +1,5 @@
+import { getDomain } from "src/Components/axiosCall";
+
 const authSettings = {
   authority: 'https://localhost:7000',
   client_id: 'VIEW.APP',
