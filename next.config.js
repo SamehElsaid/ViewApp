@@ -10,13 +10,10 @@ module.exports = withTM({
     localeDetection: true
   },
   env: {
-    // API_URL: 'https://localhost:44375/api',
-    // //API_URL: 'https://localhost:44375/api',
-    // identityUrl: 'https://localhost:7000/',
     API_URL: 'https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api',
     IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
     DEV_MODE: false,
-    DOMAIN: 'https://form-bulider-seven.vercel.app/'
+    DOMAIN: 'https://view-app-omega.vercel.app/'
   },
   images: {
     domains: []
