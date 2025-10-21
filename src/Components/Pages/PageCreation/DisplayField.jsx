@@ -38,6 +38,8 @@ export default function DisplayField({
   isDisabled,
   hiddenLabel
 }) {
+
+  console.log(findValue, 'findValue');
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [dirty, setDirty] = useState(dirtyProps)
@@ -838,7 +840,7 @@ export default function DisplayField({
       setValue(findValue)
       if (input?.type == 'date') {
         setValue(new Date(findValue))
-      }
+      } 
     } else {
       if (input?.kind == 'search' || input?.kind == 'checkbox') {
         setValue([])
@@ -848,6 +850,7 @@ export default function DisplayField({
       }
     }
   }, [input, findValue])
+  
 
   useEffect(() => {
     if (reload != 0) {

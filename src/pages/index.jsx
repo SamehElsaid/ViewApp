@@ -25,8 +25,8 @@ export default function Index() {
     setLoading(true)
     const loadingToast = toast.loading(locale === 'ar' ? 'جاري التحميل...' : 'Loading...')
     axiosGet(`request/get-requests`, locale)
-    .then(res => {
-      if (res.status) {
+      .then(res => {
+        if (res.status) {
           setData(res.data)
           console.log(res.data)
         }
@@ -103,10 +103,10 @@ export default function Index() {
       headerName: messages.actions,
       renderCell: ({ row }) => (
         <Typography variant='subtitle2' className='text-overflow' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-          <IconButton LinkComponent={Link} href={`/${row.pageName}?requestId=${row.id}&entityId=${row.entityId}`}>
-            <Icon icon='mdi:eye' />
-          </IconButton>
-          <IconButton LinkComponent={Link} href={`/${row.pageName}?requestId=${row.id}&entityId=${row.entityId}`}>
+          <IconButton
+            LinkComponent={Link}
+            href={`/${row.pageName}?requestId=${row.id}&entityId=${row.entityId}&collection=${row.collectionName}`}
+          >
             <Icon icon='mdi:eye' />
           </IconButton>
         </Typography>
@@ -117,9 +117,9 @@ export default function Index() {
   return (
     <div>
       <Card className='w-[100%]  mb-5 py-4 '>
-         <IconButton LinkComponent={Link} href={`/facility`}>
-            <Icon icon='mdi:eye' />
-          </IconButton>
+        <IconButton LinkComponent={Link} href={`/facility`}>
+          <Icon icon='mdi:eye' />
+        </IconButton>
         <CardContent
           className='flex-col gap-2 h-full md:flex-row'
           sx={{

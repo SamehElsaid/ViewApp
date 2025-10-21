@@ -22,7 +22,7 @@ const Mypage = ({ pageName, initialData, initialDataApi, pageId, entitiesId, col
   console.log('pageId', pageId)
   const loading = useSelector(rx => rx.LoadingPages.loading)
 
-  console.log('entitiesId', {entitiesId})
+  console.log('entitiesId', { entitiesId })
 
   return (
     <div className=''>
@@ -57,7 +57,7 @@ export default Mypage
 
 export async function getServerSideProps(context) {
   const page = context.query.page
-  const entitiesId = context.query.entitiesId ?? null
+  const entitiesId = context.query.entityId ?? null
   const collectionName = context.query.collection ?? null
   const pageName = page.join('/')
 

@@ -11,7 +11,7 @@ export const axiosGet = async (url, locale, token, params = {}, close) => {
   try {
     const header = {
       headers: {
-        Authorization: `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
+        Authorization: `Bearer ${token ? token.trim() : decryptData(authToken)?.token?.trim()}`,
         'Accept-Language': locale
       },
       params
@@ -27,6 +27,7 @@ export const axiosGet = async (url, locale, token, params = {}, close) => {
 
     return { ...fetchData.data, status: true }
   } catch (err) {
+    console.log(err, 'err');
     if (url === 'auth/info') {
       throw err
     } else {

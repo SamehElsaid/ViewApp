@@ -57,15 +57,22 @@ export default function ViewCollection({
   const SortWithXInGroup = convertTheTheSameYToGroup.map(group => group.sort((a, b) => a.x - b.x))
   const sortedData = SortWithXInGroup.flat()
   const filterSelect = getFields
+  
+
+  console.log(entitiesData, 'entitiesData');
+  
+
+  console.log(entitiesId, collectionName)
 
   useEffect(() => {
-    if (entitiesId && collectionName) {
+    if (entitiesId !== null && collectionName !== null) {
+      console.log(`generic-entities/${collectionName}/${entitiesId}`, locale)
+
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale)
         .then(res => {
+          
           if (res.status) {
-            console.log(res, 'hereee')
 
-            console.log(res.entities)
             setEntitiesData(res.entities?.[0])
             if (pageName === 'MedicalMemberDetailes') {
               setAllowAdd(res.entities?.[0].ALLOWADD)
