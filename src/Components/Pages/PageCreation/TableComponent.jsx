@@ -42,9 +42,6 @@ function TableComponent({
   setChangedValue
 }) {
   const { locale, messages } = useIntl()
-  console.log(columns, loadingEntity, loadingHeader)
-
-  console.log(columns)
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>

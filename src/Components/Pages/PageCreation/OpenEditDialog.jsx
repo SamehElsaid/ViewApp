@@ -24,11 +24,9 @@ export default function OpenEditDialog({
   const dataRef = useRef({})
   const { messages, locale } = useIntl()
   const [readOnly, setReadOnly] = useState(false)
-  console.log(readOnly)
 
   useEffect(() => {
     setReadOnly(!open.readOnly)
-
   }, [open, collectionName, locale])
 
   useEffect(() => {
@@ -38,11 +36,11 @@ export default function OpenEditDialog({
           const indexA = sortWithId.indexOf(a.id)
           const indexB = sortWithId.indexOf(b.id)
 
-          if (indexA === -1 && indexB === -1) return 0 // إذا لم يكن أي منهما في القائمة، لا يتغير الترتيب
-          if (indexA === -1) return 1 // إذا كان العنصر A غير موجود، يتم دفعه إلى النهاية
-          if (indexB === -1) return -1 // إذا كان العنصر B غير موجود، يتم دفعه إلى النهاية
+          if (indexA === -1 && indexB === -1) return 0
+          if (indexA === -1) return 1
+          if (indexB === -1) return -1
 
-          return indexA - indexB // ترتيب العناصر بناءً على `sortWithId`
+          return indexA - indexB
         })
       )
     }
@@ -79,7 +77,7 @@ export default function OpenEditDialog({
     axiosPatch(`generic-entities/${collectionName}?Id=${open.Id}`, locale, sendDataForm)
       .then(res => {
         if (res.status) {
-          toast.success(locale === 'ar' ? 'تم تعديل البيانات بنجاح' : 'Data updated successfully')
+          toast.success(messages.dialogs.dataUpdatedSuccessfully)
           onClose()
           data(prev =>
             prev.map(ele => {
@@ -198,7 +196,7 @@ export default function OpenEditDialog({
                 <LoadingButton disabled={readOnly} variant='contained' type='submit' loading={loadingButton}>
                   {messages.save}
                 </LoadingButton>
-                <Button  color='secondary' type='button' variant='contained' onClick={onClose}>
+                <Button color='secondary' type='button' variant='contained' onClick={onClose}>
                   {messages.cancel}
                 </Button>
               </div>

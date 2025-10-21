@@ -25,13 +25,13 @@ import { toast } from 'react-toastify'
 
 export default function Background({ data, onChange, buttonRef }) {
   const [selectedOption, setSelectedOption] = useState(data?.backgroundImage ? 'image' : 'color')
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
   const getApiData = useSelector(rx => rx.api.data)
 
   const handleFileUpload = event => {
     const file = event.target.files[0]
     if (file) {
-      const loading = toast.loading(locale === 'ar' ? 'جاري التحميل...' : 'Uploading...')
+      const loading = toast.loading(messages.dialogs.uploading)
       if (file) {
         axiosPost(
           'file/upload',
@@ -71,7 +71,7 @@ export default function Background({ data, onChange, buttonRef }) {
 
   return (
     <div>
-      <CloseNav text={locale === 'ar' ? 'اختيار الخلفية' : 'Background'} buttonRef={buttonRef} />
+      <CloseNav text={messages.dialogs.background} buttonRef={buttonRef} />
 
       <TextField
         fullWidth
@@ -79,7 +79,7 @@ export default function Background({ data, onChange, buttonRef }) {
         value={data.backgroundWidth}
         onChange={e => onChange({ ...data, backgroundWidth: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'العرض' : 'Width'}
+        label={messages.dialogs.width}
         InputProps={{
           endAdornment: (
             <InputAdornment position='end'>
@@ -103,7 +103,7 @@ export default function Background({ data, onChange, buttonRef }) {
         value={data.backgroundHeight}
         onChange={e => onChange({ ...data, backgroundHeight: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'الطول' : 'Height'}
+        label={messages.dialogs.height}
         InputProps={{
           endAdornment: (
             <InputAdornment position='end'>
@@ -125,7 +125,7 @@ export default function Background({ data, onChange, buttonRef }) {
         fullWidth
         value={data.backgroundAlignment || 'center'}
         variant='filled'
-        label={locale === 'ar' ? 'محاذاة النص' : 'Alignment'}
+        label={messages.dialogs.alignment}
         onChange={e => onChange({ ...data, backgroundAlignment: e.target.value })}
       >
         <MenuItem value='center'>Center</MenuItem>
@@ -136,9 +136,9 @@ export default function Background({ data, onChange, buttonRef }) {
         <FormControlLabel
           value='color'
           control={<Radio />}
-          label={locale === 'ar' ? 'لون الخلفية' : 'Background Color'}
+          label={messages.dialogs.backgroundColor}
         />
-        <FormControlLabel value='image' control={<Radio />} label={locale === 'ar' ? 'صورة' : 'Image'} />
+        <FormControlLabel value='image' control={<Radio />} label={messages.dialogs.image} />
       </RadioGroup>
       <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(selectedOption === 'color')}>
         <SketchPicker
@@ -153,7 +153,7 @@ export default function Background({ data, onChange, buttonRef }) {
           className='!mb-4'
           value={data.api_url || ''}
           onChange={e => onChange({ ...data, api_url: e.target.value })}
-          label={locale === 'ar' ? 'جلب البيانات من الAPI' : 'Get From API'}
+          label={messages.dialogs.getFromApi}
           variant='filled'
         >
           {getApiData.map(
@@ -176,13 +176,13 @@ export default function Background({ data, onChange, buttonRef }) {
                 onChange({ ...data, items: [], api_url: '' })
               }}
             >
-              {locale === 'ar' ? 'تفريغ البيانات' : 'Clear Data'}
+              {messages.dialogs.clearData}
             </Button>
           </div>
         )}
         <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(obj)}>
           <div className='p-2 my-4 rounded border border-dashed border-main-color'>
-            <h2 className='mb-4 text-2xl text-main-color'>{locale === 'ar' ? 'عرض البيانات' : 'View Object'}</h2>
+            <h2 className='mb-4 text-2xl text-main-color'>{messages.dialogs.viewObject}</h2>
             <SyntaxHighlighter language='json' style={docco}>
               {JSON.stringify(obj, null, 2)}
             </SyntaxHighlighter>
@@ -191,7 +191,7 @@ export default function Background({ data, onChange, buttonRef }) {
                 fullWidth
                 value={data.backgroundKey || ''}
                 variant='filled'
-                label={locale === 'ar' ? 'مفتاح الصورة' : 'Image Key'}
+                label={messages.dialogs.imageKey}
                 onChange={e => {
                   const image = getData(obj, e.target.value, '')
 
@@ -210,7 +210,7 @@ export default function Background({ data, onChange, buttonRef }) {
             startIcon={<Icon icon='ph:upload-fill' fontSize='2.25rem' className='!text-2xl ' />}
           >
             <input type='file' accept={'image/*'} hidden name='json' onChange={handleFileUpload} />
-            {locale === 'ar' ? 'رفع صورة' : 'Upload Image'}
+            {messages.dialogs.uploadImage}
           </Button>
         </Collapse>
       </Collapse>
@@ -220,7 +220,7 @@ export default function Background({ data, onChange, buttonRef }) {
           fullWidth
           value={data.backgroundSize || 'cover'}
           variant='filled'
-          label={locale === 'ar' ? 'حجم الصورة' : 'Background Size'}
+          label={messages.dialogs.backgroundSize}
           onChange={e => onChange({ ...data, backgroundSize: e.target.value })}
         >
           <MenuItem value='cover'>Cover</MenuItem>
@@ -231,7 +231,7 @@ export default function Background({ data, onChange, buttonRef }) {
           fullWidth
           value={data.backgroundRepeat || 'no-repeat'}
           variant='filled'
-          label={locale === 'ar' ? 'تكرار الصورة' : 'Background Repeat'}
+          label={messages.dialogs.backgroundRepeat}
           onChange={e => onChange({ ...data, backgroundRepeat: e.target.value })}
         >
           <MenuItem value='no-repeat'>No Repeat</MenuItem>
@@ -244,7 +244,7 @@ export default function Background({ data, onChange, buttonRef }) {
           fullWidth
           value={data.backgroundPosition || 'center'}
           variant='filled'
-          label={locale === 'ar' ? 'موضع الصورة' : 'Background Position'}
+          label={messages.dialogs.backgroundPosition}
           onChange={e => onChange({ ...data, backgroundPosition: e.target.value })}
         >
           <MenuItem value='center'>Center</MenuItem>
@@ -262,7 +262,7 @@ export default function Background({ data, onChange, buttonRef }) {
           fullWidth
           value={data.backgroundAttachment || 'scroll'}
           variant='filled'
-          label={locale === 'ar' ? 'الصورة المثبتة' : 'Background Attachment'}
+          label={messages.dialogs.backgroundAttachment}
           onChange={e => onChange({ ...data, backgroundAttachment: e.target.value })}
         >
           <MenuItem value='scroll'>Scroll</MenuItem>

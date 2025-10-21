@@ -56,7 +56,45 @@ export const getType = type => {
   return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1)
 }
 
-export const getTypeFromCollection = (type, description) => {
+export const getTypeFromCollection = (type, kind) => {
+  
+  const baseTypes = {
+    SingleText: 'text',
+    URL: 'url',
+    Phone: 'tel',
+    Email: 'email',
+    Number: 'number',
+    Date: 'date',
+    Password: 'password',
+    button: 'button',
+    File: 'file',
+    LongText: 'textarea'
+  }
+
+  if (kind === 'select') {
+    return 'select'
+  }
+
+  if (kind === 'radio') {
+    return 'radio'
+  }
+
+  if (kind === 'checkbox') {
+    return 'checkbox'
+  }
+  if (kind === 'multiple_select') {
+    return 'multiple_select'
+  }
+  if (baseTypes[type]) return baseTypes[type]
+
+  // if (type === 'ManyToMany') {
+  //   return description === 'multiple_select' ? 'Search_Select' : 'checkbox'
+  // }
+
+  return type.charAt(0).toUpperCase() + type.slice(1)
+}
+
+export const getTypeFromCollectionTarget = (type, description) => {
   const baseTypes = {
     SingleText: 'text',
     URL: 'url',
@@ -66,17 +104,22 @@ export const getTypeFromCollection = (type, description) => {
     Date: 'date',
     Password: 'password',
     File: 'file',
-    LongText: 'textarea'
+    LongText: 'textarea',
+    Boolean: 'boolean'
   }
 
   if (baseTypes[type]) return baseTypes[type]
 
   if (type === 'OneToOne') {
-    return description === 'select' ? 'select' : 'radio'
+    return 'OneToOne'
   }
 
   if (type === 'ManyToMany') {
-    return description === 'multiple_select' ? 'Search_Select' : 'checkbox'
+    return 'ManyToMany'
+  }
+
+  if (type === 'OneToMany') {
+    return 'OneToMany'
   }
 
   return type.charAt(0).toUpperCase() + type.slice(1)
@@ -97,6 +140,8 @@ const styleMap = {
 }
 
 export const DefaultStyle = type => {
+
+  
   return styleMap[type] || text
 }
 
@@ -207,7 +252,6 @@ export const getDomain = () => {
   return process.env.DEV_MODE ? 'http://localhost:3000/' : process.env.DOMAIN
 }
 
-
-export const getZIndex = (value) => {
+export const getZIndex = value => {
   return `!z-[${value}]`
 }

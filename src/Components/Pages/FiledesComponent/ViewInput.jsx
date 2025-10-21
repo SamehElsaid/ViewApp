@@ -22,8 +22,6 @@ function convertMomentToDateFnsFormat(format) {
 
 const ViewInput = ({
   input,
-  isOpen,
-  setIsOpen,
   value,
   onChangeFile,
   from,
@@ -45,6 +43,8 @@ const ViewInput = ({
   isRedirect,
   setRedirect
 }) => {
+  console.log(input)
+
   const handleKeyDown = event => {
     if (input.type != 'Phone') return
     if (event.key == 'ArrowUp' || event.key == 'ArrowDown') {
@@ -56,6 +56,154 @@ const ViewInput = ({
     if (input.type != 'Phone') return
     event.preventDefault()
   }
+
+  if (input?.kind == 'select') {
+    const label = JSON.parse(input?.descriptionEn) || []
+    const valueSend = JSON.parse(input?.selectedValueSend) || []
+
+    return (
+      <div id='custom-select'>
+        <select
+          value={value}
+          onChange={e => onChange(e)}
+          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
+          onBlur={e => {
+            if (isRedirect) {
+              const findOption = selectedOptions.find(option => option.Id == e.target.value)
+              setRedirect(findOption.redirect)
+            }
+            if (onBlur) {
+              const evaluatedFn = eval('(' + onBlur + ')')
+
+              evaluatedFn(e)
+            }
+          }}
+        >
+          <option selected value={''}>
+            {placeholder ? placeholder : locale == 'ar' ? 'اختر ' : 'Select'}
+          </option>
+          {selectedOptions.map((option, index) => (
+            <option key={index} value={valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id}>
+              {label?.map(ele => option[ele]).join('-')}
+            </option>
+          ))}
+        </select>
+      </div>
+    )
+  }
+
+  if (input.kind == 'radio') {
+    const label = JSON.parse(input?.descriptionEn)
+    const valueSend = JSON.parse(input?.selectedValueSend) || []
+
+    console.log('ds')
+
+    return (
+      <div className=''>
+        <div className=''>
+          <div className=''>
+            <div>
+              <div className='flex flex-wrap gap-1'>
+                {selectedOptions.map((option, index) => {
+                  const valueSendOption = valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id
+
+                  return (
+                    <div key={index + 'radio' + valueSendOption || index} className=''>
+                      <input
+                        value={valueSendOption}
+                        name={input.nameEn}
+                        checked={valueSendOption === value}
+                        onChange={e => {
+                          console.log(e.target.value)
+                          onChange(e)
+                        }}
+                        type='radio'
+                        id={valueSendOption}
+                        disabled={isDisable == 'disabled'}
+                        onBlur={e => {
+                          if (onBlur) {
+                            const evaluatedFn = eval('(' + onBlur + ')')
+
+                            evaluatedFn(e)
+                          }
+                        }}
+                      />
+                      <label htmlFor={valueSendOption}>{label.map(ele => option[ele]).join('-')}</label>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+    if (input.kind == 'search') {
+    const label = JSON.parse(input?.descriptionEn)
+
+    return (
+      <Autocomplete
+        multiple
+        value={value}
+        onChange={(event, newValue) => {
+          onChange(event, newValue);
+        }}
+        sx={{ width: 325 }}
+        options={selectedOptions}
+        disabled={isDisable == 'disabled'}
+        filterSelectedOptions
+        id='autocomplete-multiple-outlined'
+        getOptionLabel={option => option[label[0]] || ''}
+        renderInput={params => <TextField {...params} style={{ width: '100%' }} placeholder={placeholder} />}
+      />
+    )
+  }
+  console.log(input.kind);
+  
+  if (input.kind == 'checkbox') {
+    const label = JSON.parse(input?.descriptionEn)
+    console.log(value,"here")
+
+    return (
+      <div className='w-full'>
+        <div className='flex flex-wrap gap-1'>
+          {selectedOptions.map((option, index) => (
+            <div key={option.Id} className='flex gap-1 items-center'>
+              <input
+                value={option.Id}
+                name={input.nameEn}
+                checked={value?.find(v => v == option.Id)}
+                onChange={e => onChange(e)}
+                type='checkbox'
+                id={option.Id}
+                disabled={isDisable == 'disabled'}
+                className={`${isDisable == 'disabled' ? '!color-gray-400' : ''}`}
+                onBlur={e => {
+                  if (onBlur) {
+                    const evaluatedFn = eval('(' + onBlur + ')')
+
+                    evaluatedFn(e)
+                  }
+                }}
+              />
+              <label
+                style={{
+                  color: isDisable == 'disabled' ? 'gray' : '',
+                  cursor: isDisable == 'disabled' ? 'not-allowed' : ''
+                }}
+                htmlFor={option.Id}
+              >
+                {label.map(ele => option[ele]).join('-')}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (
     input.type == 'SingleText' ||
     input.type == 'Number' ||
@@ -158,7 +306,7 @@ const ViewInput = ({
         rows={4}
         placeholder={placeholder}
         disabled={isDisable == 'disabled'}
-        className={`${errorView || error ? 'error' : ''} `}
+        className={`${errorView || error ? 'error' : ''} resize-none`}
         style={{ transition: '0.3s' }}
         onBlur={e => {
           if (onBlur) {
@@ -302,19 +450,17 @@ const ViewInput = ({
     return !readOnly ? (
       <>
         <div className='relative w-full'>
-          <div
-            className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
-            onClick={() => setIsOpen(true)}
-          ></div>
+          <div className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'></div>
           <DatePickerWrapper className='w-full'>
             <DatePicker
               selected={value}
-              onChange={date => onChange(date)}
-              showTimeSelectOnly
+              onChange={date => {
+                onChange(date)
+              }}
               dateFormat='h:mm aa'
-              showMonthDropdown
+              showTimeSelect
+              showTimeSelectOnly
               locale={locale == 'ar' ? ar : en}
-              showYearDropdown
               onBlur={e => {
                 if (onBlur) {
                   const evaluatedFn = eval('(' + onBlur + ')')
@@ -322,67 +468,15 @@ const ViewInput = ({
                   evaluatedFn(e)
                 }
               }}
-              customInput={<ExampleCustomInput type='time' className='example-custom-input' />}
+              customInput={
+                <ExampleCustomInput value={value?.toString()} type='time' className='example-custom-input' />
+              }
               disabled={isDisable == 'disabled'}
               minDate={minDate}
               maxDate={maxDate}
             />
           </DatePickerWrapper>
         </div>
-        <Dialog
-          open={isOpen}
-          onClose={() => setIsOpen(false)}
-          aria-labelledby='alert-dialog-title'
-          aria-describedby='alert-dialog-description'
-        >
-          <div className='min-h-[80vh] flex flex-col  control-date py-5'>
-            <div className='flex gap-2 justify-end px-5'>
-              <Button
-                type='button'
-                variant='contained'
-                color='error'
-                onClick={() => {
-                  setValue(null)
-                }}
-              >
-                {locale == 'ar' ? 'اعادة تعيين' : 'Reset'}
-              </Button>
-              <Button type='button' variant='contained' color='secondary' onClick={() => setIsOpen(false)}>
-                {locale == 'ar' ? 'اغلاق' : 'Close'}
-              </Button>
-            </div>
-            {console.log(value)}
-            <DatePickerWrapper className='w-full'>
-              <DatePicker
-                selected={value}
-                open={isOpen}
-                onOpen={() => setIsOpen(true)}
-                onClose={() => setIsOpen(false)}
-                onChange={date => {
-                  onChange(date)
-                  setIsOpen(false)
-                }}
-                dateFormat='h:mm aa'
-                showTimeSelect
-                showTimeSelectOnly
-                locale={locale == 'ar' ? ar : en}
-                onBlur={e => {
-                  if (onBlur) {
-                    const evaluatedFn = eval('(' + onBlur + ')')
-
-                    evaluatedFn(e)
-                  }
-                }}
-                customInput={
-                  <ExampleCustomInput value={value?.toString()} type='time' className='example-custom-input' />
-                }
-                disabled={isDisable == 'disabled'}
-                minDate={minDate}
-                maxDate={maxDate}
-              />
-            </DatePickerWrapper>
-          </div>
-        </Dialog>
       </>
     ) : (
       <DatePicker
@@ -416,7 +510,6 @@ const ViewInput = ({
       showTime: raw.showTime === 'true'
     }
 
-    console.log(label)
     const today = new Date()
     let minDate = null
     let maxDate = null
@@ -436,65 +529,12 @@ const ViewInput = ({
     return !readOnly ? (
       <>
         <div className='relative w-full'>
-          <div
-            className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
-            onClick={() => setIsOpen(true)}
-          ></div>
-          <DatePickerWrapper className='w-full'>
-            <DatePicker
-              selected={value}
-              onChange={date => onChange(date)}
-              timeInputLabel='Time:'
-              dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
-              showMonthDropdown
-              locale={locale == 'ar' ? ar : en}
-              showYearDropdown
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
-
-                  evaluatedFn(e)
-                }
-              }}
-              showTimeInput={label.showTime == 'true'}
-              customInput={<ExampleCustomInput className='example-custom-input' />}
-              disabled={isDisable == 'disabled'}
-              minDate={minDate}
-              maxDate={maxDate}
-            />
-          </DatePickerWrapper>
-        </div>
-        <Dialog
-          open={isOpen}
-          onClose={() => setIsOpen(false)}
-          aria-labelledby='alert-dialog-title'
-          aria-describedby='alert-dialog-description'
-        >
-          <div className='min-h-[80vh] flex flex-col  control-date py-5'>
-            <div className='flex gap-2 justify-end px-5'>
-              <Button
-                type='button'
-                variant='contained'
-                color='error'
-                onClick={() => {
-                  setValue(null)
-                }}
-              >
-                {locale == 'ar' ? 'اعادة تعيين' : 'Reset'}
-              </Button>
-              <Button type='button' variant='contained' color='secondary' onClick={() => setIsOpen(false)}>
-                {locale == 'ar' ? 'اغلاق' : 'Close'}
-              </Button>
-            </div>
+          <div className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'>
             <DatePickerWrapper className='w-full'>
               <DatePicker
                 selected={value}
-                open={isOpen}
-                onOpen={() => setIsOpen(true)}
-                onClose={() => setIsOpen(false)}
                 onChange={date => {
                   onChange(date)
-                  setIsOpen(false)
                 }}
                 timeInputLabel={label.showTime == 'true' ? (locale == 'ar' ? 'الوقت:' : 'Time:') : ''}
                 dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
@@ -516,7 +556,7 @@ const ViewInput = ({
               />
             </DatePickerWrapper>
           </div>
-        </Dialog>
+        </div>
       </>
     ) : (
       <DatePicker
@@ -542,134 +582,8 @@ const ViewInput = ({
       />
     )
   }
-  if (input.type == 'OneToOne' && input.descriptionAr == 'select') {
-    const label = JSON.parse(input?.descriptionEn)
 
-    return (
-      <div id='custom-select'>
-        <select
-          value={value}
-          onChange={e => onChange(e)}
-          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
-          onBlur={e => {
-            if (isRedirect) {
-              const findOption = selectedOptions.find(option => option.Id == e.target.value)
-              setRedirect(findOption.redirect)
-            }
-            if (onBlur) {
-              const evaluatedFn = eval('(' + onBlur + ')')
 
-              evaluatedFn(e)
-            }
-          }}
-        >
-          <option selected value={''}>
-            {placeholder ? placeholder : locale == 'ar' ? 'اختر ' : 'Select'}
-          </option>
-          {selectedOptions.map((option, index) => (
-            <option key={option.Id} value={option.Id}>
-              {label.map(ele => option[ele]).join('-')}
-            </option>
-          ))}
-        </select>
-      </div>
-    )
-  }
-  if (input.type == 'OneToOne') {
-    const label = JSON.parse(input?.descriptionEn)
-
-    return (
-      <div className=''>
-        <div className=''>
-          <div className=''>
-            <div>
-              <div className='flex flex-wrap gap-1'>
-                {selectedOptions.map((option, index) => (
-                  <div key={option.Id} className=''>
-                    <input
-                      value={option.Id}
-                      name={input.nameEn}
-                      checked={value == option.Id}
-                      onChange={e => onChange(e)}
-                      type='radio'
-                      id={option.Id}
-                      disabled={isDisable == 'disabled'}
-                      onBlur={e => {
-                        if (onBlur) {
-                          const evaluatedFn = eval('(' + onBlur + ')')
-
-                          evaluatedFn(e)
-                        }
-                      }}
-                    />
-                    <label htmlFor={option.Id}>{label.map(ele => option[ele]).join('-')}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-  if (input.type == 'ManyToMany' && input.descriptionAr == 'multiple_select') {
-    const label = JSON.parse(input?.descriptionEn)
-
-    return (
-      <Autocomplete
-        multiple
-        value={value}
-        onChange={(event, newValue) => onChange(event, newValue)}
-        sx={{ width: 325 }}
-        options={selectedOptions}
-        disabled={isDisable == 'disabled'}
-        filterSelectedOptions
-        id='autocomplete-multiple-outlined'
-        getOptionLabel={option => option[label[0]] || ''}
-        renderInput={params => <TextField {...params} style={{ width: '100%' }} placeholder={placeholder} />}
-      />
-    )
-  }
-  if (input.type == 'ManyToMany') {
-    const label = JSON.parse(input?.descriptionEn)
-
-    return (
-      <div className='w-full'>
-        <div className='flex flex-wrap gap-1'>
-          {selectedOptions.map((option, index) => (
-            <div key={option.Id} className='flex gap-1 items-center'>
-              <input
-                value={option.Id}
-                name={input.nameEn}
-                checked={value?.find(v => v == option.Id)}
-                onChange={e => onChange(e)}
-                type='checkbox'
-                id={option.Id}
-                disabled={isDisable == 'disabled'}
-                className={`${isDisable == 'disabled' ? '!color-gray-400' : ''}`}
-                onBlur={e => {
-                  if (onBlur) {
-                    const evaluatedFn = eval('(' + onBlur + ')')
-
-                    evaluatedFn(e)
-                  }
-                }}
-              />
-              <label
-                style={{
-                  color: isDisable == 'disabled' ? 'gray' : '',
-                  cursor: isDisable == 'disabled' ? 'not-allowed' : ''
-                }}
-                htmlFor={option.Id}
-              >
-                {label.map(ele => option[ele]).join('-')}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 }
 
 export default ViewInput

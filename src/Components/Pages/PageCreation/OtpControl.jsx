@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { TextField, InputAdornment, MenuItem, Button } from '@mui/material'
 import { useSelector } from 'react-redux'
 import CloseNav from './CloseNav'
+import { useIntl } from 'react-intl'
 
 export default function OtpControl({ data, onChange, locale, type, buttonRef }) {
   const [obj, setObj] = useState(false)
   const getApiData = useSelector(rx => rx.api.data)
+  const { messages } = useIntl()
 
   const renderTextField = (label, valueKey, inputType = 'text', options = {}) => {
     // Add max validation specifically for the Number of OTP field
@@ -52,46 +54,26 @@ export default function OtpControl({ data, onChange, locale, type, buttonRef }) 
 
   return (
     <div>
-      <CloseNav text={locale === 'ar' ? 'العداد/التوقيت' : 'Counter/Timer'} buttonRef={buttonRef} />
+      <CloseNav text={messages.dialogs.counterTimer} buttonRef={buttonRef} />
       <div className='p-4 mt-4 rounded border border-dashed border-main-color'>
-        {renderTextField(
-          obj
-            ? locale === 'ar'
-              ? 'مفتاح العنوان بالعربية'
-              : 'Title ar key'
-            : locale === 'ar'
-            ? 'العنوان بالعربية'
-            : 'Title Ar',
-          'content_ar',
-          'text'
-        )}
-        {renderTextField(
-          obj
-            ? locale === 'ar'
-              ? 'مفتاح العنوان بالانجليزية'
-              : 'Title en key'
-            : locale === 'ar'
-            ? 'العنوان بالانجليزية'
-            : 'Title En',
-          'content_en',
-          'text'
-        )}
-        {renderTextField(locale === 'ar' ? 'عدد الرمز' : 'Number of OTP', 'numberOfOtp', 'number', {
-          helperText: locale === 'ar' ? 'الحد الأقصى هو 20' : 'Maximum is 20'
+        {renderTextField(obj ? messages.dialogs.titleAr : messages.dialogs.titleEn, 'content_ar', 'text')}
+        {renderTextField(obj ? messages.dialogs.keyInAr : messages.dialogs.keyInEn, 'content_en', 'text')}
+        {renderTextField(messages.dialogs.numberOfOtp, 'numberOfOtp', 'number', {
+          helperText: messages.dialogs.maximumIs20
         })}
-        {renderTextField(locale === 'ar' ? 'مدة التأكيد' : 'Timer time', 'timerTime', 'number', {
+        {renderTextField(messages.dialogs.timerTime, 'timerTime', 'number', {
           InputProps: {
-            endAdornment: <InputAdornment position='end'>{locale === 'ar' ? 'ثواني' : 'Seconds'}</InputAdornment>
+            endAdornment: <InputAdornment position='end'>{messages.dialogs.seconds}</InputAdornment>
           }
         })}
-        {renderTextField(locale === 'ar' ? 'مفتاح الرمز المرسل للِAPI' : 'Required code key for API', 'key', 'text')}
-        {renderTextField(locale === 'ar' ? 'رابط التأكيد' : 'Verification link', 'api_url', 'text')}
-        {renderTextField(locale === 'ar' ? 'رابط إعادة الإرسال' : 'Resend OTP link', 'resendOtpLink', 'text')}
-        {renderTextField(locale === 'ar' ? 'اعاده التوجيه' : 'redirect link', 'redirectLink', 'text')}
+        {renderTextField(messages.dialogs.requiredCodeKeyForApi, 'key', 'text')}
+        {renderTextField(messages.dialogs.verificationLink, 'api_url', 'text')}
+        {renderTextField(messages.dialogs.resendOtpLink, 'resendOtpLink', 'text')}
+        {renderTextField(messages.dialogs.redirectLink, 'redirectLink', 'text')}
 
-        {renderTextField('Color', 'titleColor', 'color')}
+        {renderTextField(messages.dialogs.color, 'titleColor', 'color')}
 
-        <h2 className='mt-4 text-xl font-bold'>{locale === 'ar' ? 'بيانات من الurl' : 'Data From URL'}</h2>
+        <h2 className='mt-4 text-xl font-bold'>{messages.dialogs.dataFromUrl}</h2>
         <div className='flex justify-end mb-2'>
           <Button
             variant='contained'
@@ -103,12 +85,11 @@ export default function OtpControl({ data, onChange, locale, type, buttonRef }) 
               }
             }}
           >
-            {locale === 'ar' ? 'إضافة' : 'Add'}
+            {messages.dialogs.add}
           </Button>
         </div>
         {data.params?.map((param, index) => (
           <div key={index} className='flex gap-2'>
-            {/* {renderTextField(locale === 'ar' ? 'اسم المفتاح' : 'Key Name', param.param, 'text')} */}
             <TextField
               fullWidth
               type='text'
@@ -119,10 +100,9 @@ export default function OtpControl({ data, onChange, locale, type, buttonRef }) 
                   params: data.params.map((p, i) => (i === index ? { ...p, param: e.target.value } : p))
                 })
               }
-              label={locale === 'ar' ? 'اسم المفتاح' : 'Key Name'}
+              label={messages.dialogs.keyName}
               variant='filled'
             />
-            {/* {renderTextField(locale === 'ar' ? 'قيمة المفتاح' : 'Param value', param.paramValue, 'text')} */}
             <TextField
               fullWidth
               type='text'
@@ -133,7 +113,7 @@ export default function OtpControl({ data, onChange, locale, type, buttonRef }) 
                   params: data.params.map((p, i) => (i === index ? { ...p, paramValue: e.target.value } : p))
                 })
               }
-              label={locale === 'ar' ? 'قيمة المفتاح' : 'Param value'}
+              label={messages.dialogs.paramValue}
               variant='filled'
             />
           </div>

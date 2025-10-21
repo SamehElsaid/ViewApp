@@ -2,8 +2,11 @@ import React, { useMemo } from 'react'
 import UpdateRichText from '../UpdateRichText'
 import { TbTextCaption } from 'react-icons/tb'
 import { getData } from 'src/Components/_Shared'
+import { useIntl } from 'react-intl'
 
 export default function useRichText({ locale, buttonRef }) {
+  const { messages } = useIntl()
+  
   const RichText = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -20,27 +23,26 @@ export default function useRichText({ locale, buttonRef }) {
             }}
           >
             {data?.api_url
-              ? getData(data?.items, data?.[`content_${locale}`], locale === 'ar' ? 'المحتوى' : 'Content') ??
-                (locale === 'ar' ? 'المحتوى' : 'Content')
+              ? getData(data?.items, data?.[`content_${locale}`], messages.dialogs.content) ?? messages.dialogs.content
               : data?.[`content_${locale}`]
               ? data?.[`content_${locale}`]
-              : locale === 'ar'
-              ? 'المحتوى'
-              : 'Content'}
+              : messages.dialogs.content}
           </div>
         )
       },
       id: 'richText',
-      title: locale === 'ar' ? 'نص منسق' : 'Text',
-      description: locale === 'ar' ? 'يمكن إضافة نص منسق إلى الصفحة' : 'Adds customizable text content to the page.',
+      title: messages.dialogs.richText,
+      description: messages.dialogs.richTextDescription,
       version: 1,
       icon: <TbTextCaption className='text-2xl' />,
       controls: {
         type: 'custom',
-        Component: ({ data, onChange }) => <UpdateRichText data={data} onChange={onChange} locale={locale} buttonRef={buttonRef} />
+        Component: ({ data, onChange }) => (
+          <UpdateRichText data={data} onChange={onChange} locale={locale} buttonRef={buttonRef} />
+        )
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale])
 
   return { RichText }

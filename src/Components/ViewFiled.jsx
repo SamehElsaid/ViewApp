@@ -30,7 +30,7 @@ function ViewField({ open, setOpen, setData }) {
   const maxLength = open?.validationData?.find(item => item.ruleType.toLowerCase() === 'maxlength')?.parameters
   const minLength = open?.validationData?.find(item => item.ruleType.toLowerCase() === 'minlength')?.parameters
   const required = open?.validationData?.find(item => item.ruleType.toLowerCase() === 'required')?.parameters
-  const unique = open?.validationData?.find(item => item.ruleType.toLowerCase() === 'unique')?.parameters
+  const unique = open?.validationData?.find(item => item.ruleType.toLowerCase() === 'unique')?.parameters || open?.key === 'Id'
   let data = {}
   try {
     data = JSON.parse(open?.descriptionEn)

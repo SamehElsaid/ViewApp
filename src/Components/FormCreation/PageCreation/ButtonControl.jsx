@@ -19,7 +19,7 @@ import { UrlTranAr, UrlTranEn } from 'src/Components/axiosCall'
 import toast from 'react-hot-toast'
 
 export default function InputControl({ data, onChange, type }) {
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
   const [selected, setSelect] = useState('main')
 
   const Css = cssToObject(data.css || DefaultStyle(type))
@@ -68,7 +68,7 @@ export default function InputControl({ data, onChange, type }) {
             }}
             variant={selected === 'main' ? 'contained' : 'outlined'}
           >
-            {locale === 'ar' ? 'الاساسية' : 'Main'}
+            {messages.dialogs.main}
           </Button>
           <Button
             variant={selected === 'style' ? 'contained' : 'outlined'}
@@ -76,7 +76,7 @@ export default function InputControl({ data, onChange, type }) {
               setSelect('style')
             }}
           >
-            {locale === 'ar' ? 'التنسيق' : 'Style'}
+            {messages.dialogs.style}
           </Button>
           <Button
             onClick={() => {
@@ -84,7 +84,7 @@ export default function InputControl({ data, onChange, type }) {
             }}
             variant={selected === 'roles' ? 'contained' : 'outlined'}
           >
-            {locale === 'ar' ? 'الصلاحيات' : 'Roles'}
+            {messages.dialogs.roles}
           </Button>
         </ButtonGroup>
       </div>{' '}
@@ -96,7 +96,7 @@ export default function InputControl({ data, onChange, type }) {
             value={data.type || 'text'}
             onChange={e => onChange({ ...data, type: e.target.value })}
             variant='filled'
-            label={locale === 'ar' ? 'نوع الحقل' : 'Type'}
+            label={messages.dialogs.type}
             select
           >
             <MenuItem value='text'>Text</MenuItem>
@@ -115,7 +115,7 @@ export default function InputControl({ data, onChange, type }) {
               value={data.format || 'MM/dd/yyyy'}
               onChange={e => onChange({ ...data, format: e.target.value })}
               variant='filled'
-              label={locale === 'ar' ? 'التنسيق' : 'Format'}
+              label={messages.dialogs.format}
               placeholder='MM/dd/yyyy h:mm aa'
             ></TextField>
             <TextField
@@ -124,12 +124,12 @@ export default function InputControl({ data, onChange, type }) {
               value={data.showTime || 'false'}
               onChange={e => onChange({ ...data, showTime: e.target.value })}
               variant='filled'
-              label={locale === 'ar' ? 'الوقت' : 'Time'}
+              label={messages.dialogs.time}
               placeholder='true'
               select
             >
-              <MenuItem value='true'>{locale === 'ar' ? 'عرض' : 'Show'}</MenuItem>
-              <MenuItem value='false'>{locale === 'ar' ? 'إخفاء' : 'Hide'}</MenuItem>
+              <MenuItem value='true'>{messages.dialogs.show}</MenuItem>
+              <MenuItem value='false'>{messages.dialogs.hide}</MenuItem>
             </TextField>
           </>
         )}
@@ -139,7 +139,7 @@ export default function InputControl({ data, onChange, type }) {
           value={data.key}
           onChange={e => onChange({ ...data, key: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'المفتاح' : 'Key'}
+          label={messages.dialogs.key}
         />
         <TextField
           fullWidth
@@ -147,14 +147,14 @@ export default function InputControl({ data, onChange, type }) {
           value={data.labelAr}
           onChange={e => onChange({ ...data, labelAr: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الحقل بالعربية' : 'Label Ar'}
+          label={messages.dialogs.labelAr}
           InputProps={{
             endAdornment: (
               <InputAdornment
                 position='end'
                 type='button'
                 onClick={async () => {
-                  const loading = toast.loading(locale === 'ar' ? 'يتم الترجمه' : 'Translating')
+                  const loading = toast.loading(messages.dialogs.translating)
                   const res = await UrlTranAr(data.labelAr)
                   onChange({ ...data, labelEn: res })
                   toast.dismiss(loading)
@@ -173,14 +173,14 @@ export default function InputControl({ data, onChange, type }) {
           value={data.labelEn}
           onChange={e => onChange({ ...data, labelEn: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الحقل بالانجليزية' : 'Label En'}
+          label={messages.dialogs.labelEn}
           InputProps={{
             endAdornment: (
               <InputAdornment
                 position='end'
                 type='button'
                 onClick={async () => {
-                  const loading = toast.loading(locale === 'ar' ? 'يتم الترجمه' : 'Translating')
+                  const loading = toast.loading(messages.dialogs.translating)
                   const res = await UrlTranEn(data.labelEn)
                   onChange({ ...data, labelAr: res })
                   toast.dismiss(loading)
@@ -200,14 +200,14 @@ export default function InputControl({ data, onChange, type }) {
           value={data.placeholderAr}
           onChange={e => onChange({ ...data, placeholderAr: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الحقل بالعربية' : 'Placeholder Ar'}
+          label={messages.dialogs.placeholderAr}
           InputProps={{
             endAdornment: (
               <InputAdornment
                 position='end'
                 type='button'
                 onClick={async () => {
-                  const loading = toast.loading(locale === 'ar' ? 'يتم الترجمه' : 'Translating')
+                  const loading = toast.loading(messages.dialogs.translating)
                   const res = await UrlTranAr(data.placeholderAr)
                   onChange({ ...data, placeholderEn: res })
                   toast.dismiss(loading)
@@ -226,14 +226,14 @@ export default function InputControl({ data, onChange, type }) {
           value={data.placeholderEn}
           onChange={e => onChange({ ...data, placeholderEn: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الحقل بالانجليزية' : 'Placeholder En'}
+          label={messages.dialogs.placeholderEn}
           InputProps={{
             endAdornment: (
               <InputAdornment
                 position='end'
                 type='button'
                 onClick={async () => {
-                  const loading = toast.loading(locale === 'ar' ? 'يتم الترجمه' : 'Translating')
+                  const loading = toast.loading(messages.dialogs.translating)
                   const res = await UrlTranEn(data.placeholderEn)
                   onChange({ ...data, placeholderAr: res })
                   toast.dismiss(loading)
@@ -253,7 +253,7 @@ export default function InputControl({ data, onChange, type }) {
             value={data.rows || 5}
             onChange={e => onChange({ ...data, rows: e.target.value })}
             variant='filled'
-            label={locale === 'ar' ? 'الأسطر' : 'Rows'}
+            label={messages.dialogs.rows}
           />
         )}
       </Collapse>
@@ -264,7 +264,7 @@ export default function InputControl({ data, onChange, type }) {
           value={getData(type === 'textarea' ? 'textarea.width.value' : 'input.width.value') || ''}
           onChange={e => UpdateData(type === 'textarea' ? 'textarea.width.value' : 'input.width.value', e.target.value)}
           variant='filled'
-          label={locale === 'ar' ? 'العرض' : 'Width'}
+          label={messages.dialogs.width}
           disabled={
             getData(type === 'textarea' ? 'textarea.width.unit' : 'input.width.unit') === 'Max-Content' ||
             getData(type === 'textarea' ? 'textarea.width.unit' : 'input.width.unit') === 'Min-Content' ||
@@ -307,7 +307,7 @@ export default function InputControl({ data, onChange, type }) {
             UpdateData(type === 'textarea' ? 'textarea.height.value' : 'input.height.value', e.target.value)
           }
           variant='filled'
-          label={locale === 'ar' ? 'الطول' : 'Height'}
+          label={messages.dialogs.height}
           disabled={
             getData(type === 'textarea' ? 'textarea.height.unit' : 'input.height.unit') === 'Max-Content' ||
             getData(type === 'textarea' ? 'textarea.height.unit' : 'input.height.unit') === 'Min-Content' ||
@@ -348,7 +348,7 @@ export default function InputControl({ data, onChange, type }) {
             UpdateData(type === 'textarea' ? 'textarea.margin-top.value' : 'input.margin-top.value', e.target.value)
           }
           variant='filled'
-          label={locale === 'ar' ? 'المسافة العلوية' : 'Margin Top'}
+          label={messages.dialogs.marginTop}
           disabled={
             getData(type === 'textarea' ? 'textarea.margin-top.unit' : 'input.margin-top.unit') === 'Max-Content' ||
             getData(type === 'textarea' ? 'textarea.margin-top.unit' : 'input.margin-top.unit') === 'Min-Content' ||
@@ -395,7 +395,7 @@ export default function InputControl({ data, onChange, type }) {
             )
           }
           variant='filled'
-          label={locale === 'ar' ? 'المسافة السفلية' : 'Margin Bottom'}
+          label={messages.dialogs.marginBottom}
           disabled={
             getData(type === 'textarea' ? 'textarea.margin-bottom.unit' : 'input.margin-bottom.unit') ===
               'Max-Content' ||
@@ -450,7 +450,7 @@ export default function InputControl({ data, onChange, type }) {
             )
           }
           variant='filled'
-          label={locale === 'ar' ? 'المسافة اليسرى' : 'Margin Left'}
+          label={messages.dialogs.marginLeft}
           disabled={
             getData(type === 'textarea' ? 'textarea.margin-inline-start.unit' : 'input.margin-inline-start.unit') ===
               'Max-Content' ||
@@ -507,7 +507,7 @@ export default function InputControl({ data, onChange, type }) {
             )
           }
           variant='filled'
-          label={locale === 'ar' ? 'المسافة اليمنى' : 'Margin Right'}
+          label={messages.dialogs.marginRight}
           disabled={
             getData(type === 'textarea' ? 'textarea.margin-inline-end.unit' : 'input.margin-inline-end.unit') ===
               'Max-Content' ||
@@ -564,7 +564,7 @@ export default function InputControl({ data, onChange, type }) {
                 e.target.value
               )
             }
-            label={locale === 'ar' ? 'اللون الخلفي' : 'Background Color'}
+            label={messages.dialogs.backgroundColor}
             variant='filled'
           />
         </div>
@@ -574,7 +574,7 @@ export default function InputControl({ data, onChange, type }) {
             type='color'
             defaultValue={getData(type === 'textarea' ? 'textarea.color.unit' : 'input.color.unit') || '#575757'}
             onBlur={e => UpdateData(type === 'textarea' ? 'textarea.color.unit' : 'input.color.unit', e.target.value)}
-            label={locale === 'ar' ? 'اللون' : 'Color'}
+            label={messages.dialogs.color}
             variant='filled'
           />
         </div>
@@ -592,7 +592,7 @@ export default function InputControl({ data, onChange, type }) {
                 e.target.value
               )
             }
-            label={locale === 'ar' ? 'لون المكان المشغول' : 'PlaceHolder Color'}
+            label={messages.dialogs.placeHolderColor}
             variant='filled'
           />
         </div>
@@ -606,7 +606,7 @@ export default function InputControl({ data, onChange, type }) {
             onBlur={e =>
               UpdateData(type === 'textarea' ? 'textarea.label.color.unit' : 'input.label.color.unit', e.target.value)
             }
-            label={locale === 'ar' ? 'لون التسمية' : 'Label Color'}
+            label={messages.dialogs.labelColor}
             variant='filled'
           />
         </div>
@@ -617,7 +617,7 @@ export default function InputControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData('#calendar-icon.color.unit') || '#555'}
               onBlur={e => UpdateData('#calendar-icon.color.unit', e.target.value)}
-              label={locale === 'ar' ? 'لون الايقون التاريخ' : 'Date Icon Color'}
+              label={messages.dialogs.dateIconColor}
               variant='filled'
             />
           </div>
@@ -636,7 +636,7 @@ export default function InputControl({ data, onChange, type }) {
               }
             />
           }
-          label={locale === 'ar' ? 'مطلوب' : 'Required'}
+          label={messages.dialogs.required}
         />
         <FormControlLabel
           control={
@@ -650,13 +650,13 @@ export default function InputControl({ data, onChange, type }) {
               }
             />
           }
-          label={locale === 'ar' ? 'مطلوب' : 'Unique'}
+          label={messages.dialogs.unique}
         />
 
         {data.type === 'number' && (
           <>
             <TextField
-              label={locale === 'ar' ? 'اقل قيمة' : 'Min Value'}
+              label={messages.dialogs.minValue}
               type='number'
               fullWidth
               margin='normal'
@@ -669,7 +669,7 @@ export default function InputControl({ data, onChange, type }) {
               }
             />
             <TextField
-              label={locale === 'ar' ? 'اقصى قيمة' : 'Max Value'}
+              label={messages.dialogs.maxValue}
               type='number'
               fullWidth
               margin='normal'
@@ -687,7 +687,7 @@ export default function InputControl({ data, onChange, type }) {
         {type !== 'date' && (
           <>
             <TextField
-              label={locale === 'ar' ? 'الحد الأدنى' : 'Min Length'}
+              label={messages.dialogs.minLength}
               type='number'
               fullWidth
               margin='normal'
@@ -700,7 +700,7 @@ export default function InputControl({ data, onChange, type }) {
               }
             />
             <TextField
-              label={locale === 'ar' ? 'الحد الأقصى' : 'Max Length'}
+              label={messages.dialogs.maxLength}
               type='number'
               fullWidth
               margin='normal'
@@ -725,7 +725,7 @@ export default function InputControl({ data, onChange, type }) {
               type='text'
               defaultValue={data.regexMessageAr}
               onBlur={e => onChange({ ...data, regexMessageAr: e.target.value })}
-              label={locale === 'ar' ? 'رسالة التحقق العربية' : 'Regex Message Ar'}
+              label={messages.dialogs.regexMessageAr}
               variant='filled'
             />
             <TextField
@@ -733,7 +733,7 @@ export default function InputControl({ data, onChange, type }) {
               type='text'
               defaultValue={data.regexMessageEn}
               onBlur={e => onChange({ ...data, regexMessageEn: e.target.value })}
-              label={locale === 'ar' ? 'رسالة التحقق الانجليزية' : 'Regex Message En'}
+              label={messages.dialogs.regexMessageEn}
               variant='filled'
             />
           </>

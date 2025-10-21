@@ -2,8 +2,11 @@ import { TextField } from '@mui/material'
 import { useMemo } from 'react'
 import { TbContainer } from 'react-icons/tb'
 import CloseNav from '../CloseNav'
+import { useIntl } from 'react-intl'
 
 export default function useContainer({ locale, buttonRef }) {
+  const { messages } = useIntl()
+  
   const ContainerPlugin = useMemo(() => {
     return {
       Renderer: ({ data, children }) => (
@@ -19,22 +22,22 @@ export default function useContainer({ locale, buttonRef }) {
         </div>
       ),
       id: 'containerPlugin',
-      title: locale === 'ar' ? 'حاوية' : 'Container',
-      description: locale === 'ar' ? 'تضمين عناصر متعددة في جزء' : 'Group and organize multiple elements within a section.',
+      title: messages.dialogs.container,
+      description: messages.dialogs.containerDescription,
       version: 1,
       icon: <TbContainer className='text-2xl' />,
       controls: {
         type: 'custom',
         Component: ({ data, onChange }) => (
           <>
-            <CloseNav text={locale === 'ar' ? 'اختيار الحاوية' : 'Container'} buttonRef={buttonRef} />
+            <CloseNav text={messages.dialogs.container} buttonRef={buttonRef} />
             <TextField
               fullWidth
               type='text'
               value={data.paddingStart}
               onChange={e => onChange({ ...data, paddingStart: e.target.value })}
               variant='filled'
-              label={locale === 'ar' ? 'الاذاحة الداخلية من اليمين' : 'Padding Start'}
+              label={messages.dialogs.paddingStart}
             />
 
             <TextField
@@ -43,7 +46,7 @@ export default function useContainer({ locale, buttonRef }) {
               value={data.paddingEnd}
               onChange={e => onChange({ ...data, paddingEnd: e.target.value })}
               variant='filled'
-              label={locale === 'ar' ? 'الاذاحة الداخلية من اليسار' : 'Padding End'}
+              label={messages.dialogs.paddingEnd}
             />
             <TextField
               fullWidth
@@ -51,7 +54,7 @@ export default function useContainer({ locale, buttonRef }) {
               value={data.paddingTop}
               onChange={e => onChange({ ...data, paddingTop: e.target.value })}
               variant='filled'
-              label={locale === 'ar' ? 'الاذاحة الداخلية من الاعلى' : 'Padding Top'}
+              label={messages.dialogs.paddingTop}
             />
             <TextField
               fullWidth
@@ -59,7 +62,7 @@ export default function useContainer({ locale, buttonRef }) {
               value={data.paddingBottom}
               onChange={e => onChange({ ...data, paddingBottom: e.target.value })}
               variant='filled'
-              label={locale === 'ar' ? 'الاذاحة الداخلية من الاسفل' : 'Padding Bottom'}
+              label={messages.dialogs.paddingBottom}
             />
           </>
         )

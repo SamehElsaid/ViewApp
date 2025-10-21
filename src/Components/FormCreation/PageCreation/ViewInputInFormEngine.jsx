@@ -6,10 +6,12 @@ import { BsPaperclip, BsTrash } from 'react-icons/bs'
 import DatePicker from 'react-datepicker'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { FaCalendarAlt } from 'react-icons/fa'
+import { useIntl } from 'react-intl'
 
 const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
   const [fileNames, setFileNames] = useState([])
   const [startDate, setStartDate] = useState(new Date())
+  const { messages } = useIntl()
 
   const ExampleCustomInput = forwardRef(({ value, onClick }, ref) => (
     <div className='relative w-full'>
@@ -45,7 +47,9 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
           transition: '0.3s'
         }}
         placeholder={
-          locale === 'ar' ? data.placeholderAr || 'الحقل بالعربية' : data.placeholderEn || 'The field in English'
+          locale === 'ar'
+            ? data.placeholderAr || messages.dialogs.placeholderAr
+            : data.placeholderEn || messages.dialogs.placeholderEn
         }
       />
     ) : type === 'checkbox' ? (
@@ -105,13 +109,7 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
     ) : type === 'file' ? (
       <div id='file-upload-container'>
         <label htmlFor='file-upload-input' id='file-upload-label'>
-          <div id='label-color'>
-            {defaultValue(
-              data,
-              locale === 'ar' ? 'labelAr' : 'labelEn',
-              locale === 'ar' ? 'الحقل بالعربية' : 'The field in English'
-            )}
-          </div>
+          <div id='label-color'>{defaultValue(data, messages.dialogs.labelAr, messages.dialogs.labelEn)}</div>
           <div id='file-upload-content'>
             <svg
               id='file-upload-icon'
@@ -130,12 +128,10 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
             </svg>
 
             <p id='file-upload-text'>
-              <span className='font-semibold'>{locale === 'ar' ? 'اضف الصورة' : 'Add Image'} </span>
-              {locale === 'ar' ? 'أو اسحب وأفلت' : 'or drag and drop'}
+              <span className='font-semibold'>{messages.dialogs.addImage} </span>
+              {messages.dialogs.orDragAndDrop}
             </p>
-            <p id='file-upload-subtext'>
-              {locale === 'ar' ? 'SVG, PNG, JPG or GIF (MAX. 800x400px)' : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
-            </p>
+            <p id='file-upload-subtext'>SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
             {fileNames.length !== 0 && (
               <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
                 {fileNames.map((name, index) => (
@@ -171,7 +167,9 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
           transition: '0.3s'
         }}
         placeholder={
-          locale === 'ar' ? data.placeholderAr || 'الحقل بالعربية' : data.placeholderEn || 'The field in English'
+          locale === 'ar'
+            ? data.placeholderAr || messages.dialogs.placeholderAr
+            : data.placeholderEn || messages.dialogs.placeholderEn
         }
       />
     )
@@ -194,11 +192,7 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
     return (
       type !== 'file' && (
         <label htmlFor={data.key ?? new Date().getTime()} id='first-label'>
-          {defaultValue(
-            data,
-            locale === 'ar' ? 'labelAr' : 'labelEn',
-            locale === 'ar' ? 'الحقل بالعربية' : 'The field in English'
-          )}
+          {defaultValue(data, messages.dialogs.labelAr, messages.dialogs.labelEn)}
         </label>
       )
     )
@@ -218,6 +212,8 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
 }
 
 export default function ViewInputInFormEngine({ data, locale, defaultValue, onChange, advancedEdit, type, readOnly }) {
+  const { messages } = useIntl()
+  
   return (
     <div className='flex flex-col gap-2 w-full h-full'>
       <CssEditorView data={data} locale={locale} defaultValue={defaultValue} type={type} readOnly={readOnly} />
@@ -225,7 +221,7 @@ export default function ViewInputInFormEngine({ data, locale, defaultValue, onCh
         {advancedEdit && (
           <div className='overflow-scroll w-full h-full'>
             <h2 className='text-xl font-bold text-main-color'>
-              {locale === 'ar' ? 'محرر CSS للحقل' : 'CSS Editor For Input'}
+              {messages.dialogs.cssEditorForInput}
             </h2>
             <CssEditor data={data} onChange={onChange} type={type} />
           </div>

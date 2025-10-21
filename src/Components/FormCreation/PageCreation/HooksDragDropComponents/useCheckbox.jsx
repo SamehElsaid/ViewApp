@@ -3,8 +3,11 @@ import { GiClick } from 'react-icons/gi'
 import ViewInputInFormEngine from '../ViewInputInFormEngine'
 import CheckboxControl from '../CheckboxControl'
 import { IoIosCheckboxOutline } from 'react-icons/io'
+import { useIntl } from 'react-intl'
 
 export default function useCheckbox({ locale, advancedEdit  }) {
+  const { messages } = useIntl()
+
   const Checkbox = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -24,8 +27,8 @@ export default function useCheckbox({ locale, advancedEdit  }) {
         )
       },
       id: 'checkbox',
-      title: locale === 'ar' ? 'خانة الاختيار' : 'Checkbox',
-      description: locale === 'ar' ? 'خانة الاختيار' : 'Checkbox',
+      title: messages.dialogs.checkbox,
+      description: messages.dialogs.checkbox,
       version: 1,
       icon: <IoIosCheckboxOutline  className='text-2xl' />,
       controls: {
@@ -33,7 +36,7 @@ export default function useCheckbox({ locale, advancedEdit  }) {
         Component: ({ data, onChange }) => <CheckboxControl data={data} onChange={onChange} locale={locale} type='checkbox' />
       }
     }
-  }, [locale, advancedEdit])
+  }, [locale, advancedEdit, messages])
 
   return { Checkbox }
 }

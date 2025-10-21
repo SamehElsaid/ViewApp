@@ -2,16 +2,19 @@ import { GoListOrdered } from 'react-icons/go'
 import { useMemo } from 'react'
 import OrderControl from '../OrderControl'
 import EcommerceStatistics from 'src/Components/analytics/EcommerceStatistics'
+import { useIntl } from 'react-intl'
 
 export default function useAnalytics({ advancedEdit, locale, readOnly, buttonRef }) {
+  const { messages } = useIntl()
+  
   const analytics = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
         return <EcommerceStatistics />
       },
       id: 'analytics',
-      title: locale === 'ar' ? 'تحليلات' : 'Analytics',
-      description: locale === 'ar' ? 'تحليلات' : 'Analytics',
+      title: messages.dialogs.analytics,
+      description: messages.dialogs.analytics,
       version: 1,
       controls: {
         type: 'custom',

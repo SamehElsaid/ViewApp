@@ -2,8 +2,11 @@ import React, { useMemo, useState } from 'react'
 import { FaBars, FaChevronDown } from 'react-icons/fa'
 import { MdMenu } from 'react-icons/md'
 import HeaderControl from './HeaderControl'
+import { useIntl } from 'react-intl'
 
 export default function useHeader({ locale, buttonRef }) {
+  const { messages } = useIntl()
+
   const Header = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -53,7 +56,7 @@ export default function useHeader({ locale, buttonRef }) {
             style={{
               backgroundColor: data?.backgroundColor || '#ffffff',
               borderBottom: `1px solid ${data?.borderColor || '#e5e7eb'}`,
-              padding: `${data?.paddingY || '12px'} ${data?.paddingX || '16px'}`,
+              padding: `${data?.paddingY + 'px' || '12px'} ${data?.paddingX + 'px' || '16px'}`,
               boxShadow: data?.showShadow ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
             }}
           >
@@ -84,11 +87,11 @@ export default function useHeader({ locale, buttonRef }) {
                       }}
                     >
                       {!data?.options || data?.options.length === 0 ? (
-                        <option value=''>{locale === 'ar' ? 'اختر...' : 'Select...'}</option>
+                        <option value=''>{messages.dialogs.select}</option>
                       ) : (
                         data.options.map((option, index) => (
                           <option key={index} value={option.value}>
-                            {locale === 'ar' ? option.label_ar : option.label_en}
+                            {option?.[`label_${locale}`]}
                           </option>
                         ))
                       )}
@@ -115,14 +118,7 @@ export default function useHeader({ locale, buttonRef }) {
                     width: 'auto'
                   }}
                 />
-                {/* ) : ( */}
-                {/* <div
-                    className="text-xl font-bold"
-                    style={{ color: data?.logoTextColor || '#000000' }}
-                  >
-                    {locale === 'ar' ? data?.logoText_ar || 'الشعار هنا' : data?.logoText_en || 'Logo Here'}
-                  </div> */}
-                {/* )} */}
+           
               </div>
 
               {/* Right Section */}
@@ -142,7 +138,7 @@ export default function useHeader({ locale, buttonRef }) {
                           fontWeight: data?.rightLinksFontWeight || 'normal'
                         }}
                       >
-                        {locale === 'ar' ? link.text_ar : link.text_en}
+                        {link?.[`text_${locale}`]}
                       </a>
                     ))}
 
@@ -157,7 +153,7 @@ export default function useHeader({ locale, buttonRef }) {
                         onClick={handleRightButtonClick}
                         id={data?.rightButtonId || 'header-right-button'}
                       >
-                        {locale === 'ar' ? data?.rightButtonText_ar || 'زر' : data?.rightButtonText_en || 'Button'}
+                        { data?.[`rightButtonText_${locale}`] || messages.dialogs.button}
                       </button>
                     )}
                   </div>
@@ -186,7 +182,7 @@ export default function useHeader({ locale, buttonRef }) {
                         fontWeight: data?.rightLinksFontWeight || 'normal'
                       }}
                     >
-                      {locale === 'ar' ? link.text_ar : link.text_en}
+                      {link?.[`text_${locale}`]}
                     </a>
                   ))}
 
@@ -200,7 +196,7 @@ export default function useHeader({ locale, buttonRef }) {
                         fontWeight: data?.mobileMenuItemFontWeight || 'normal'
                       }}
                     >
-                      {locale === 'ar' ? item.text_ar : item.text_en}
+                      {item?.[`text_${locale}`]}
                     </a>
                   ))}
                 </div>
@@ -209,12 +205,9 @@ export default function useHeader({ locale, buttonRef }) {
           </header>
         )
       },
-      id: locale === 'ar' ? 'رأس' : 'Header',
-      title: locale === 'ar' ? 'رأس ديناميكي' : 'Dynamic Header',
-      description:
-        locale === 'ar'
-          ? 'رأس ديناميكي مع شعار في الوسط ومحدد على اليسار ومحتوى قابل للتخصيص على اليمين'
-          : 'Dynamic header with centered logo, selector on the left, and customizable content on the right.',
+      id: 'header',
+      title: messages.dialogs.header,
+      description: messages.dialogs.headerDescription,
       version: 1,
       icon: <FaBars className='text-2xl' />,
       controls: {

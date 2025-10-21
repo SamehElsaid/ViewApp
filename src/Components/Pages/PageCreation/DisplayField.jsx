@@ -11,12 +11,14 @@ import { VaildId } from 'src/Components/_Shared'
 import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
+import axios from 'axios'
 
 export default function DisplayField({
   from,
   input,
   dirtyProps,
   data,
+  handleSubmit,
   reload,
   refError,
   dataRef,
@@ -34,7 +36,7 @@ export default function DisplayField({
   isRedirect,
   setRedirect,
   isDisabled,
-  allowAdd
+  hiddenLabel
 }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
@@ -82,7 +84,7 @@ export default function DisplayField({
     if (roles?.trigger?.typeOfValidation == 'filter' && !loading) {
       if (dataRef?.current?.[roles?.trigger?.selectedField] != undefined) {
         const FilterWithKey = roles?.trigger?.currentField == 'id' ? 'Id' : roles?.trigger?.currentField
-        if (input?.type == 'ManyToMany') {
+        if (input?.kind == 'search' || input?.kind == 'checkbox') {
           setValue([])
         }
         setSelectedOptions(
@@ -261,8 +263,6 @@ export default function DisplayField({
       }
     }
     if (roles?.trigger?.typeOfValidation == 'optional' && roles?.trigger?.mainValue && !loading) {
-      console.log('optional')
-
       if (input.fieldCategory == 'Basic') {
         if (roles?.trigger?.parentKey) {
           if (dataRef?.current?.[roles?.trigger?.selectedField]) {
@@ -273,8 +273,6 @@ export default function DisplayField({
                 const data = res.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
-                    console.log(1)
-                    console.log(data?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue)
                     if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
                       if (!validations?.Required) {
                         setValidations(prev => ({ ...prev, Required: true }))
@@ -310,18 +308,12 @@ export default function DisplayField({
             })
           }
         } else {
-          console.log('s')
-
           if (roles?.trigger.isEqual == 'equal') {
-            console.log(dataRef?.current?.[roles?.trigger?.selectedField], roles?.trigger?.mainValue)
-
             if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
               if (!validations?.Required) {
                 setValidations(prev => ({ ...prev, Required: true }))
               }
             } else {
-              console.log('1')
-
               if (validations?.Required) {
                 setValidations(prev => {
                   const newPrev = { ...prev }
@@ -349,7 +341,6 @@ export default function DisplayField({
           }
         }
       } else {
-        console.log('sa')
         if (roles?.trigger?.parentKey) {
           if (dataRef?.current?.[roles?.trigger?.selectedField]) {
             axiosGet(
@@ -427,10 +418,6 @@ export default function DisplayField({
       }
     }
     if (roles?.trigger?.typeOfValidation == 'optional' && !roles?.trigger?.mainValue && !loading) {
-      console.log('sam')
-
-      // console.log("here");
-
       if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
         setValidations(prev => {
           delete prev.Required
@@ -616,9 +603,6 @@ export default function DisplayField({
 
     // ! Start hidden Control
     if (roles?.trigger?.typeOfValidation == 'hidden' && roles?.trigger?.mainValue && !loading) {
-      console.log(input)
-      console.log('hiddessn')
-
       if (input.fieldCategory == 'Basic' || input.type == 'new_element') {
         if (roles?.trigger?.parentKey) {
           if (dataRef?.current?.[roles?.trigger?.selectedField]) {
@@ -646,8 +630,6 @@ export default function DisplayField({
             })
           } else {
             if (roles?.trigger?.isEqual != 'equal') {
-              console.log('he')
-
               setIsDisable('hidden')
             }
           }
@@ -659,8 +641,6 @@ export default function DisplayField({
               setIsDisable('hidden')
             }
           } else {
-            console.log(dataRef?.current?.[roles?.trigger?.selectedField], roles?.trigger?.mainValue)
-
             if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
               setIsDisable('hidden')
             } else {
@@ -712,8 +692,6 @@ export default function DisplayField({
       }
     }
     if (roles?.trigger?.typeOfValidation == 'hidden' && !roles?.trigger?.mainValue && !loading) {
-      console.log('hidden')
-
       if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
         setIsDisable('hidden')
       } else {
@@ -862,7 +840,7 @@ export default function DisplayField({
         setValue(new Date(findValue))
       }
     } else {
-      if (input?.type == 'ManyToMany') {
+      if (input?.kind == 'search' || input?.kind == 'checkbox') {
         setValue([])
       }
       if (input?.type == 'date') {
@@ -871,12 +849,10 @@ export default function DisplayField({
     }
   }, [input, findValue])
 
-  console.log(validations, input.key)
-
   useEffect(() => {
     if (reload != 0) {
       setValue('')
-      if (input?.type == 'ManyToMany') {
+      if (input?.kind == 'search' || input?.kind == 'checkbox') {
         setValue([])
       }
       setRegex('')
@@ -887,14 +863,11 @@ export default function DisplayField({
     }
   }, [reload, input])
   useEffect(() => {
-    console.log(roles?.onMount.type)
-
     if (!loading) {
       setTimeout(() => {
         if (roles?.onMount?.type == 'disable') {
           setIsDisable('disabled')
         }
-        console.log({ here: roles?.onMount?.type, filed: input?.key })
         if (roles?.onMount?.type == 'required') {
           setValidations(prev => ({ ...prev, Required: true }))
         }
@@ -930,7 +903,9 @@ export default function DisplayField({
 
     setDirty(true)
     let isTypeNew = true
-    if (input?.type == 'ManyToMany') {
+    console.log('here')
+
+    if (input?.kind == 'search' || input?.kind == 'checkbox') {
       isTypeNew = false
     }
     if (input?.type == 'date') {
@@ -938,8 +913,8 @@ export default function DisplayField({
     }
 
     let newData = value
-    if (input?.type == 'ManyToMany') {
-      if (input.descriptionAr == 'multiple_select') {
+    if (input?.kind == 'search' || input?.kind == 'checkbox') {
+      if (input.kind == 'search') {
         const maxLength = validations?.MaxLength?.maxLength ?? 9999999999
         if (newValue.length > +maxLength) {
           const newSelection = [...newValue.slice(0, maxLength - 1), newValue.at(-1)]
@@ -1105,8 +1080,8 @@ export default function DisplayField({
   }, [refError, input, value, dataRef, validations, setTriggerData])
 
   useEffect(() => {
-    if (input.type == 'OneToOne') {
-      axiosGet(`generic-entities/${input?.options?.source}?isLookup=true`)
+    if (input?.getDataForm === 'collection') {
+      axiosGet(`generic-entities/${input?.options?.source}`)
         .then(res => {
           if (res.status) {
             setSelectedOptions(res.entities)
@@ -1116,19 +1091,37 @@ export default function DisplayField({
         .finally(() => {
           setLoading(false)
         })
-    } else if (input.type == 'ManyToMany') {
-      axiosGet(`generic-entities/${input?.options?.target}?isLookup=true`)
+    }
+
+    if (input?.getDataForm === 'api') {
+      console.log(input?.externalApi, input.apiHeaders)
+      const apiHeaders = input.apiHeaders ?? {}
+      axios
+        .get(input?.externalApi, {
+          headers: input.apiHeaders
+        })
+
         .then(res => {
-          if (res.status) {
-            setSelectedOptions(res.entities)
-            setOldSelectedOptions(res.entities)
+          console.log(res.data.result, 'res')
+          const selectData = res?.data?.data || res.result || res.data.result || res.data
+          console.log(selectData, 'selectData')
+
+          if (Array.isArray(selectData)) {
+            setSelectedOptions(selectData)
+            setOldSelectedOptions(selectData)
           }
+        })
+        .catch(err => {
+          console.log(err)
         })
         .finally(() => {
           setLoading(false)
         })
-    } else {
-      setLoading(false)
+    }
+    if (input?.getDataForm === 'static') {
+      console.log(input?.staticData)
+      setSelectedOptions(input?.staticData)
+      setOldSelectedOptions(input?.staticData)
     }
   }, [input])
 
@@ -1216,7 +1209,7 @@ export default function DisplayField({
     }
   }
 
-  const label = (
+  const label = hiddenLabel ? null : (
     <label htmlFor={input.key} style={{ textTransform: 'capitalize' }}>
       {locale == 'ar' ? input.nameAr : input.nameEn}
     </label>
@@ -1231,7 +1224,7 @@ export default function DisplayField({
       id={input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim())}
     >
       <style>{`#${input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim())} {
-        ${design}
+        ${input.kind == 'search' ? '' : design}
       }`}</style>
       {hoverText && (
         <div className='absolute bg-white w-full glass-effect z-10 start-0 border border-main-color border-dashed top-[calc(100%+5px)] invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300'>
@@ -1266,7 +1259,7 @@ export default function DisplayField({
           )}
           {input.type == 'new_element' ? (
             <NewElement
-              allowAdd={allowAdd}
+              handleSubmit={handleSubmit}
               isDisable={isDisable}
               readOnly={readOnly}
               onChangeData={onChange}
@@ -1311,14 +1304,14 @@ export default function DisplayField({
         </div>
       </div>
       <div
-        className={`${
+        class={`${
           errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
         } w-fit text-[#fb866e]   text-2xl end-[2px] bg-white z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}
       >
         <IoMdInformationCircleOutline />
       </div>
       <div
-        className={`${
+        class={`${
           errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
         } !text-sm bg-[#fb866e] text-white  z-10 w-fit end-[0] mt-1 px-2 absolute top-[100%] rounded-md transition-all duration-300`}
       >

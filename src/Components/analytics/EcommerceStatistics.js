@@ -33,6 +33,7 @@ const EcommerceStatistics = ({ data }) => {
 
   return (
     <Card className='p-4'> 
+
       <Grid item xs={6} md={3}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <div className={`flex justify-center items-center w-10 h-10 rounded-full ${randomColor} ${randomTextColor}`}>

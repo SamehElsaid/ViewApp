@@ -33,7 +33,6 @@ export default function useChart({ advancedEdit, locale, readOnly, buttonRef }) 
           }
         }, [apiData, data])
 
-        console.log(items)
 
         const mainData = data.itemsValue
           ? data.itemsValue.map((ele, i) => {
@@ -49,7 +48,6 @@ export default function useChart({ advancedEdit, locale, readOnly, buttonRef }) 
               { value: 16, label: 'Operational', color: '#fe6161' }
             ]
 
-        console.log({ mainData, items })
 
         return <ApexDonutChart mainData={data.api_url ? items : mainData} onChange={onChange} />
       },

@@ -26,10 +26,6 @@ module.exports = withTM({
       'react/jsx-dev-runtime.js': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
       'react/jsx-runtime.js': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
       '@rsuite/icons/RemindFill.js': path.resolve(__dirname, 'node_modules/@rsuite/icons/RemindFill.js')
-
-      // 'rsuite/esm/locales/index.js': path.resolve(__dirname, 'node_modules/rsuite/lib/locales/index.js'),
-      // 'rsuite/esm/locales/index.js': path.resolve(__dirname, 'node_modules/rsuite/esm/locales/index.js'),
-      // 'rsuite/esm/utils/index.js': path.resolve(__dirname, 'node_modules/rsuite/esm/utils/index.js'),
     }
 
     return config

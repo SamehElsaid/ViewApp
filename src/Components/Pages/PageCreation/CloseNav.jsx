@@ -25,7 +25,7 @@ function CloseNav({ text, buttonRef }) {
       <IconButton
         size='small'
         onClick={() => {
-          buttonRef.current.click()
+          buttonRef?.current?.click()
         }}
         color='error'
         variant='contained'

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import useCollection from './useCollection'
 import useBackground from './useBackground'
 import useTable from './useTable'
@@ -26,35 +26,14 @@ import useChart from './useChart'
 
 // import useCartProgress from './useCartProgress'
 
-export default function useCellPlugins({
-  advancedEdit,
-  locale,
-  readOnly,
-  buttonRef,
-  workflowId,
-  pageId,
-  entitiesId,
-  collectionName,
-  pageName
-}) {
+export default function useCellPlugins({ advancedEdit, locale, readOnly, buttonRef, workflowId, pageId }) {
   // Hooks Drag Drop Components
-  const { collection } = useCollection({
-    advancedEdit,
-    locale,
-    readOnly,
-    buttonRef,
-    workflowId,
-    pageId,
-    entitiesId,
-    collectionName,
-    pageName
-  })
+  const { collection } = useCollection({ advancedEdit, locale, readOnly, buttonRef, workflowId, pageId })
   const { order } = useOrder({ advancedEdit, locale, readOnly, buttonRef })
 
-  // const { analytics } = useAnalytics({ advancedEdit, locale, readOnly, buttonRef })
   const { chart } = useChart({ advancedEdit, locale, readOnly, buttonRef })
   const { backgroundPlugin } = useBackground({ locale, buttonRef })
-  const { table } = useTable({ advancedEdit, locale, buttonRef, pageId, entitiesId, collectionName, pageName })
+  const { table } = useTable({ advancedEdit, locale, buttonRef, pageId })
   const { ContainerPlugin } = useContainer({ locale, buttonRef })
   const { BoxControl } = useBox({ locale, buttonRef })
   const { UploadImage } = useUploadImage({ locale, buttonRef })
@@ -66,8 +45,6 @@ export default function useCellPlugins({
   const { FlexControlCell } = useFlexControl({ locale, buttonRef })
   const { ButtonCell } = useButton({ locale, buttonRef })
   const { cartCell } = useCart({ locale, readOnly, buttonRef })
-
-  // const { cartProgress } = useCartProgress({ locale, readOnly, buttonRef })
   const { IconView } = useIconView({ locale, buttonRef })
   const { SectionControl } = useSection({ locale, buttonRef })
   const { dynamicTable } = useDynamicTable({ locale, buttonRef, advancedEdit })
@@ -76,9 +53,9 @@ export default function useCellPlugins({
   const cellPlugins = useMemo(
     () => [
       slate(),
-      backgroundPlugin,
       ContainerPlugin,
       BoxControl,
+      backgroundPlugin,
       UploadImage,
       UploadVideo,
       spacer,
@@ -122,17 +99,9 @@ export default function useCellPlugins({
     ]
   )
 
-  // console.log(
-  //   cellPlugins.map(item => {
-  //     return { title: item.title }
-  //   })
-  // )
-
-  // cellPlugins: cellPlugins.sort((a, b) => a.title.toLocaleLowerCase().trim().localeCompare(b.title.toLocaleLowerCase().trim()))
-
   return {
-    cellPlugins: cellPlugins.sort((a, b) =>
-      a.title.toLocaleLowerCase().trim().localeCompare(b.title.toLocaleLowerCase().trim())
-    )
+    cellPlugins: cellPlugins
+      .filter(item => item.id !== 'ory/editor/core/content/slate')
+      .sort((a, b) => a.title.toLocaleLowerCase().localeCompare(b.title.toLocaleLowerCase()))
   }
 }

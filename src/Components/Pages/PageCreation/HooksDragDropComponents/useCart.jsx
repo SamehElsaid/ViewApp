@@ -2,8 +2,11 @@ import { TbViewportWide } from 'react-icons/tb'
 import CartControl from '../CartControl'
 import ViewCart from '../ViewCart'
 import { useMemo } from 'react'
+import { useIntl } from 'react-intl'
 
 export default function useCart({ locale, readOnly, buttonRef }) {
+  const { messages } = useIntl()
+  
   const cartCell = useMemo(() => {
     return {
       Renderer: ({ data, onChange, children }) => {
@@ -14,8 +17,8 @@ export default function useCart({ locale, readOnly, buttonRef }) {
         )
       },
       id: 'cart',
-      title: locale === 'ar' ? 'حاوية' : 'Card',
-      description: locale === 'ar' ? 'حاوية مصممة لتجميع المحتوى المرتبط.' : 'A styled container for grouping related content.',
+      title: messages.dialogs.cart,
+      description: messages.dialogs.cartDescription,
       version: 1,
       icon: <TbViewportWide className='text-2xl' />,
       controls: {

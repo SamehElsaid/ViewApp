@@ -1,8 +1,11 @@
 import React, { useMemo } from 'react'
 import UpdateImage from '../UpdateImage'
 import { CiVideoOn } from 'react-icons/ci'
+import { useIntl } from 'react-intl'
 
 export default function useUploadVideo({ locale, buttonRef }) {
+  const { messages } = useIntl()
+  
   const UploadVideo = useMemo(() => {
     return {
       Renderer: ({ data, children }) => (
@@ -22,8 +25,8 @@ export default function useUploadVideo({ locale, buttonRef }) {
         </>
       ),
       id: 'uploadVideo',
-      title: locale === 'ar' ? 'فيديو' : ' Video',
-      description: locale === 'ar' ? 'مشغل فيديو لعرض محتوى الوسائط': ' Video player to showcase media content',
+      title: messages.dialogs.uploadVideo,
+      description: messages.dialogs.uploadVideoDescription,
       version: 1,
       icon: <CiVideoOn className='text-2xl' />,
       controls: {

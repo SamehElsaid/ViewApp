@@ -8,10 +8,8 @@ import {
   FormControlLabel,
   TextField
 } from '@mui/material'
-import { useIntl } from 'react-intl'
 
 function Tabs({ openTab, handleCloseTab, messages, editTab, tabData, setTabData, addTab }) {
-  const { locale } = useIntl()
 
   return (
     <Dialog open={openTab} onClose={handleCloseTab} fullWidth>
@@ -55,10 +53,10 @@ function Tabs({ openTab, handleCloseTab, messages, editTab, tabData, setTabData,
 
       <DialogActions>
         <Button onClick={handleCloseTab} variant='contained' color='warning'>
-          {messages.cancel}
+          {messages.dialogs.cancel}
         </Button>
         <Button onClick={addTab} variant='contained' color='primary'>
-          {editTab ? (locale === 'ar' ? 'تعديل' : 'Edit') : locale === 'ar' ? 'اضافة' : 'Add'}
+          {editTab ? messages.dialogs.edit : messages.dialogs.add}
         </Button>
       </DialogActions>
     </Dialog>

@@ -5,17 +5,26 @@ import { useRef, useState } from 'react'
 import { Button, Dialog, DialogContent, Typography } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
 
-function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disabledBtn, isDisable, readOnly, allowAdd }) {
-  console.log(input)
+function NewElement({
+  input,
+  onBlur,
+  value,
+  setValue,
+  roles,
+  onChangeEvent,
+  disabledBtn,
+  isDisable,
+  readOnly,
+  handleSubmit
+}) {
   const [open, setOpen] = useState(false)
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
   const [loadingButton, setLoadingButton] = useState(false)
   const buttonRef = useRef(null)
 
   const handleValidationChanges = e => {
     setValue('checked')
   }
-  console.log(onChangeEvent, input.name_en)
 
   const handleCheckboxChange = e => {
     if (roles?.onMount?.href) {
@@ -79,6 +88,10 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
     } catch (err) {
       console.log(err)
     }
+    console.log(roles, 'roles')
+    if (roles?.externalApiUrl) {
+      handleSubmit(e, roles?.externalApiUrl)
+    }
   }
 
   function isValidURL(str) {
@@ -112,7 +125,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
             }
           }}
         />
-        <label htmlFor={input.id}>{locale === 'ar' ? input.name_ar : input.name_en}</label>
+        <label htmlFor={input.id}>{input[`name_${locale}`]}</label>
       </div>
     )
   }
@@ -129,7 +142,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
               rel='noopener noreferrer'
               className={`btn-tabs ${item.active ? 'active' : ''}`}
             >
-              {locale === 'ar' ? item.name_ar : item.name_en}
+              {item[`name_${locale}`]}
             </a>
           ) : item.link ? (
             <Link
@@ -137,7 +150,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
               href={`/${locale}/${item.link.replace(/^\/+/, '')}`}
               className={`btn-tabs ${item.active ? 'active' : ''}`}
             >
-              {locale === 'ar' ? item.name_ar : item.name_en}
+              {item[`name_${locale}`]}
             </Link>
           ) : (
             <button
@@ -146,7 +159,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
               type='button'
               className={`btn-tabs ${item.active ? 'active' : ''}`}
             >
-              {locale === 'ar' ? item.name_ar : item.name_en}
+              {item[`name_${locale}`]}
             </button>
           )
         )}
@@ -154,7 +167,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
     )
   }
   if (input.key === 'text_content') {
-    return <div className='text-element'>{locale === 'ar' ? input.name_ar : input.name_en}</div>
+    return <div className='text-element'>{input[`name_${locale}`]}</div>
   }
   if (input.key === 'button') {
     if (isValidURL(roles?.onMount?.href)) {
@@ -168,7 +181,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
             rel='noopener noreferrer'
             disabled={isDisable === 'disable'}
           >
-            {locale === 'ar' ? input?.name_ar : input?.name_en}
+            {input[`name_${locale}`]}
           </a>
         </div>
       )
@@ -182,7 +195,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
             onClick={handleClick}
             disabled={isDisable === 'disable'}
           >
-            {locale === 'ar' ? input?.name_ar : input?.name_en}
+            {input[`name_${locale}`]}
           </Link>
         </div>
       )
@@ -214,7 +227,6 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
                       onClick={e => {
                         handleClick(e)
                         buttonRef.current.type = 'submit'
-                        console.log('dsa')
                         setTimeout(() => {
                           buttonRef.current.click()
                           buttonRef.current.type = 'button'
@@ -222,10 +234,10 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
                         }, 0)
                       }}
                     >
-                      {locale === 'ar' ? 'أرسل' : 'Submit'}
+                      {messages.dialogs.submit}
                     </LoadingButton>
                     <Button color='secondary' variant='contained' onClick={() => setOpen(false)}>
-                      {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                      {messages.dialogs.cancel}
                     </Button>
                   </div>
                 </div>
@@ -245,13 +257,15 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
             }}
             type={input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn'] ? 'button' : 'submit'}
             className='btn'
-            disabled={disabledBtn || !allowAdd}
+            disabled={disabledBtn}
           >
-            {locale === 'ar' ? input.name_ar : input.name_en}
+            {input[`name_${locale}`]}
           </button>
         </>
       )
     }
+
+    console.log(roles, 'roles')
 
     return (
       <button
@@ -260,7 +274,7 @@ function NewElement({ input, onBlur, value, setValue, roles, onChangeEvent, disa
         type='button'
         className={`btn ${isDisable === 'hide' ? (readOnly ? '' : 'hidden') : ''} block `}
       >
-        {locale === 'ar' ? input.name_ar : input.name_en}
+        {input[`name_${locale}`]}s
       </button>
     )
   }

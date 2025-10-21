@@ -1,8 +1,11 @@
 import { useMemo } from 'react'
 import { MdOutlineColorLens } from 'react-icons/md'
-import Background from '../Background'
+import Background from '../Background'  
+import { useIntl } from 'react-intl'
 
 export default function useBackground({ locale, buttonRef }) {
+  const { messages } = useIntl()
+  
   const backgroundPlugin = useMemo(() => {
     return {
       Renderer: ({ data, children }) => (
@@ -31,9 +34,8 @@ export default function useBackground({ locale, buttonRef }) {
         </div>
       ),
       id: 'backgroundPlugin',
-      title: locale === 'ar' ? 'الخلفية' : 'Background',
-      description:
-        locale === 'ar' ? 'يمكن أن تشمل الخلفيات ألوان صلبة أو صور' : 'Backgrounds can include solid colors or images',
+      title: messages.dialogs.background,
+      description: messages.dialogs.backgroundDescription,
       version: 1,
       controls: {
         type: 'custom',

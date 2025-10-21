@@ -4,11 +4,11 @@ import { useIntl } from 'react-intl'
 import CloseNav from './CloseNav'
 
 export default function FlexBoxControl({ data, onChange, buttonRef }) {
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
 
   return (
     <div style={{ padding: '10px' }}>
-      <CloseNav text={locale === 'ar' ? 'محتوى' : 'Box'} buttonRef={buttonRef} />
+      <CloseNav text={messages.dialogs.content} buttonRef={buttonRef} />
 
       <TextField
         fullWidth
@@ -16,7 +16,7 @@ export default function FlexBoxControl({ data, onChange, buttonRef }) {
         value={data.backgroundWidth}
         onChange={e => onChange({ ...data, backgroundWidth: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'العرض' : 'Width'}
+        label={messages.dialogs.width}
         InputProps={{
           endAdornment: (
             <InputAdornment position='end'>
@@ -42,7 +42,7 @@ export default function FlexBoxControl({ data, onChange, buttonRef }) {
         value={data.backgroundHeight}
         onChange={e => onChange({ ...data, backgroundHeight: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'الطول' : 'Height'}
+        label={messages.dialogs.height}
         InputProps={{
           endAdornment: (
             <InputAdornment position='end'>

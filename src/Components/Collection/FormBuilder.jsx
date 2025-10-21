@@ -65,6 +65,11 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       return toast.error(messages.generateInput.keyMustBeString)
     }
     if (activeStep === 2 && !isOptionsStep && !isFileStep) {
+      console.log('activeStep', validations.maxLength, validations.minLength)
+      if(+validations.maxLength < +validations.minLength && validations.maxLength !== '') {
+        return toast.error(messages.maxLengthMustBeGreaterThanMinLength)
+      }
+      
       setActiveStep(steps.length - 1) // Skip the setup step if not required
     } else {
       setActiveStep(prevActiveStep => prevActiveStep + 1)
@@ -478,12 +483,13 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
                     fullWidth
                     margin='normal'
                     value={validations.maxLength}
-                    onChange={e =>
+                    min={validations.minLength}
+                    onChange={e => {
                       setValidations({
                         ...validations,
                         maxLength: e.target.value
                       })
-                    }
+                    }}
                   />
                 )}
               </div>

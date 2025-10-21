@@ -5,29 +5,30 @@ import { axiosGet } from 'src/Components/axiosCall'
 export default function ViewValueInTable({ data, value }) {
   const [dataView, setDataView] = useState(false)
 
+  console.log(data, value)
 
-  useEffect(() => {
-    if (data?.options?.source) {
-      axiosGet(`generic-entities/${data?.options?.source}/${value}`).then(res => {
-        if (res.status) {
-          const lable = JSON.parse(data?.descriptionEn) ?? []
+  // useEffect(() => {
+  //   if (data?.options?.source) {
+  //     axiosGet(`generic-entities/${data?.options?.source}/${value}`).then(res => {
+  //       if (res.status) {
+  //         const lable = JSON.parse(data?.descriptionEn) ?? []
 
-          const Values = lable.map(ele => {
-            if (res.entities?.[0]) {
-              return res.entities?.[0]?.[ele]
-            }
+  //         const Values = lable.map(ele => {
+  //           if (res.entities?.[0]) {
+  //             return res.entities?.[0]?.[ele]
+  //           }
 
-            return ''
-          })
+  //           return ''
+  //         })
 
-          setDataView(Values.join('-') ?? '')
-        } else {
-          setDataView("-")
-        }
-      })
-    }
-  }, [data, value])
+  //         setDataView(Values.join('-') ?? '')
+  //       } else {
+  //         setDataView('-')
+  //       }
+  //     })
+  //   }
+  // }, [data, value])
 
-
-  return <div>{dataView ? dataView : <CircularProgress size={25} />}</div>
+  // return <div>{dataView ? dataView : <CircularProgress size={25} />}</div>
+  return <div>{value}</div>
 }

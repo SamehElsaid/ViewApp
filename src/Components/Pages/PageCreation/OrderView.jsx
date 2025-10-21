@@ -10,6 +10,8 @@ import { CSS } from '@dnd-kit/utilities'
 import EditListItem from './EditListItem'
 
 function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }) {
+  const { messages } = useIntl()
+
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: item.id
   })
@@ -52,7 +54,7 @@ function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }
         <span
           {...listeners}
           className='!text-main-color cursor-move select-none'
-          title={locale === 'ar' ? 'تحريك' : 'Drag'}
+          title={messages.dialogs.drag}
         >
           ☰
         </span>
@@ -65,7 +67,7 @@ function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }
         <div className='flex gap-2'>
           <button
             type='button'
-            title={locale !== 'ar' ? 'Delete' : 'حذف'}
+            title={messages.dialogs.delete}
             onClick={e => {
               e.stopPropagation()
               onDelete(item.id)
@@ -77,7 +79,7 @@ function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }
 
           <button
             type='button'
-            title={locale !== 'ar' ? 'Setting' : 'التحكم'}
+            title={messages.dialogs.setting}
             onClick={e => {
               e.stopPropagation()
               setOpen(item)
@@ -198,7 +200,7 @@ function OrderView({ data, locale, onChange, readOnly }) {
               onChange({ ...data, dataView: newDataView })
             }}
           >
-            {locale === 'ar' ? 'اضافة عنصر' : 'Add Item'}
+            {messages.dialogs.addItem}
           </Button>
         </>
       )}

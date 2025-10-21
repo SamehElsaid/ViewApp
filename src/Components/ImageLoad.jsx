@@ -4,6 +4,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconBu
 import { Box, styled } from '@mui/system'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { useIntl } from 'react-intl'
 
 import { LazyImage } from 'react-lazy-images'
 
@@ -20,9 +21,9 @@ const CustomCloseButton = styled(IconButton)(() => ({
     transform: 'translate(2px, -2px)'
   }
 }))
-function ImageLoad({ alt, src, className, stop, loading, defaultImg , style}) {
+function ImageLoad({ alt, src, className, stop, loading, defaultImg, style }) {
   const [open, setOpen] = useState(false)
-  const {  messages } = useRouter()
+  const { messages } = useIntl()
   const [error, setError] = useState(false)
 
   const handleClose = () => {
@@ -91,9 +92,21 @@ function ImageLoad({ alt, src, className, stop, loading, defaultImg , style}) {
           className={`relative ${className}`}
           debounceDurationMs={800}
           placeholder={({ imageProps, ref }) => (
-            <img {...imageProps} src={loading} ref={ref} style={{ width: '100%', cursor: 'pointer', filter: 'blur(10px)', ...style }} />
+            <img
+              {...imageProps}
+              src={loading}
+              ref={ref}
+              style={{ width: '100%', cursor: 'pointer', filter: 'blur(10px)', ...style }}
+            />
           )}
-          actual={({ imageProps }) => <img {...imageProps} src={error ? defaultImg : imageProps.src} onError={() => setError(true)} style={{ width: '100%', cursor: 'pointer', ...style }} />}
+          actual={({ imageProps }) => (
+            <img
+              {...imageProps}
+              src={error ? defaultImg : imageProps.src}
+              onError={() => setError(true)}
+              style={{ width: '100%', cursor: 'pointer', ...style }}
+            />
+          )}
         />
       ) : (
         <LazyImage

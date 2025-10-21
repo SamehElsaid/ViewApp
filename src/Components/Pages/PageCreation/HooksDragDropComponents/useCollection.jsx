@@ -2,18 +2,11 @@ import { FaWpforms } from 'react-icons/fa6'
 import { useMemo } from 'react'
 import Select from '../Select'
 import ViewCollection from '../ViewCollection'
+import { useIntl } from 'react-intl'
 
-export default function useCollection({
-  advancedEdit,
-  locale,
-  readOnly,
-  buttonRef,
-  workflowId,
-  pageId,
-  entitiesId,
-  collectionName,
-  pageName
-}) {
+export default function useCollection({ advancedEdit, locale, readOnly, buttonRef, workflowId, pageId }) {
+  const { messages } = useIntl()
+
   const collection = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -26,28 +19,17 @@ export default function useCollection({
             disabled={!readOnly}
             workflowId={workflowId}
             pageId={pageId}
-            entitiesId={entitiesId}
-            collectionName={collectionName}
-            pageName={pageName}
           />
         )
       },
       id: 'collection',
-      title: locale === 'ar' ? 'مدخل البيانات' : 'Form Input',
-      description:
-        locale === 'ar'
-          ? 'يمكن أن يحتوي المدخل على نص أو أرقام أو بيانات أخرى'
-          : 'A field for users to enter text, numbers, or other data in forms.',
+      title: messages.dialogs.collection,
+      description: messages.dialogs.collectionDescription,
       version: 1,
       controls: {
         type: 'custom',
         Component: ({ data, onChange }) => (
-          <Select
-            title={locale === 'ar' ? 'مدخل البيانات' : 'Form Input'}
-            onChange={onChange}
-            data={data}
-            buttonRef={buttonRef}
-          />
+          <Select title={messages.dialogs.collection} onChange={onChange} data={data} buttonRef={buttonRef} />
         )
       },
       icon: <FaWpforms className='text-2xl' />

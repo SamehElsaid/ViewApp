@@ -6,12 +6,13 @@ const ExampleCustomInput = forwardRef(({ value, onClick, input }, ref) => {
 
   try {
     label = JSON.parse(input?.descriptionEn) ?? {
-      format: 'yyyy-MM-dd',
+      format: 'mm-dd-yyyy',
       showTime: 'false'
     }
   } catch {
-    label = { format: 'h:mm aa', showTime: 'true' }
+    label = { format: 'mm-dd-yyyy', showTime: 'false' }
   }
+
 
   return (
     <div className='relative w-full'>

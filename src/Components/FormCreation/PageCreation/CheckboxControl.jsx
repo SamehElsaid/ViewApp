@@ -9,7 +9,6 @@ import {
   FormControlLabel,
   FormLabel,
   Grid,
-  IconButton,
   InputAdornment,
   InputLabel,
   MenuItem,
@@ -20,14 +19,13 @@ import { useIntl } from 'react-intl'
 import { useEffect, useState } from 'react'
 import Collapse from '@kunukn/react-collapse'
 import { cssToObject, DefaultStyle, objectToCss } from 'src/Components/_Shared'
-import { Icon } from '@iconify/react'
-import { axiosGet, UrlTranAr, UrlTranEn } from 'src/Components/axiosCall'
+import { axiosGet } from 'src/Components/axiosCall'
 import toast from 'react-hot-toast'
 import { Box } from '@mui/system'
 import { useRouter } from 'next/router'
 
 export default function CheckboxControl({ data, onChange, type }) {
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
   const [selected, setSelect] = useState('main')
 
   const {
@@ -73,7 +71,6 @@ export default function CheckboxControl({ data, onChange, type }) {
   const [dataSources, setDataSources] = useState([])
   const [loadingCollection, setLoadingCollection] = useState(false)
   const [optionsCollection, setOptionsCollection] = useState([])
-  const { messages } = useIntl()
 
   useEffect(() => {
     setLoadingCollection(true)
@@ -98,7 +95,7 @@ export default function CheckboxControl({ data, onChange, type }) {
       axiosGet(`collections/get-by-id?id=${data.collectionId}`, locale).then(res => {
         if (res.status) {
           if (res.data?.id) {
-            const loadingToast = toast.loading(locale === 'ar' ? 'يتم التحميل' : 'Loading')
+            const loadingToast = toast.loading(messages.dialogs.loading)
             axiosGet(`collection-fields/get?CollectionId=${res.data.id}`, locale)
               .then(res => {
                 if (res.status) {
@@ -122,7 +119,7 @@ export default function CheckboxControl({ data, onChange, type }) {
       axiosGet(`collections/get-by-id?id=${data.collectionId}`, locale).then(res => {
         if (res.status) {
           if (res.data?.id) {
-            const loadingToast = toast.loading(locale === 'ar' ? 'يتم التحميل' : 'Loading')
+            const loadingToast = toast.loading(messages.dialogs.loading)
             axiosGet(`collection-fields/get?CollectionId=${res.data.id}`, locale)
               .then(res => {
                 if (res.status) {
@@ -306,7 +303,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             }}
             variant={selected === 'main' ? 'contained' : 'outlined'}
           >
-            {locale === 'ar' ? 'الاساسية' : 'Main'}
+            {messages.dialogs.main}
           </Button>
           <Button
             variant={selected === 'style' ? 'contained' : 'outlined'}
@@ -314,7 +311,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               setSelect('style')
             }}
           >
-            {locale === 'ar' ? 'التنسيق' : 'Style'}
+            {messages.dialogs.style}
           </Button>
           <Button
             onClick={() => {
@@ -322,7 +319,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             }}
             variant={selected === 'roles' ? 'contained' : 'outlined'}
           >
-            {locale === 'ar' ? 'الصلاحيات' : 'Roles'}
+            {messages.dialogs.roles}
           </Button>
         </ButtonGroup>
       </div>{' '}
@@ -333,7 +330,7 @@ export default function CheckboxControl({ data, onChange, type }) {
           defaultValue={data.key}
           onBlur={e => onChange({ ...data, key: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'المفتاح' : 'Key'}
+          label={messages.dialogs.key}
         />
         <TextField
           fullWidth
@@ -341,7 +338,7 @@ export default function CheckboxControl({ data, onChange, type }) {
           defaultValue={data.labelAr}
           onBlur={e => onChange({ ...data, labelAr: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الحقل بالعربية' : 'Label Ar'}
+          label={messages.dialogs.labelAr}
         />
         <TextField
           fullWidth
@@ -349,7 +346,7 @@ export default function CheckboxControl({ data, onChange, type }) {
           defaultValue={data.labelEn}
           onBlur={e => onChange({ ...data, labelEn: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الحقل بالانجليزية' : 'Label En'}
+          label={messages.dialogs.labelEn}
         />
 
         {type !== 'file' && (
@@ -368,7 +365,7 @@ export default function CheckboxControl({ data, onChange, type }) {
                   sortWithId: false
                 })
               }}
-              label={locale === 'ar' ? 'المصدر' : 'Data Source'}
+              label={messages.dialogs.dataSource}
               variant='filled'
             >
               {dataSources.map(item => (
@@ -413,7 +410,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               )}
               renderOption={(props, option) =>
                 option.nameEn !== collection?.nameEn ? (
-                  <Box sx={{ direction: locale === 'ar' ? 'rtl' : '' }} component='li' {...props}>
+                  <Box sx={{ direction: 'ar' ? 'rtl' : '' }} component='li' {...props}>
                     {locale === 'ar' ? option.nameAr : option.nameEn}
                   </Box>
                 ) : null
@@ -459,7 +456,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`#custom-select.width.value`) || ''}
             onChange={e => UpdateData(`#custom-select.width.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'العرض' : 'Width'}
+            label={messages.dialogs.width}
             disabled={
               getData(`#custom-select.width.unit`) === 'max-content' ||
               getData(`#custom-select.width.unit`) === 'min-content' ||
@@ -496,7 +493,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`#custom-select select.background-color.unit`) || '#575757'}
               onBlur={e => UpdateData(`#custom-select select.background-color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون الخلفي' : 'Background Color'}
+              label={messages.dialogs.backgroundColor}
               variant='filled'
             />
           </div>
@@ -506,7 +503,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`#custom-select select.border-color.unit`) || '#575757'}
               onBlur={e => UpdateData(`#custom-select select.border-color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون الحدود' : 'Border Color'}
+              label={messages.dialogs.borderColor}
               variant='filled'
             />
           </div>
@@ -516,7 +513,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`#custom-select select.color.unit`) || '#fff'}
               onBlur={e => UpdateData(`#custom-select select.color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون' : 'Color'}
+              label={messages.dialogs.color}
               variant='filled'
             />
           </div>
@@ -527,21 +524,20 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`#first-label.color.unit`) || '#555'}
               onBlur={e => UpdateData(`#first-label.color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'لون التسمية' : 'Label Color'}
+              label={messages.dialogs.labelColor}
               variant='filled'
             />
           </div>
         </Collapse>
       ) : type === 'file' ? (
         <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(selected === 'style')}>
-
           <div className='bg-[#f0f0f0] p-2 mt-1 rounded-md cursor-pointer'>
             <TextField
               fullWidth
               type='color'
               defaultValue={getData(`label.background-color.unit`) || '#575757'}
               onBlur={e => UpdateData(`label.background-color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون الخلفي' : 'Background Color'}
+              label={messages.dialogs.backgroundColor}
               variant='filled'
             />
           </div>
@@ -551,7 +547,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`label.border-color.unit`) || '#575757'}
               onBlur={e => UpdateData(`label.border-color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون الحدود' : 'Border Color'}
+              label={messages.dialogs.borderColor}
               variant='filled'
             />
           </div>
@@ -561,7 +557,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`#file-upload-content.color.unit`) || '#fff'}
               onBlur={e => UpdateData(`#file-upload-content.color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون' : 'Color'}
+              label={messages.dialogs.color}
               variant='filled'
             />
           </div>
@@ -572,7 +568,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData('#label-color.color.unit') || '#555'}
               onBlur={e => UpdateData('#label-color.color.unit', e.target.value)}
-              label={locale === 'ar' ? 'لون التسمية' : 'Label Color'}
+              label={messages.dialogs.labelColor}
               variant='filled'
             />
           </div>
@@ -581,15 +577,13 @@ export default function CheckboxControl({ data, onChange, type }) {
         <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(selected === 'style')}>
           <div className='mt-1'></div>
           <FormControl variant='filled' fullWidth>
-            <InputLabel id='demo-simple-select-filled-label'>
-              {locale === 'ar' ? 'الاتجاه' : 'Flex Direction'}
-            </InputLabel>
+            <InputLabel id='demo-simple-select-filled-label'>{messages.dialogs.flexDirection}</InputLabel>
             <Select
               fullWidth
               labelId='demo-simple-select-filled-label'
               value={getData('#view-input-in-form-engine.flex-direction.unit') || 'row'} // الافتراضي px
               onChange={e => UpdateData('#view-input-in-form-engine.flex-direction.unit', e.target.value)}
-              label={locale === 'ar' ? 'الاتجاه' : 'Flex Direction'}
+              label={messages.dialogs.flexDirection}
             >
               <MenuItem value='row'>Row</MenuItem>
               <MenuItem value='column'>Column</MenuItem>
@@ -603,7 +597,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`input[type=${type}] + label:before.width.value`) || ''}
             onChange={e => UpdateData(`input[type=${type}] + label:before.width.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'العرض' : 'Width'}
+            label={messages.dialogs.width}
             disabled={
               getData(`input[type=${type}] + label:before.width.unit`) === 'max-content' ||
               getData(`input[type=${type}] + label:before.width.unit`) === 'min-content' ||
@@ -640,7 +634,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`input[type=${type}] + label:before.height.value`) || ''}
             onChange={e => UpdateData(`input[type=${type}] + label:before.height.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'الطول' : 'Height'}
+            label={messages.dialogs.height}
             disabled={
               getData(`input[type=${type}] + label:before.height.unit`) === 'max-content' ||
               getData(`input[type=${type}] + label:before.height.unit`) === 'min-content' ||
@@ -677,7 +671,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`input[type=${type}] + label.margin-top.value`) || ''}
             onChange={e => UpdateData(`input[type=${type}] + label.margin-top.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'المسافة العلوية' : 'Margin Top'}
+            label={messages.dialogs.marginTop}
             disabled={
               getData(`input[type=${type}] + label.margin-top.unit`) === 'max-content' ||
               getData(`input[type=${type}] + label.margin-top.unit`) === 'min-content' ||
@@ -714,7 +708,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`input[type=${type}] + label.margin-bottom.value`) || ''}
             onChange={e => UpdateData(`input[type=${type}] + label.margin-bottom.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'المسافة السفلية' : 'Margin Bottom'}
+            label={messages.dialogs.marginBottom}
             disabled={
               getData(`input[type=${type}] + label.margin-bottom.unit`) === 'max-content' ||
               getData(`input[type=${type}] + label.margin-bottom.unit`) === 'min-content' ||
@@ -751,7 +745,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`input[type=${type}] + label.margin-inline-start.value`) || ''}
             onChange={e => UpdateData(`input[type=${type}] + label.margin-inline-start.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'المسافة اليسرى' : 'Margin Left'}
+            label={messages.dialogs.marginLeft}
             disabled={
               getData(`input[type=${type}] + label.margin-inline-start.unit`) === 'max-content' ||
               getData(`input[type=${type}] + label.margin-inline-start.unit`) === 'min-content' ||
@@ -788,7 +782,7 @@ export default function CheckboxControl({ data, onChange, type }) {
             value={getData(`input[type=${type}] + label.margin-inline-end.value`) || ''}
             onChange={e => UpdateData(`input[type=${type}] + label.margin-inline-end.value`, e.target.value)}
             variant='filled'
-            label={locale === 'ar' ? 'المسافة اليمنى' : 'Margin Right'}
+            label={messages.dialogs.marginRight}
             disabled={
               getData(`input[type=${type}] + label.margin-inline-end.unit`) === 'max-content' ||
               getData(`input[type=${type}] + label.margin-inline-end.unit`) === 'min-content' ||
@@ -827,7 +821,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               onBlur={e =>
                 UpdateData(`input[type=${type}]:checked + label:before.background-color.unit`, e.target.value)
               }
-              label={locale === 'ar' ? 'اللون الخلفي' : 'Background Color'}
+              label={messages.dialogs.backgroundColor}
               variant='filled'
             />
           </div>
@@ -837,7 +831,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`input[type=${type}]:checked + label:before.border-color.unit`) || '#575757'}
               onBlur={e => UpdateData(`input[type=${type}]:checked + label:before.border-color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون الحدود' : 'Border Color'}
+              label={messages.dialogs.borderColor}
               variant='filled'
             />
           </div>
@@ -847,7 +841,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData(`input[type=${type}]:checked + label:before.color.unit`) || '#fff'}
               onBlur={e => UpdateData(`input[type=${type}]:checked + label:before.color.unit`, e.target.value)}
-              label={locale === 'ar' ? 'اللون' : 'Color'}
+              label={messages.dialogs.color}
               variant='filled'
             />
           </div>
@@ -858,7 +852,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               type='color'
               defaultValue={getData('#first-label.color.unit') || '#555'}
               onBlur={e => UpdateData('#first-label.color.unit', e.target.value)}
-              label={locale === 'ar' ? 'لون التسمية' : 'Label Color'}
+              label={messages.dialogs.labelColor}
               variant='filled'
             />
           </div>
@@ -877,7 +871,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               }
             />
           }
-          label={locale === 'ar' ? 'مطلوب' : 'Required'}
+          label={messages.dialogs.required}
         />
         <FormControlLabel
           control={
@@ -891,28 +885,12 @@ export default function CheckboxControl({ data, onChange, type }) {
               }
             />
           }
-          label={locale === 'ar' ? 'مطلوب' : 'Unique'}
+          label={messages.dialogs.unique}
         />
         {type === 'file' && (
           <>
-            {/* <div className='p-2 mt-2 rounded-md border-2 border-gray-300'>
-              <h4>{locale === 'ar' ? 'الملفات المسموحة' : 'Allowed Files'}:</h4>
-              <Grid container spacing={2}>
-                <Grid item xs={4} key={type}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={data.multiple}
-                        onChange={() => onChange({ ...data, multiple: !data.multiple })}
-                      />
-                    }
-                    label={locale === 'ar' ? 'متعددة' : 'Multiple'}
-                  />
-                </Grid>
-              </Grid>
-            </div> */}
             <div className='p-2 mt-2 rounded-md border-2 border-gray-300'>
-              <h4>{locale === 'ar' ? 'الملفات المسموحة' : 'Allowed Files'}:</h4>
+              <h4>{messages.dialogs.allowedFiles}:</h4>
               <Grid container spacing={2}>
                 {fileTypes.map(type => (
                   <Grid item xs={4} key={type}>
@@ -934,7 +912,7 @@ export default function CheckboxControl({ data, onChange, type }) {
         {type === 'checkbox' && (
           <>
             <TextField
-              label={locale === 'ar' ? 'الحد الأدنى' : 'Min Length'}
+              label={messages.dialogs.minLength}
               type='number'
               fullWidth
               margin='normal'
@@ -947,7 +925,7 @@ export default function CheckboxControl({ data, onChange, type }) {
               }
             />
             <TextField
-              label={locale === 'ar' ? 'الحد الأقصى' : 'Max Length'}
+              label={messages.dialogs.maxLength}
               type='number'
               fullWidth
               margin='normal'

@@ -2,22 +2,25 @@ import React from 'react'
 import CloseNav from './CloseNav'
 import { MenuItem, TextField } from '@mui/material'
 import ButtonControl from './ButtonControl'
+import { useIntl } from 'react-intl'
 
 function OrderControl({ locale, buttonRef, data, onChange }) {
+  const { messages } = useIntl()
+
   const optionsList = [
-    { value: 'order', label: 'Order List' },
-    { value: 'unordered', label: 'Unordered List' }
+    { value: 'order', label: messages.dialogs.orderList },
+    { value: 'unordered', label: messages.dialogs.unorderedList }
   ]
 
   return (
     <div>
-      <CloseNav text={locale === 'ar' ? 'قائمة الطلبات' : 'Order list'} buttonRef={buttonRef} />
+      <CloseNav text={messages.dialogs.orderList} buttonRef={buttonRef} />
       <TextField
         select
         fullWidth
         value={data['kind'] || optionsList[0].value}
         onChange={e => onChange({ ...data, ['kind']: e.target.value })}
-        label={locale === 'ar' ? 'نوع الطلبات' : 'Order kind'}
+        label={messages.dialogs.orderKind}
         variant='filled'
       >
         {optionsList.map(({ value, label }) => (
@@ -29,9 +32,7 @@ function OrderControl({ locale, buttonRef, data, onChange }) {
       <ButtonControl type='order' data={data} onChange={onChange} buttonRef={buttonRef} />
 
       <p>
-        {locale === 'ar'
-          ? 'لتحكم كامل في القائمة اذهب الي وضع التعديلات'
-          : 'To control the list completely, go to the edit mode'}
+        {messages.dialogs.toControlTheListCompletely} {messages.dialogs.goToTheEditMode}
       </p>
     </div>
   )

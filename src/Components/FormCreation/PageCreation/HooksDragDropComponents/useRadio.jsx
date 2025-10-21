@@ -2,8 +2,11 @@ import { useMemo } from 'react'
 import ViewInputInFormEngine from '../ViewInputInFormEngine'
 import CheckboxControl from '../CheckboxControl'
 import { IoMdRadioButtonOn } from 'react-icons/io'
+import { useIntl } from 'react-intl'
 
 export default function useRadio({ locale, advancedEdit  }) {
+  const { messages } = useIntl()
+  
   const Radio = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -23,8 +26,8 @@ export default function useRadio({ locale, advancedEdit  }) {
         )
       },
       id: 'radio',
-      title: locale === 'ar' ? 'خانة الاختيار المنفردة'  : 'Radio',
-      description: locale === 'ar' ? 'خانة الاختيار المنفردة' : 'Radio',
+      title: messages.dialogs.radio,
+      description: messages.dialogs.radio,
       version: 1,
       icon: <IoMdRadioButtonOn   className='text-2xl' />,
       controls: {
@@ -32,7 +35,7 @@ export default function useRadio({ locale, advancedEdit  }) {
         Component: ({ data, onChange }) => <CheckboxControl data={data} onChange={onChange} locale={locale} type='radio' />
       }
     }
-  }, [locale, advancedEdit])
+  }, [locale, advancedEdit, messages])
 
   return { Radio }
 }

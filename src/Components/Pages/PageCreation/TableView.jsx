@@ -14,7 +14,7 @@ import { useDispatch } from 'react-redux'
 import TableComponent from './TableComponent'
 import { useSelector } from 'react-redux'
 
-function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitiesId, collectionName, pageName }) {
+function TableView({ data, locale, onChange, readOnly, disabled }) {
   const [getFields, setGetFields] = useState([])
   const [changedValue, setChangedValue] = useState([])
   const [loading, setLoading] = useState(true)
@@ -25,32 +25,8 @@ function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitie
   const errorAllRef = useRef([])
 
   const user = useSelector(rx => rx.auth)
-  console.log(user)
 
   const [open, setOpen] = useState(false)
-  const [entitiesData, setEntitiesData] = useState(null)
-  const [loadingEntities, setLoadingEntities] = useState(true)
-
-  useEffect(() => {
-    if (entitiesId && collectionName && pageName === 'MedicalMemberDetailes') {
-      console.log('adham')
-
-      axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale)
-        .then(res => {
-          if (res.status) {
-            console.log(res, 'hereee')
-
-            console.log(res.entities, 'res.entities')
-            setEntitiesData(res.entities?.[0])
-          }
-        })
-        .finally(() => setLoadingEntities(false))
-    } else {
-      setLoadingEntities(false)
-    }
-  }, [entitiesId, collectionName, pageName])
-
-  console.log(pageName === 'first', entitiesId, collectionName, entitiesData)
 
   const handleClosePop = () => {
     setOpen(false)
@@ -64,7 +40,6 @@ function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitie
 
   useEffect(() => {
     setLoading(true)
-    console.log('here')
     if (data.collectionId) {
       axiosGet(
         `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${
@@ -80,7 +55,6 @@ function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitie
               newEntities = newEntities.map(ele => {
                 let newEle = { ...ele }
                 const findWithId = changedValue.find(e => e.Id === newEle.Id)
-                console.log(findWithId, 'findWithId')
                 if (findWithId) {
                   newEle = findWithId
                 }
@@ -91,7 +65,6 @@ function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitie
             if (paginationModel.page === 0) {
               newEntities = [...newChangedValue, ...newEntities]
             }
-            console.log(newEntities, 'newEntities')
 
             setGetFields(newEntities)
             setTotalCount(res.totalCount)
@@ -305,7 +278,7 @@ function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitie
       <>
         {!readOnly && <SortableList items={filterWithSelect} onSortEnd={onSortEnd} axis='xy' />}
         <div className='flex justify-end px-5 mb-3'>
-          {data.kind === 'form-table' && paginationModel.page === 0 && !entitiesData?.ALLOWADD && (
+          {data.kind === 'form-table' && paginationModel.page === 0 && (
             <Button
               variant='contained'
               color='success'
@@ -363,18 +336,13 @@ function TableView({ data, locale, onChange, readOnly, disabled, pageId, entitie
                 variant='contained'
                 color='success'
                 onClick={() => {
-                  console.log(changedValue, 'changedValue')
 
-                  axiosPost(
-                    `generic-entities/${data.collectionName}`,
-                    locale,
-                    changedValue.map(ele => {
-                      return {
-                        ...ele,
-                        Id: ele.Id.includes('front') ? undefined : ele.Id
-                      }
-                    })
-                  ).then(res => {
+                  axiosPost(`generic-entities/${data.collectionName}`, locale,  changedValue.map(ele => {
+                    return {
+                      ...ele,
+                      Id: ele.Id.includes('front') ? undefined : ele.Id 
+                    }
+                  })).then(res => {
                     if (res.status) {
                       toast.success(messages.savedSuccessfully)
                     }

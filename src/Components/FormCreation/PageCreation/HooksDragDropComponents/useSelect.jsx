@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
-import { GiClick } from 'react-icons/gi'
 import ViewInputInFormEngine from '../ViewInputInFormEngine'
 import CheckboxControl from '../CheckboxControl'
-import { IoIosArrowDown, IoIosCheckboxOutline, IoMdRadioButtonOn } from 'react-icons/io'
+import { IoIosArrowDown } from 'react-icons/io'
+import { useIntl } from 'react-intl'
 
 export default function useSelect({ locale, advancedEdit }) {
+  const { messages } = useIntl()
+  
   const Select = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -30,8 +32,8 @@ export default function useSelect({ locale, advancedEdit }) {
         )
       },
       id: 'select',
-      title: locale === 'ar' ? 'قائمة الاختيار السفلية' : 'Dropdown',
-      description: locale === 'ar' ? 'قائمة الاختيار السفلية' : 'Dropdown',
+      title: messages.dialogs.select,
+      description: messages.dialogs.select,
       version: 1,
       icon: <IoIosArrowDown className='text-2xl' />,
       controls: {
@@ -41,7 +43,7 @@ export default function useSelect({ locale, advancedEdit }) {
         )
       }
     }
-  }, [locale, advancedEdit])
+  }, [locale, advancedEdit, messages])
 
   return { Select }
 }

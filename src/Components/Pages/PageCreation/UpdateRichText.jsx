@@ -5,11 +5,13 @@ import Collapse from '@kunukn/react-collapse'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import CloseNav from './CloseNav'
+import { useIntl } from 'react-intl'
 
 export default function UpdateRichText({ data, onChange, locale, type, buttonRef }) {
   const [obj, setObj] = useState(false)
   const getApiData = useSelector(rx => rx.api.data)
-
+  const { messages } = useIntl()
+  
   const renderTextField = (label, valueKey, inputType = 'text', options = {}) => (
     <TextField
       fullWidth
@@ -54,7 +56,10 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
 
   return (
     <div>
-      <CloseNav text={type === 'progressBar' ? locale === 'ar' ? 'اختيار الشريط التقدم' : 'Progress Bar' : locale === 'ar' ? 'اختيار النص' : 'Text'} buttonRef={buttonRef} />
+      <CloseNav
+        text={type === 'progressBar' ? messages.dialogs.progressBar : messages.dialogs.text}
+        buttonRef={buttonRef}
+      />
 
       <TextField
         select
@@ -62,7 +67,7 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
         className='!mb-4'
         value={data.api_url || ''}
         onChange={e => onChange({ ...data, api_url: e.target.value })}
-        label={locale === 'ar' ? 'جلب البيانات من الAPI' : 'Get From API'}
+        label={messages.dialogs.getFromApi}
         variant='filled'
       >
         {getApiData.map(
@@ -86,14 +91,14 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
               onChange({ ...data, items: [], api_url: '' })
             }}
           >
-            {locale === 'ar' ? 'تفريغ البيانات' : 'Clear Data'}
+            {messages.dialogs.clearData}
           </Button>
         </div>
       )}
 
       <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(obj)}>
         <div className='p-2 my-4 rounded border border-dashed border-main-color'>
-          <h2 className='mb-4 text-2xl text-main-color'>{locale === 'ar' ? 'عرض البيانات' : 'View Object'}</h2>
+          <h2 className='mb-4 text-2xl text-main-color'>{messages.dialogs.viewObject}</h2>
           <SyntaxHighlighter language='json' style={docco}>
             {JSON.stringify(obj, null, 2)}
           </SyntaxHighlighter>
@@ -107,7 +112,7 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
           value={data.backgroundWidth}
           onChange={e => onChange({ ...data, backgroundWidth: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'العرض' : 'Width'}
+          label={messages.dialogs.width}
           InputProps={{
             endAdornment: (
               <InputAdornment position='end'>
@@ -125,38 +130,14 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
             )
           }}
         />
-        {renderTextField(
-          obj
-            ? locale === 'ar'
-              ? 'مفتاح العنوان بالعربية'
-              : 'Title ar key'
-            : locale === 'ar'
-            ? 'العنوان بالعربية'
-            : 'Title Ar',
-          'content_ar',
-          'text'
-        )}
-        {renderTextField(
-          obj
-            ? locale === 'ar'
-              ? 'مفتاح العنوان بالانجليزية'
-              : 'Title en key'
-            : locale === 'ar'
-            ? 'العنوان بالانجليزية'
-            : 'Title En',
-          'content_en',
-          'text'
-        )}
+        {renderTextField(obj ? messages.dialogs.keyInAr : messages.dialogs.titleAr, 'content_ar', 'text')}
+        {renderTextField(obj ? messages.dialogs.keyInEn : messages.dialogs.titleEn, 'content_en', 'text')}
         {type === 'progressBar' && (
           <>
             {renderTextField(
               obj
-                ? locale === 'ar'
-                  ? 'مفتاح العرض بالنسبة المئوية'
-                  : 'progress Width percentage key'
-                : locale === 'ar'
-                ? 'العرض نسبة مئوية'
-                : 'progress Width percentage',
+                ? messages.dialogs.progressWidthPercentageKey
+                : messages.dialogs.progressWidthPercentage,
               'progressWidth',
               'number'
             )}
@@ -177,7 +158,7 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
             label: `${(i + 1) * 100}`
           }))
         )}
-        {renderSelect(locale === 'ar' ? 'محاذاة' : 'Text align', 'titleTextAlign', [
+        {renderSelect(messages.dialogs.textAlign, 'titleTextAlign', [
           { value: 'start', label: 'Start' },
           { value: 'center', label: 'Center' },
           { value: 'end', label: 'End' }
@@ -189,12 +170,9 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
           { value: 'Times New Roman', label: 'Times New Roman' },
           { value: 'Courier New', label: 'Courier New' }
         ])}
-        {renderTextField(locale === 'ar' ? 'المسافة بالأسفل' : 'Margin bottom', 'marginBottom', 'number')}
+        {renderTextField(messages.dialogs.marginBottom, 'marginBottom', 'number')}
       </div>
-      {/* <h1 className='text-main-color'>{locale === 'ar' ? 'المحتوى بالعربية' : 'Content in Arabic'}</h1>
-      <Editor data={data} initialTemplateName={data.content_ar} onChange={onChange} locale={locale} type='content_ar' />
-      <h1 className='text-main-color'>{locale === 'ar' ? 'المحتوى بالانجليزية' : 'Content in English'}</h1>
-      <Editor data={data} initialTemplateName={data.content_en} onChange={onChange} locale={locale} type='content_en' /> */}
+
     </div>
   )
 }

@@ -2,8 +2,11 @@ import { useMemo } from 'react';
 import { FaTable } from 'react-icons/fa';
 import DynamicTableControl from '../DynamicTableControl';
 import DynamicTableView from '../DynamicTableView';
+import { useIntl } from 'react-intl';
 
 export default function useDynamicTable({ locale, buttonRef, advancedEdit }) {
+  const { messages } = useIntl()
+  
   const dynamicTable = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -17,18 +20,15 @@ export default function useDynamicTable({ locale, buttonRef, advancedEdit }) {
           />
         );
       },
-      id: locale === 'ar' ? 'جدول-ديناميكي' : 'dynamic-table',
-      title: locale === 'ar' ? 'جدول ديناميكي' : 'Dynamic Table',
-      description: 
-        locale === 'ar' 
-          ? 'يتيح للمستخدمين إنشاء جداول ديناميكية مع خانات اختيار للتحديد' 
-          : 'Allows users to create dynamic tables with checkable cells for selection.',
+      id: messages.dialogs.dynamicTable,
+      title: messages.dialogs.dynamicTable,
+      description: messages.dialogs.dynamicTableDescription,
       version: 1,
       controls: {
         type: 'custom',
         Component: ({ data, onChange }) => (
           <DynamicTableControl 
-            title={locale === 'ar' ? 'جدول ديناميكي' : 'Dynamic Table'} 
+            title={messages.dialogs.dynamicTable} 
             type='dynamic-table' 
             onChange={onChange} 
             data={data} 
@@ -39,7 +39,7 @@ export default function useDynamicTable({ locale, buttonRef, advancedEdit }) {
       },
       icon: <FaTable className='text-2xl' />
     };
-  }, [advancedEdit, locale, buttonRef]); // Fixed: added buttonRef to dependencies array
+  }, [advancedEdit, locale, buttonRef, messages]); // Fixed: added buttonRef to dependencies array
 
   return { dynamicTable };
 }

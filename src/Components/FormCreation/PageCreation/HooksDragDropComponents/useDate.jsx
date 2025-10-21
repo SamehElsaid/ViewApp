@@ -2,8 +2,10 @@ import { useMemo } from 'react'
 import InputControl from '../ButtonControl'
 import ViewInputInFormEngine from '../ViewInputInFormEngine'
 import { FaCalendarAlt } from 'react-icons/fa'
+import { useIntl } from 'react-intl'
 
 export default function useDate({ locale, advancedEdit,readOnly }) {
+  const { messages } = useIntl()
 
   const Date = useMemo(() => {
     return {
@@ -31,8 +33,8 @@ export default function useDate({ locale, advancedEdit,readOnly }) {
         )
       },
       id: 'date',
-      title: locale === 'ar' ? 'تاريخ' : 'Date',
-      description: locale === 'ar' ? 'تاريخ' : 'Date',
+      title: messages.dialogs.date,
+      description: messages.dialogs.date,
       version: 1,
       icon: <FaCalendarAlt className='text-2xl' />,
       controls: {
@@ -40,7 +42,7 @@ export default function useDate({ locale, advancedEdit,readOnly }) {
         Component: ({ data, onChange }) => <InputControl type='date' data={data} onChange={onChange} locale={locale} />
       }
     }
-  }, [locale, advancedEdit,readOnly])
+  }, [locale, advancedEdit,readOnly, messages])
 
   return { Date }
 }

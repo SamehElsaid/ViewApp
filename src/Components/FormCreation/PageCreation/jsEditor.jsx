@@ -9,7 +9,7 @@ import { Button } from '@mui/material'
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
 const JsEditor = ({ data, onChange, jsCode, open, Css, type, roles }) => {
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
 
   const functionTemplate = `async function Action(e, args) {\n  // write your code here\n}`
 
@@ -48,7 +48,7 @@ const JsEditor = ({ data, onChange, jsCode, open, Css, type, roles }) => {
         }
         onChange({ ...data, additional_fields: additional_fields })
       } else {
-        toast.error(locale === 'ar' ? 'خطأ في الكود' : 'Invalid code')
+        toast.error(messages.dialogs.invalidCode)
         setCode(functionTemplate)
       }
     } catch (error) {
@@ -60,7 +60,7 @@ const JsEditor = ({ data, onChange, jsCode, open, Css, type, roles }) => {
     <div>
       <div className='flex justify-end mb-2'>
         <Button variant='contained' color='error' onClick={() => handleEditorChange(functionTemplate)}>
-          {locale === 'ar' ? 'اعادة الكود' : 'Reset Code'}
+          {messages.dialogs.resetCode}
         </Button>
       </div>
       <MonacoEditor

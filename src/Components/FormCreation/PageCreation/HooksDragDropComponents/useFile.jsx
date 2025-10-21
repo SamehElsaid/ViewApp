@@ -2,8 +2,11 @@ import { useMemo } from 'react'
 import ViewInputInFormEngine from '../ViewInputInFormEngine'
 import CheckboxControl from '../CheckboxControl'
 import { IoCloudUploadOutline } from 'react-icons/io5'
+import { useIntl } from 'react-intl'
 
 export default function useFile({ locale, advancedEdit }) {
+  const { messages } = useIntl()
+  
   const File = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -29,8 +32,8 @@ export default function useFile({ locale, advancedEdit }) {
         )
       },
       id: 'file',
-      title: locale === 'ar' ? 'رفع الملفات' : 'Uploader',
-      description: locale === 'ar' ? 'رفع الملفات' : 'Uploader',
+      title: messages.dialogs.uploader,
+      description: messages.dialogs.uploader,
       version: 1,
       icon: <IoCloudUploadOutline  className='text-2xl' />,
       controls: {
@@ -40,7 +43,7 @@ export default function useFile({ locale, advancedEdit }) {
         )
       }
     }
-  }, [locale, advancedEdit])
+  }, [locale, advancedEdit, messages])
 
   return { File }
 }

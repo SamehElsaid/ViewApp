@@ -2,8 +2,11 @@ import React, { useMemo } from 'react'
 import UpdateRichText from '../UpdateRichText'
 import { getData } from 'src/Components/_Shared'
 import { FaBarsProgress } from 'react-icons/fa6'
+import { useIntl } from 'react-intl'
 
 export default function useProgressBar({ locale, buttonRef }) {
+  const { messages } = useIntl()
+  
   const ProgressBar = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -41,21 +44,19 @@ export default function useProgressBar({ locale, buttonRef }) {
             ></div>
             <div className='relative z-10'>
               {data?.api_url
-                ? getData(data?.items, data?.[`content_${locale}`], locale === 'ar' ? 'المحتوى' : 'Content') ??
-                  (locale === 'ar' ? 'المحتوى' : 'Content')
+                ? getData(data?.items, data?.[`content_${locale}`], messages.dialogs.content) ??
+                  messages.dialogs.content
                 : data?.[`content_${locale}`]
                 ? data?.[`content_${locale}`]
-                : locale === 'ar'
-                ? 'المحتوى'
-                : 'Content'}{' '}
+                : messages.dialogs.content}{' '}
               ({data?.api_url ? getData(data?.items, data?.progressWidth, '50%') : data.progressWidth ?? 50 + '%'})
             </div>
           </div>
         )
       },
       id: 'progressBar',
-      title: locale === 'ar' ? 'شريط تقدم' : 'Progress Bar',
-      description: locale === 'ar' ? 'يمكن عرض التقدم نحو هدف أو نسبة الانتهاء' : 'Visually represents progress towards a goal or completion percentage.',
+      title: messages.dialogs.progressBar,
+      description: messages.dialogs.progressBarDescription,
       version: 1,
       icon: <FaBarsProgress className='text-2xl' />,
       controls: {
@@ -65,7 +66,7 @@ export default function useProgressBar({ locale, buttonRef }) {
         )
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale])
 
   return { ProgressBar }

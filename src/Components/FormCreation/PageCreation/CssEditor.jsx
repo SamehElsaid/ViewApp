@@ -5,7 +5,7 @@ import { Button } from '@mui/material'
 import { useIntl } from 'react-intl'
 
 const CssEditor = ({ data, onChange, Css, open, roles }) => {
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
 
   const handleChange = value => {
     const additional_fields = data.additional_fields ?? []
@@ -39,7 +39,7 @@ const CssEditor = ({ data, onChange, Css, open, roles }) => {
           )
         }}
       >
-        {locale === 'ar' ? 'تنسيق' : 'Format'}
+        {messages.dialogs.format}
       </Button>
       <CodeMirror value={Css} width='100%' className='100%' extensions={[css()]} onChange={handleChange} />
     </div>

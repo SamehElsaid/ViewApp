@@ -1,11 +1,14 @@
 import { InputAdornment, MenuItem, Select, TextField } from '@mui/material'
 import React from 'react'
 import CloseNav from './CloseNav'
+import { useIntl } from 'react-intl'
 
 export default function FlexControl({ data, onChange, locale, from, buttonRef }) {
+  const { messages } = useIntl()
+
   return (
     <div>
-      <CloseNav text={locale === 'ar' ? 'Flex Control' : 'Flex Control'} buttonRef={buttonRef} />
+      <CloseNav text={messages.dialogs.flexControl} buttonRef={buttonRef} />
       {!from && (
         <TextField
           fullWidth
@@ -13,7 +16,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
           value={data.height}
           onChange={e => onChange({ ...data, height: e.target.value })}
           variant='filled'
-          label={locale === 'ar' ? 'الطول' : 'Height'}
+          label={messages.dialogs.height}
           InputProps={{
             endAdornment: (
               <InputAdornment position='end'>
@@ -37,7 +40,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
         value={data.flexDirection}
         onChange={e => onChange({ ...data, flexDirection: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'اتجاه المحتوى' : 'Flex Direction'}
+        label={messages.dialogs.flexDirection}
         select
       >
         <MenuItem value='row'>row</MenuItem>
@@ -51,7 +54,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
         value={data.flexWrap}
         onChange={e => onChange({ ...data, flexWrap: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'المحتويات في سطر' : 'Flex Wrap'}
+        label={messages.dialogs.flexWrap}
         select
       >
         <MenuItem value='wrap'>wrap</MenuItem>
@@ -64,7 +67,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
         value={data.justifyContent}
         onChange={e => onChange({ ...data, justifyContent: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'محاذاة المحتوى' : 'Justify Content'}
+        label={messages.dialogs.justifyContent}
         select
       >
         <MenuItem value='center'>center</MenuItem>
@@ -80,7 +83,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
         value={data.alignItems}
         onChange={e => onChange({ ...data, alignItems: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'المحاذاة الرأسية' : 'Align Items'}
+        label={messages.dialogs.alignItems}
         select
       >
         <MenuItem value='center'>center</MenuItem>
@@ -95,7 +98,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
         value={data.gap}
         onChange={e => onChange({ ...data, gap: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'المسافة بين العناصر' : 'Gap'}
+        label={messages.dialogs.gap}
         InputProps={{
           endAdornment: <InputAdornment position='end'>px</InputAdornment>
         }}
@@ -106,7 +109,7 @@ export default function FlexControl({ data, onChange, locale, from, buttonRef })
         value={data.childrenView || 'auto'}
         onChange={e => onChange({ ...data, childrenView: e.target.value })}
         variant='filled'
-        label={locale === 'ar' ? 'عرض الابناء' : 'Children View'}
+        label={messages.dialogs.childrenView}
         select
       >
         <MenuItem value='auto'>Auto</MenuItem>

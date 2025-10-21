@@ -2,8 +2,11 @@ import { useMemo } from 'react'
 import InputControl from '../ButtonControl'
 import ViewInputInFormEngine from '../ViewInputInFormEngine'
 import { FaRegEdit } from 'react-icons/fa'
+import { useIntl } from 'react-intl'
 
 export default function useInput({ locale, advancedEdit }) {
+  const { messages } = useIntl()
+  
   const Input = useMemo(() => {
     return {
       Renderer: ({ data, onChange }) => {
@@ -28,8 +31,8 @@ export default function useInput({ locale, advancedEdit }) {
         )
       },
       id: 'input',
-      title: locale === 'ar' ? 'حقل' : 'Input',
-      description: locale === 'ar' ? 'حقل' : 'Input',
+      title: messages.dialogs.input,
+      description: messages.dialogs.input,
       version: 1,
       icon: <FaRegEdit className='text-2xl' />,
       controls: {
@@ -37,7 +40,7 @@ export default function useInput({ locale, advancedEdit }) {
         Component: ({ data, onChange }) => <InputControl data={data} onChange={onChange} locale={locale} />
       }
     }
-  }, [locale, advancedEdit])
+  }, [locale, advancedEdit, messages])
 
   return { Input }
 }

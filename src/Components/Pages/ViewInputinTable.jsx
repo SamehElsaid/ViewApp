@@ -16,7 +16,9 @@ function ViewInputInTable({
   getDesign,
   triggerData,
   setOpen,
-  notFound
+  notFound,
+  setGetFields,
+  setChangedValue
 }) {
   const refError = useRef({})
   const [reload, setReload] = useState(0)
@@ -35,7 +37,29 @@ function ViewInputInTable({
   }, [])
 
   return (
-    <div className='relative w-full'>
+    <div
+      className='relative w-full'
+      onBlur={() => {
+        setGetFields(prev => {
+          const findWithId = prev.find(e => e.Id === row.Id)
+          findWithId[ele.key] = dataRef.current[ele.key]
+
+          return prev
+        })
+
+        setChangedValue(prev => {
+          const newPrev = [...prev]
+          const findWithId = newPrev.find(e => e.Id === row.Id)
+          if (findWithId) {
+            findWithId[ele.key] = dataRef.current[ele.key]
+          } else {
+            newPrev.push({ ...row, [ele.key]: dataRef.current[ele.key] })
+          }
+
+          return newPrev
+        })
+      }}
+    >
       {!readOnly && (
         <div
           onContextMenu={e => {
@@ -106,6 +130,7 @@ function ViewInputInTable({
         reload={reload}
         errorView={findError?.[ele.type === 'new_element' ? ele.id : ele.key]?.[0]}
         findError={findError && typeof findError?.[ele.type === 'new_element' ? ele.id : ele.key] === 'object'}
+        hiddenLabel={true}
       />
     </div>
   )

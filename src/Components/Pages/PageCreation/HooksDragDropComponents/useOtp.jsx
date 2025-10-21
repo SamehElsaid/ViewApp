@@ -30,7 +30,6 @@ export default function useOtp({ locale, buttonRef }) {
                 dataParams.push({ [param.param]: router.query[param.paramValue] })
               }
             })
-            console.log(dataParams)
             setQueries(dataParams)
           }
           // eslint-disable-next-line react-hooks/exhaustive-deps

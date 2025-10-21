@@ -16,7 +16,6 @@ const Header = styled(Box)(() => ({
   top: 0
 }))
 function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
-  console.log(open)
 
   return (
     <Drawer
@@ -29,7 +28,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
     >
       <Header>
         <Typography className='capitalize text-[#555] !font-bold' variant='h4'>
-          {locale === 'ar' ? open?.text_ar : open?.text_en}
+          {open?.[`text_${locale}`]}
         </Typography>
         <IconButton
           size='small'
@@ -53,7 +52,6 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
               type='text'
               defaultValue={open?.text_en}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -65,14 +63,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'النص باللغة الإنجليزية' : 'Text in English'}
+              label={messages.dialogs.textInEnglish}
             />
             <TextField
               fullWidth
               type='text'
               defaultValue={open?.text_ar}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -84,14 +81,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'النص باللغة العربية' : 'Text in Arabic'}
+              label={messages.dialogs.textInArabic}
             />
             <TextField
               fullWidth
               type='number'
               defaultValue={open.paddingBlock}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -103,14 +99,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'المساحة الداخلية الطويلة' : 'Padding Block'}
+              label={messages.dialogs.paddingBlock}
             />
             <TextField
               fullWidth
               type='number'
               defaultValue={open.paddingInline}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -122,14 +117,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'المساحة  الداخلية العرضية' : 'Padding Inline'}
+              label={messages.dialogs.paddingInline}
             />
             <TextField
               fullWidth
               type='number'
               defaultValue={open.borderRadius}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -141,14 +135,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'نصف القطر' : 'Border Radius'}
+              label={messages.dialogs.borderRadius}
             />
             <TextField
               fullWidth
               type='number'
               defaultValue={open.borderWidth}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -160,14 +153,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'عرض الحد' : 'Border Width'}
+              label={messages.dialogs.borderWidth}
             />
             <TextField
               fullWidth
               type='color'
               defaultValue={open.backgroundColor}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -179,14 +171,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الخلفية' : 'Background Color'}
+              label={messages.dialogs.backgroundColor}
             />
             <TextField
               fullWidth
               type='color'
               defaultValue={open.color}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -198,14 +189,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الخط' : 'Color'}
+              label={messages.dialogs.color}
             />
             <TextField
               fullWidth
               type='color'
               defaultValue={open.borderColor}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -217,7 +207,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الحد' : 'Border Color'}
+              label={messages.dialogs.borderColor}
             />
 
             <TextField
@@ -225,7 +215,6 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
               type='number'
               defaultValue={open.fontSize}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -237,7 +226,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'حجم الخط' : 'Font Size'}
+              label={messages.dialogs.fontSize}
             />
 
             <TextField
@@ -245,7 +234,6 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
               type='number'
               defaultValue={open.fontWeight}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -257,14 +245,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'الوزن الخط' : 'Font Weight'}
+              label={messages.dialogs.fontWeight}
             />
             <TextField
               fullWidth
               type='text'
               value={open.borderStyle}
               onChange={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -276,7 +263,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'نوع الخط' : 'Font Family'}
+              label={messages.dialogs.fontFamily}
               select
             >
               <MenuItem value='solid'>Solid</MenuItem>
@@ -290,7 +277,6 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
               type='color'
               defaultValue={open.hoverBackgroundColor}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -302,7 +288,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الخلفية عند التحديد' : 'hover BackgroundColor'}
+              label={messages.dialogs.hoverBackgroundColor}
             />
 
             <TextField
@@ -310,7 +296,6 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
               type='color'
               defaultValue={open.hoverColor}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -322,14 +307,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الخط عند التحديد' : 'hover Color'}
+              label={messages.dialogs.hoverColor}
             />
             <TextField
               fullWidth
               type='color'
               defaultValue={open.hoverBorderColor}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -341,14 +325,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الحد عند التحديد' : 'hover Border Color'}
+              label={messages.dialogs.hoverBorderColor}
             />
             <TextField
               fullWidth
               type='color'
               defaultValue={open.hoverBorderColor}
               onBlur={e => {
-                console.log(e.target.value)
 
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
@@ -360,7 +343,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={locale === 'ar' ? 'لون الحد عند التحديد' : 'hover Border Color'}
+              label={messages.dialogs.hoverBorderColor}
             />
           </div>
         </Box>

@@ -22,7 +22,7 @@ const ReactPageEditor = () => {
   const [editorValue, setEditorValue] = useState(null)
   const [readOnly, setReadOnly] = useState(false)
   const [advancedEdit, setAdvancedEdit] = useState(false)
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
   const [openApiData, setOpenApiData] = useState(false)
   const [openBack, setOpenBack] = useState(false)
   const [saveData, setSaveData] = useState(false)
@@ -53,26 +53,22 @@ const ReactPageEditor = () => {
     <div className='relative'>
       <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>
         <DialogTitle>
-          {locale === 'ar'
-            ? 'العودة إلى الصفحة السابقة بدون حفظ التغيرات'
-            : 'Return to Previous Page Without Save Changes'}
+          {messages.dialogs.returnToPreviousPageWithoutSaveChanges}
         </DialogTitle>
         <DialogContent>
           <DialogActions>
             <Button variant='contained' color='error' onClick={() => push(`/${locale}/setting/pages`)}>
-              {locale === 'ar' ? 'نعم' : 'Yes'}
+              {messages.dialogs.yes}
             </Button>
             <Button variant='contained' color='secondary' onClick={() => setOpenBack(false)}>
-              {locale === 'ar' ? 'لا' : 'No'}
+              {messages.dialogs.no}
             </Button>
           </DialogActions>
         </DialogContent>
       </Dialog>
       <Dialog open={saveData} onClose={() => setSaveData(false)} fullWidth>
         <DialogTitle>
-          {locale === 'ar'
-            ? 'هل أنت متأكد من أنك تريد حفظ التغييرات؟ يرجى التأكد قبل المتابعة '
-            : 'Are you sure you want to save the changes? Please confirm before proceeding'}
+          {messages.dialogs.areYouSureYouWantToSaveTheChanges}
         </DialogTitle>
         <DialogContent>
           <DialogActions>
@@ -167,27 +163,15 @@ const ReactPageEditor = () => {
                       data.options.uiSchema.xComponentProps.cssClass = dataMain.css || DefaultStyle(cell?.plugin?.id)
                       data.validationData = validationData
                       if (!data.key) {
-                        toast.error(
-                          locale === 'ar'
-                            ? `المفتاح مطلوب في الحقل ${index + 1}`
-                            : `Key is required in  Field  ${index + 1}`
-                        )
+                        toast.error(`${messages.dialogs.keyRequired} ${index + 1}`)
                         stop.push(false)
                       }
                       if (!data.nameAr) {
-                        toast.error(
-                          locale === 'ar'
-                            ? `الحقل بالعربي مطلوب في الحقل ${index + 1}`
-                            : `Label in Arabic is required in  Field  ${index + 1}`
-                        )
+                        toast.error(`${messages.dialogs.labelRequired} ${index + 1}`)
                         stop.push(false)
                       }
                       if (!data.nameEn) {
-                        toast.error(
-                          locale === 'ar'
-                            ? `الحقل بالانجليزي مطلوب في الحقل ${index + 1}`
-                            : `Label in English is required in  Field  ${index + 1}`
-                        )
+                        toast.error(`${messages.dialogs.labelRequired} ${index + 1}`)
                         stop.push(false)
                       }
                       if (!data.nameAr || !data.nameEn || !data.key) {
@@ -221,27 +205,15 @@ const ReactPageEditor = () => {
                       }
 
                       if (!data.nameAr) {
-                        toast.error(
-                          locale === 'ar'
-                            ? `الحقل بالعربي مطلوب في الحقل ${index + 1}`
-                            : `Label in Arabic is required in  Field  ${index + 1}`
-                        )
+                        toast.error(`${messages.dialogs.labelRequired} ${index + 1}`)
                         stop.push(false)
                       }
                       if (!data.nameEn) {
-                        toast.error(
-                          locale === 'ar'
-                            ? `الحقل بالانجليزي مطلوب في الحقل ${index + 1}`
-                            : `Label in English is required in  Field  ${index + 1}`
-                        )
+                        toast.error(`${messages.dialogs.labelRequired} ${index + 1}`)
                         stop.push(false)
                       }
                       if (!dataMain.collectionName) {
-                        toast.error(
-                          locale === 'ar'
-                            ? `اسم المجموعة مطلوب في الحقل ${index + 1}`
-                            : `Collection Name is required in  Field  ${index + 1}`
-                        )
+                        toast.error(`${messages.dialogs.collectionNameRequired} ${index + 1}`)
                         stop.push(false)
                       }
                       if (!data.nameAr || !data.nameEn || !dataMain.collectionName) {
@@ -262,7 +234,7 @@ const ReactPageEditor = () => {
                   })
                 })
                 if (addData.length === 0) {
-                  toast.error(locale === 'ar' ? 'لا يوجد حقول للاضافة' : 'No fields to add')
+                  toast.error(messages.dialogs.noFieldsToAdd)
 
                   return
                 }
@@ -286,9 +258,9 @@ const ReactPageEditor = () => {
                 )
                   .then(res => {
                     if (res.includes(false)) {
-                      toast.error(locale === 'ar' ? 'حدث خطأ ما' : 'An error occurred')
+                      toast.error(messages.dialogs.anErrorOccurred)
                     } else {
-                      toast.success(locale === 'ar' ? 'تم حفظ التغييرات بنجاح' : 'Changes saved successfully')
+                      toast.success(messages.dialogs.changesSavedSuccessfully)
                     }
                     setSaveData(false)
                   })
@@ -297,10 +269,10 @@ const ReactPageEditor = () => {
                   })
               }}
             >
-              {locale === 'ar' ? 'حفظ' : 'Save'}
+              {messages.dialogs.save}
             </LoadingButton>
             <Button variant='contained' color='error' onClick={() => setSaveData(false)}>
-              {locale === 'ar' ? 'الغاء' : 'Cancal'}
+              {messages.dialogs.cancel}
             </Button>
           </DialogActions>
         </DialogContent>
@@ -314,7 +286,7 @@ const ReactPageEditor = () => {
           }}
         >
           <MdOutlineSaveAs className='text-xl me-1' />
-          {locale === 'ar' ? ' اضافة الحقول' : 'Add Inputs'}
+          {messages.dialogs.addInputs}
         </Button>
         <Button
           variant='contained'

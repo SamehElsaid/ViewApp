@@ -6,6 +6,7 @@ import { saveAs } from 'file-saver'
 
 export const axiosGet = async (url, locale, token, params = {}, close) => {
   const authToken = Cookies.get('sub')
+  
 
   try {
     const header = {
@@ -37,6 +38,8 @@ export const axiosGet = async (url, locale, token, params = {}, close) => {
 export const axiosPatch = async (url, locale, data, file, close) => {
   const authToken = Cookies.get('sub')
   const HeaderImg = { 'Content-Type': 'multipart/form-data' }
+
+
 
   const headerToken = file
     ? { ...HeaderImg, Authorization: `Bearer ${decryptData(authToken).token}` }
@@ -120,13 +123,13 @@ export const axiosPut = async (url, locale, data, file, close) => {
   }
 }
 
-export const axiosDelete = async (url, locale) => {
+export const axiosDelete = async (url, locale, token) => {
   const authToken = Cookies.get('sub')
 
   try {
     const fetchData = await axios.delete(`${process.env.API_URL}/${url}`, {
       headers: {
-        Authorization: `Bearer  ${decryptData(authToken).token}`,
+        Authorization: `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
         'Accept-Language': locale
       }
     })

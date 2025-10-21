@@ -10,34 +10,38 @@ import {
   IconButton,
   MenuItem,
   TextField,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material'
 import { Box } from '@mui/system'
+import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
 import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import Collapse from '@kunukn/react-collapse'
 import { axiosGet } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
-
 import CloseNav from './CloseNav'
 import IconifyIcon from 'src/Components/icon'
+import { MdDeleteOutline } from 'react-icons/md'
+import JsEditorOnSubmit from 'src/Components/FormCreation/PageCreation/jsEditorOnSubmit'
 
 function Select({ onChange, data, type, buttonRef, title }) {
-  const { locale } = useIntl()
+  const { locale, messages } = useIntl()
   const [collection, setCollection] = useState('')
   const [optionsCollection, setOptionsCollection] = useState([])
   const [loadingCollection, setLoadingCollection] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState([])
-  const { messages } = useIntl()
   const [getFields, setGetFields] = useState([])
-  const [dataSources, setDataSources] = useState([])
+  const [SelectedRelatedCollectionsFields, setSelectedRelatedCollectionsFields] = useState([])
 
   useEffect(() => {
     setLoadingCollection(true)
     axiosGet(`data-source/get`, locale)
       .then(res => {
         if (res.status) {
-          setDataSources(res.data)
           onChange({
             ...data,
             data_source_id: res.data[0].id
@@ -72,7 +76,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
       axiosGet(`collections/get-by-id?id=${data.collectionId}`, locale).then(res => {
         if (res.status) {
           if (res.data?.id) {
-            const loadingToast = toast.loading(locale === 'ar' ? 'يتم التحميل' : 'Loading')
+            const loadingToast = toast.loading(messages.dialogs.loading)
             axiosGet(`collection-fields/get?CollectionId=${res.data.id}`, locale)
               .then(res => {
                 if (res.status) {
@@ -108,13 +112,58 @@ function Select({ onChange, data, type, buttonRef, title }) {
     }
   }
 
-  const handleChange = event => {
+  const [associationsOpen, setAssociationsOpen] = useState(false)
+  const [associationsConfig, setAssociationsConfig] = useState(data?.associationsConfig || [])
+
+  const [singleTextChoice, setSingleTextChoice] = useState(null)
+
+  const handleChange = (event, fieldCategory, skipCheck, field) => {
+    // const
     const { value, checked } = event.target
+    const isChecked = skipCheck || checked
+
+    console.log(isChecked && fieldCategory === 'Associations')
+    if (fieldCategory === 'Associations' && isChecked) {
+      setAssociationsOpen({ key: event.target.value, source: field?.options?.source, field })
+
+      return
+    }
+
+    // if(filed)
+    console.log(field)
+    if (field?.type === 'SingleText' && isChecked) {
+      setSingleTextChoice({ value, field, fieldCategory })
+
+      return
+    }
+
+    console.log(isChecked, value)
     setSelectedOptions(prevSelected =>
-      checked ? [...prevSelected, value] : prevSelected.filter(item => item !== value)
+      isChecked ? [...prevSelected, value] : prevSelected.filter(item => item !== value)
     )
-    const selected = checked ? [...selectedOptions, value] : selectedOptions.filter(item => item !== value)
-    onChange({ ...data, selected, type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit })
+    const selected = isChecked ? [...selectedOptions, value] : selectedOptions.filter(item => item !== value)
+
+    const oldAdditionalFields = data?.additional_fields ?? []
+    const filteredAdditionalFields = oldAdditionalFields.filter(inp => inp.key !== field?.id)
+
+    console.log(filteredAdditionalFields, field)
+    if (skipCheck) {
+      console.log(skipCheck)
+      onChange({
+        ...data,
+        selected,
+        associationsConfig: skipCheck,
+        additional_fields: filteredAdditionalFields,
+        type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit
+      })
+    } else {
+      onChange({
+        ...data,
+        selected,
+        additional_fields: filteredAdditionalFields,
+        type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit
+      })
+    }
   }
 
   const [addMoreElement] = useState([
@@ -144,11 +193,114 @@ function Select({ onChange, data, type, buttonRef, title }) {
     }
   }, [addMoreData.length])
 
+  const [relatedCollections, setRelatedCollections] = useState([])
+
+  // useEffect(() => {
+  //   if (collection?.id) {
+
+  //   }
+  // }, [locale, collection?.id])
+
+  const [relatedCollectionsFields, setRelatedCollectionsFields] = useState([])
+
+  useEffect(() => {
+    if (data?.relatedCollections?.length > 0) {
+      const loadingToast = toast.loading(messages.dialogs.loading)
+      Promise.all(
+        data.relatedCollections.map(async item => {
+          const res = await axiosGet(`collection-fields/get?CollectionId=${item.id}`, locale)
+          if (res.status) {
+            return { collection: item, fields: res.data }
+          }
+
+          return null
+        })
+      )
+        .then(results => {
+          const validResults = results.filter(Boolean)
+          setRelatedCollectionsFields(validResults)
+        })
+        .finally(() => {
+          toast.dismiss(loadingToast)
+        })
+    }
+  }, [data?.relatedCollections?.length])
+
+  useEffect(() => {
+    setSelectedRelatedCollectionsFields(data.SelectedRelatedCollectionsFields ?? [])
+  }, [data.SelectedRelatedCollectionsFields])
+
   return (
     <div>
       <div className=''>
         <CloseNav text={title} buttonRef={buttonRef} />
       </div>
+      <AssociationsSetup
+        open={associationsOpen}
+        onClose={() => {
+          setAssociationsOpen(false)
+        }}
+        initialConfig={associationsConfig}
+        onSave={config => {
+          console.log(config)
+          let newConfig = data?.associationsConfig ?? []
+          console.log(newConfig, 'newConfig')
+
+          const found = newConfig.find(item => item.key === config.key)
+          if (found) {
+            newConfig = newConfig.map(item => (item.key === config.key ? config : item))
+          } else {
+            newConfig = [...newConfig, config]
+          }
+
+          setSelectedOptions(prevSelected => [...prevSelected, config.key])
+
+          handleChange({ target: { value: config.key } }, '', newConfig)
+
+          // onChange({ ...data, associationsConfig: associationsConfig })
+        }}
+      />
+
+      <Dialog open={Boolean(singleTextChoice)} onClose={() => setSingleTextChoice(null)} fullWidth maxWidth='xs'>
+        <DialogTitle>{messages?.dialogs?.chooseAction || 'Choose action'}</DialogTitle>
+        <DialogContent>
+          {messages?.dialogs?.singleTextChoice || 'How do you want to use this SingleText?'}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              const value = singleTextChoice.value
+
+              // proceed normally as checked
+              const newSelected = selectedOptions.includes(value) ? selectedOptions : [...selectedOptions, value]
+
+              setSelectedOptions(newSelected)
+              const associationsConfig = data?.associationsConfig ?? []
+              const filteredAssociationsConfig = associationsConfig.filter(item => item.key !== value)
+              onChange({
+                ...data,
+                selected: newSelected,
+                associationsConfig: filteredAssociationsConfig,
+                type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit
+              })
+              setSingleTextChoice(null)
+            }}
+          >
+            {messages?.dialogs?.normalbtn || 'Normal'}
+          </Button>
+          <Button
+            variant='contained'
+            onClick={() => {
+              const { value, field } = singleTextChoice
+              setAssociationsOpen({ key: value, source: field?.options?.source, field, type: 'normal' })
+              setSingleTextChoice(null)
+            }}
+          >
+            {messages?.dialogs?.convertToAssociations || 'Convert to Associations'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <form
         className='flex flex-col p-4 h-full'
         onSubmit={e => {
@@ -164,13 +316,22 @@ function Select({ onChange, data, type, buttonRef, title }) {
           value={collection}
           onChange={(e, value) => {
             setCollection(value)
-            onChange({ ...data, collectionId: value?.id, collectionName: value?.key, selected: [], sortWithId: false })
-            setSelectedOptions([])
+            setRelatedCollections([])
+            setRelatedCollectionsFields([])
+            onChange({
+              ...data,
+              collectionId: value?.id,
+              collectionName: value?.key,
+              selected: [],
+              sortWithId: false,
+              relatedCollections: [],
+              SelectedRelatedCollectionsFields: []
+            })
           }}
           renderInput={params => (
             <TextField
               {...params}
-              label={locale === 'ar' ? 'نموذج البيانات' : 'Select Data Model'}
+              label={messages.dialogs.selectDataModel}
               variant='outlined'
               InputProps={{
                 ...params.InputProps,
@@ -197,23 +358,199 @@ function Select({ onChange, data, type, buttonRef, title }) {
             <FormControl component='fieldset' fullWidth>
               <FormLabel component='legend'>{messages.View_Value}</FormLabel>
               <div className='!flex !flex-row !flex-wrap gap-2'>
-                {getFields?.map(value => (
-                  <FormControlLabel
-                    key={value.key}
-                    className='!w-fit capitalize'
-                    control={
-                      <Checkbox
-                        value={value.key}
-                        checked={selectedOptions.includes(value.key)}
-                        onChange={handleChange}
-                      />
-                    }
-                    label={value.key}
-                  />
-                ))}
+                {getFields?.map(value => {
+                  const dataValidations = {}
+                  value.validationData.forEach(item => {
+                    dataValidations[item.ruleType] = item.parameters
+                  })
+
+                  return (
+                    <FormControlLabel
+                      key={value.key}
+                      className='!w-fit capitalize'
+                      control={
+                        <>
+                          <Checkbox
+                            value={value.key}
+                            checked={selectedOptions.includes(value.key)}
+                            onChange={e => {
+                              handleChange(e, value.fieldCategory, false, value)
+                            }}
+                          />
+                        </>
+                      }
+                      label={
+                        <>
+                          {value.key} {dataValidations?.Required ? <span className='text-red-500'>*</span> : ''}
+                        </>
+                      }
+                    />
+                  )
+                })}
               </div>
             </FormControl>
           </div>
+          {!type && (
+            <div className='mt-4 border-2 border-main-color border-dashed p-2 rounded-md'>
+              <div className='flex justify-end items-center mb-2'>
+                <Button
+                  variant='contained'
+                  color='primary'
+                  onClick={() => {
+                    setRelatedCollections([])
+                    const loadingToast = toast.loading(messages.dialogs.loading)
+                    axiosGet(`collections/get-related-collections?id=${collection.id}`, locale)
+                      .then(res => {
+                        if (res.status) {
+                          setRelatedCollections(res.data ?? [])
+                        }
+                      })
+                      .finally(() => {
+                        toast.dismiss(loadingToast)
+                      })
+                  }}
+                >
+                  {messages.dialogs.getRelatedCollections}
+                </Button>
+              </div>
+              <TextField
+                select
+                fullWidth
+                value={null}
+                label={messages.dialogs.addSuBForm}
+                id='select-helper'
+                variant='filled'
+                onChange={e => {
+                  const oldRelatedCollections = data?.relatedCollections ?? []
+                  const foundRelatedCollections = relatedCollections.find(item => item.key === e.target.value)
+                  const findOldRelatedCollections = oldRelatedCollections.find(item => item.key === e.target.value)
+                  if (findOldRelatedCollections) {
+                    toast.error(messages.dialogs.relatedCollectionAlreadyExists)
+
+                    return
+                  }
+                  onChange({ ...data, relatedCollections: [...oldRelatedCollections, foundRelatedCollections] })
+                }}
+              >
+                {relatedCollections.map((item, i) => (
+                  <MenuItem value={item.key} key={i}>
+                    {item?.key}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <Collapse
+                transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
+                isOpen={Boolean(data.relatedCollections?.length > 0)}
+              >
+                <div className='flex flex-col gap-2 my-3 '>
+                  {relatedCollectionsFields?.map((item, i) => (
+                    <div key={i} className='border-2 border-main-color border-dashed p-2 rounded-md'>
+                      <div className='flex justify-between items-center gap-5'>
+                        <div className=''>{item.collection.key}</div>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          onClick={() => {
+                            onChange({
+                              ...data,
+                              relatedCollections: data.relatedCollections.filter(
+                                items => items.key !== item?.collection?.key
+                              ),
+                              SelectedRelatedCollectionsFields: SelectedRelatedCollectionsFields.filter(
+                                items => items.collection.key !== item?.collection?.key
+                              )
+                            })
+                          }}
+                        >
+                          <MdDeleteOutline />
+                        </IconButton>
+                      </div>
+                      <div className=''>
+                        <FormControl component='fieldset' fullWidth>
+                          <FormLabel component='legend'>{messages.View_Value}</FormLabel>
+                          <div className='!flex !flex-row !flex-wrap gap-2'>
+                            {item.fields?.map(value => {
+                              const dataValidations = {}
+                              value.validationData.forEach(item => {
+                                dataValidations[item.ruleType] = item.parameters
+                              })
+
+                              const fieldSelected = SelectedRelatedCollectionsFields?.find(
+                                s => s.collection.key === item.collection.key
+                              )
+
+                              return (
+                                <FormControlLabel
+                                  key={value.key}
+                                  className='!w-fit capitalize'
+                                  control={
+                                    <>
+                                      <Checkbox
+                                        value={value.key}
+                                        checked={fieldSelected?.selected?.includes(value.key)}
+                                        onChange={e => {
+                                          setSelectedRelatedCollectionsFields(prev => {
+                                            const fieldSelected = prev.find(
+                                              itemS => itemS.collection.key === item.collection.key
+                                            )
+
+                                            // ✅ لو الـ collection موجودة
+                                            if (fieldSelected) {
+                                              const isAlreadySelected = fieldSelected.selected.includes(value.key)
+
+                                              // تحديث الـ selected داخل الـ collection المحددة
+                                              const updated = prev.map(itemS => {
+                                                if (itemS.collection.key === item.collection.key) {
+                                                  return {
+                                                    ...itemS,
+                                                    selected: isAlreadySelected
+                                                      ? itemS.selected.filter(k => k !== value.key) // شيل القيمة لو موجودة
+                                                      : [...itemS.selected, value.key] // ضيف القيمة لو مش موجودة
+                                                  }
+                                                }
+
+                                                return itemS
+                                              })
+
+                                              onChange({ ...data, SelectedRelatedCollectionsFields: updated })
+
+                                              return updated
+                                            }
+
+                                            // ✅ لو الـ collection مش موجودة، أضفها جديدة
+                                            onChange({
+                                              ...data,
+                                              SelectedRelatedCollectionsFields: [
+                                                ...prev,
+                                                { collection: item.collection, selected: [value.key] }
+                                              ]
+                                            })
+
+                                            return [...prev, { collection: item.collection, selected: [value.key] }]
+                                          })
+                                        }}
+                                      />
+                                    </>
+                                  }
+                                  label={
+                                    <>
+                                      {value.key}{' '}
+                                      {dataValidations?.Required ? <span className='text-red-500'>*</span> : ''}
+                                    </>
+                                  }
+                                />
+                              )
+                            })}
+                          </div>
+                        </FormControl>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Collapse>
+            </div>
+          )}
 
           <div className='mt-4'></div>
           {!type ? (
@@ -223,30 +560,14 @@ function Select({ onChange, data, type, buttonRef, title }) {
                 fullWidth
                 value={data.type_of_sumbit || ''}
                 onChange={e => {
-                  if (e.target.value === 'collection') {
-                    if (selectedOptions.length !== getFields.length) {
-                      toast.error(locale === 'ar' ? 'يجب اختيار كل الحقول' : 'You must select the All fields')
-
-                      return
-                    }
-                  }
-
                   onChange({ ...data, type_of_sumbit: e.target.value })
                 }}
-                label={locale === 'ar' ? 'نوع الارسال' : 'Type Of Submit'}
+                label={messages.dialogs.typeOfSubmit}
                 variant='filled'
               >
-                <MenuItem value={'collection'}>{locale === 'ar' ? 'هذه النموذج' : 'This Data model'}</MenuItem>
-                <MenuItem value={'api'}>{locale === 'ar' ? 'الي Api اخر' : 'Other API'}</MenuItem>
+                <MenuItem value={'collection'}>{messages.dialogs.thisDataModel}</MenuItem>
+                <MenuItem value={'api'}>{messages.dialogs.otherApi}</MenuItem>
               </TextField>
-              <TextField
-                fullWidth
-                value={data.redirect || ''}
-                onChange={e => onChange({ ...data, redirect: e.target.value })}
-                label={locale === 'ar' ? 'الذهاب الي' : 'Redirect to'}
-                variant='filled'
-              />
-
               <Collapse
                 transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
                 isOpen={Boolean(data.type_of_sumbit === 'api')}
@@ -255,19 +576,32 @@ function Select({ onChange, data, type, buttonRef, title }) {
                   fullWidth
                   value={data.submitApi || ''}
                   onChange={e => onChange({ ...data, submitApi: e.target.value })}
-                  label={locale === 'ar' ? 'ارسال البيانات الي الAPI' : 'Submit To API'}
+                  label={messages.dialogs.submitToApi}
                   variant='filled'
                 />
               </Collapse>
 
+              <div className='pt-2 border-2 rounded-md mt-5 p-2 border-dashed border-main-color'>
+                <h2 className='mt-2 text-lg font-bold text-main-color'>{messages.onSubmit}</h2>
+                <TextField
+                  fullWidth
+                  value={data.redirect || ''}
+                  onChange={e => onChange({ ...data, redirect: e.target.value })}
+                  label={messages.dialogs.redirectTo}
+                  variant='filled'
+                />
+                <div className='mt-2'></div>
+                <JsEditorOnSubmit jsCode={data.onSubmit ?? ''} onChange={onChange} data={data} />
+              </div>
+
               <div className='p-2 mt-4 rounded-md border-2 border-gray-300'>
-                <div className='text-lg font-bold'>{locale === 'ar' ? 'اضافة عناصر' : 'Add More Element'}</div>
+                <div className='text-lg font-bold'>{messages.dialogs.addMoreElement}</div>
 
                 <TextField
                   select
                   fullWidth
                   value={moreElement}
-                  label={locale === 'ar' ? 'اضافة عناصر' : 'Add More Element'}
+                  label={messages.dialogs.addMoreElement}
                   id='select-helper'
                   variant='filled'
                   onChange={e => {
@@ -276,7 +610,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                 >
                   {addMoreElement.map((item, i) => (
                     <MenuItem value={item.key} key={i}>
-                      {locale === 'ar' ? item.name_ar : item.name_en}
+                      {item?.[`name_${locale}`]}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -284,7 +618,6 @@ function Select({ onChange, data, type, buttonRef, title }) {
                   <div className='flex justify-center my-3'>
                     <Button
                       onClick={() => {
-                        console.log(moreElement)
                         if (moreElement) {
                           if (moreElement === 'check_box') {
                             const oldAddMoreElement = data?.addMoreElement ?? []
@@ -367,13 +700,13 @@ function Select({ onChange, data, type, buttonRef, title }) {
                             })
                             setMoreElement('')
                           }
-                          toast.success(locale === 'ar' ? 'تم اضافة العنصر' : 'Element Added')
+                          toast.success(messages.dialogs.elementAdded)
                         }
                       }}
                       variant='contained'
                       color='primary'
                     >
-                      {locale === 'ar' ? 'اضافة' : 'Add'}
+                      {messages.dialogs.add}
                     </Button>
                   </div>
                 </Collapse>
@@ -390,14 +723,12 @@ function Select({ onChange, data, type, buttonRef, title }) {
                             <div className='text-sm'>
                               <span className='text-main-color me-2'>
                                 (
-                                {
-                                  addMoreElement.find(ele => ele.key.toLowerCase() === item.key.toLowerCase())?.[
-                                    `name_${locale}`
-                                  ] || messages.text
-                                }
+                                {addMoreElement.find(ele => ele.key.toLowerCase() === item.key.toLowerCase())?.[
+                                  `name_${locale}`
+                                ] || messages.text}
                                 )
                               </span>
-                              {locale === 'ar' ? item.name_ar : item.name_en}{' '}
+                              {item?.[`name_${locale}`]}{' '}
                             </div>
                             <Tooltip title={messages.delete}>
                               <IconButton
@@ -433,11 +764,11 @@ function Select({ onChange, data, type, buttonRef, title }) {
                     kind: e.target.value
                   })
                 }}
-                label={locale === 'ar' ? 'نوع الجدول' : 'Type Of table'}
+                label={messages.dialogs.typeOfTable}
                 variant='filled'
               >
-                <MenuItem value={'view-data'}>{locale === 'ar' ? 'عرض البيانات' : 'View Data'}</MenuItem>
-                <MenuItem value={'form-table'}>{locale === 'ar' ? 'ارسال البيانات' : 'Submit Data '}</MenuItem>
+                <MenuItem value={'view-data'}>{messages.dialogs.viewData}</MenuItem>
+                <MenuItem value={'form-table'}>{messages.dialogs.submitData}</MenuItem>
               </TextField>
               <Collapse
                 transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
@@ -448,27 +779,19 @@ function Select({ onChange, data, type, buttonRef, title }) {
                   fullWidth
                   value={data.type_of_sumbit || ''}
                   onChange={e => {
-                    if (e.target.value === 'collection') {
-                      if (selectedOptions.length !== getFields.length) {
-                        toast.error(locale === 'ar' ? 'يجب اختيار كل الحقول' : 'You must select the All fields')
-
-                        return
-                      }
-                    }
-
                     onChange({ ...data, type_of_sumbit: e.target.value })
                   }}
-                  label={locale === 'ar' ? 'نوع الارسال' : 'Type Of Submit'}
+                  label={messages.dialogs.typeOfSubmit}
                   variant='filled'
                 >
-                  <MenuItem value={'collection'}>{locale === 'ar' ? 'هذه التجميعة' : 'This Collection'}</MenuItem>
-                  <MenuItem value={'api'}>{locale === 'ar' ? 'الي Api اخر' : 'Other API'}</MenuItem>
+                  <MenuItem value={'collection'}>{messages.dialogs.thisCollection}</MenuItem>
+                  <MenuItem value={'api'}>{messages.dialogs.otherApi}</MenuItem>
                 </TextField>
                 <TextField
                   fullWidth
                   value={data.redirect || ''}
                   onChange={e => onChange({ ...data, redirect: e.target.value })}
-                  label={locale === 'ar' ? 'الذهاب الي' : 'Redirect to'}
+                  label={messages.dialogs.redirectTo}
                   variant='filled'
                 />
 
@@ -480,19 +803,19 @@ function Select({ onChange, data, type, buttonRef, title }) {
                     fullWidth
                     value={data.submitApi || ''}
                     onChange={e => onChange({ ...data, submitApi: e.target.value })}
-                    label={locale === 'ar' ? 'ارسال البيانات الي الAPI' : 'Submit To API'}
+                    label={messages.dialogs.submitToApi}
                     variant='filled'
                   />
                 </Collapse>
 
                 <div className='p-2 mt-4 rounded-md border-2 border-gray-300'>
-                  <div className='text-lg font-bold'>{locale === 'ar' ? 'اضافة عناصر' : 'Add More Element'}</div>
+                  <div className='text-lg font-bold'>{messages.dialogs.addMoreElement}</div>
 
                   <TextField
                     select
                     fullWidth
                     value={moreElement}
-                    label={locale === 'ar' ? 'اضافة عناصر' : 'Add More Element'}
+                    label={messages.dialogs.addMoreElement}
                     id='select-helper'
                     variant='filled'
                     onChange={e => {
@@ -501,7 +824,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                   >
                     {addMoreElement.map((item, i) => (
                       <MenuItem value={item.key} key={i}>
-                        {locale === 'ar' ? item.name_ar : item.name_en}
+                        {item?.[`name_${locale}`]}
                       </MenuItem>
                     ))}
                   </TextField>
@@ -574,7 +897,6 @@ function Select({ onChange, data, type, buttonRef, title }) {
                               })
                               setMoreElement('')
                             }
-                            console.log(moreElement)
                             if (moreElement === 'text') {
                               const oldAddMoreElement = data?.addMoreElement ?? []
                               onChange({
@@ -592,13 +914,13 @@ function Select({ onChange, data, type, buttonRef, title }) {
                               })
                               setMoreElement('')
                             }
-                            toast.success(locale === 'ar' ? 'تم اضافة العنصر' : 'Element Added')
+                            toast.success(messages.dialogs.elementAdded)
                           }
                         }}
                         variant='contained'
                         color='primary'
                       >
-                        {locale === 'ar' ? 'اضافة' : 'Add'}
+                        {messages.dialogs.add}
                       </Button>
                     </div>
                   </Collapse>
@@ -610,7 +932,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                       {data?.addMoreElement?.map(item => (
                         <div key={item.id}>
                           <div className='flex justify-between items-center'>
-                            <div className='text-sm'>{locale === 'ar' ? item.name_ar : item.name_en}</div>
+                            <div className='text-sm'>{item?.[`name_${locale}`]}</div>
                             <Button
                               variant='outlined'
                               color='error'
@@ -622,7 +944,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                                 })
                               }}
                             >
-                              {locale === 'ar' ? 'حذف' : 'Delete'}
+                              {messages.dialogs.delete}
                             </Button>
                           </div>
                         </div>
@@ -632,7 +954,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                 </div>
               </Collapse>
 
-              <h2 className='text-lg font-bold'>{locale === 'ar' ? 'الاجراءات' : 'Actions'}</h2>
+              <h2 className='text-lg font-bold'>{messages.dialogs.actions}</h2>
               <FormControlLabel
                 key={data.edit}
                 className='!w-fit capitalize'
@@ -645,7 +967,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                     }}
                   />
                 }
-                label={locale === 'ar' ? 'تعديل البيانات' : 'Edit Data'}
+                label={messages.dialogs.editData}
               />
               <FormControlLabel
                 key={data.delete}
@@ -659,7 +981,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                     }}
                   />
                 }
-                label={locale === 'ar' ? 'حذف البيانات' : 'Delete Data'}
+                label={messages.dialogs.deleteData}
               />
             </>
           )}

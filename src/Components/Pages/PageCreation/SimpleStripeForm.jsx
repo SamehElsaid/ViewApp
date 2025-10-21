@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { toast } from 'react-toastify';
+import { useIntl } from 'react-intl';
 
 const SimpleStripeForm = ({ locale  , updatePay}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
+  const { messages } = useIntl()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +18,7 @@ const SimpleStripeForm = ({ locale  , updatePay}) => {
     // But this is a mock just for UI purposes
     setTimeout(() => {
       setProcessing(false);
-      toast.success(locale === 'ar' ? 'تمت عملية الدفع بنجاح (وهمية)' : 'Payment successful (mock)!');
+      toast.success(messages.dialogs.paymentSuccessful);
       updatePay(false)
     }, 1500);
   };
