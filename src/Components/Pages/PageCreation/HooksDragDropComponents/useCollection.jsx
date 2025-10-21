@@ -4,7 +4,17 @@ import Select from '../Select'
 import ViewCollection from '../ViewCollection'
 import { useIntl } from 'react-intl'
 
-export default function useCollection({ advancedEdit, locale, readOnly, buttonRef, workflowId, pageId }) {
+export default function useCollection({
+  advancedEdit,
+  locale,
+  readOnly,
+  buttonRef,
+  workflowId,
+  pageId,
+  entitiesId,
+  collectionName,
+  pageName
+}) {
   const { messages } = useIntl()
 
   const collection = useMemo(() => {
@@ -19,6 +29,9 @@ export default function useCollection({ advancedEdit, locale, readOnly, buttonRe
             disabled={!readOnly}
             workflowId={workflowId}
             pageId={pageId}
+            entitiesId={entitiesId}
+            collectionName={collectionName}
+            pageName={pageName}
           />
         )
       },

@@ -14,7 +14,17 @@ import { useIntl } from 'react-intl'
 
 const ResponsiveGridLayout = WidthProvider(GridLayout)
 
-export default function ViewCollection({ data, locale, onChange, readOnly, disabled, pageId }) {
+export default function ViewCollection({
+  data,
+  locale,
+  onChange,
+  readOnly,
+  disabled,
+  pageId,
+  entitiesId,
+  collectionName,
+  pageName
+}) {
   const [getFields, setGetFields] = useState([])
   const [loading, setLoading] = useState(true)
   const [redirect, setRedirect] = useState(false)
@@ -36,8 +46,6 @@ export default function ViewCollection({ data, locale, onChange, readOnly, disab
   const addMoreElement = data.addMoreElement ?? []
   const dataLength = getFields.length + addMoreElement.length
 
-
-
   const convertTheTheSameYToGroup = layout
     ? Object?.values(
         layout?.reduce((acc, item) => ((acc[Math.floor(item.y)] = acc[Math.floor(item.y)] || []).push(item), acc), {})
@@ -46,6 +54,26 @@ export default function ViewCollection({ data, locale, onChange, readOnly, disab
   const SortWithXInGroup = convertTheTheSameYToGroup.map(group => group.sort((a, b) => a.x - b.x))
   const sortedData = SortWithXInGroup.flat()
   const filterSelect = getFields
+
+  useEffect(() => {
+    if (entitiesId && collectionName) {
+      axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale)
+        .then(res => {
+          if (res.status) {
+            console.log(res, 'hereee')
+
+            console.log(res.entities)
+            setEntitiesData(res.entities?.[0])
+            if (pageName === 'MedicalMemberDetailes') {
+              setAllowAdd(res.entities?.[0].ALLOWADD)
+            }
+          }
+        })
+        .finally(() => setLoadingEntities(false))
+    } else {
+      setLoadingEntities(false)
+    }
+  }, [entitiesId, collectionName, pageName])
 
   useEffect(() => {
     if (!loading) {
