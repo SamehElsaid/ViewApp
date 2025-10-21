@@ -33,6 +33,9 @@ export default function ViewCollection({
   const refError = useRef({})
   const dataRef = useRef({})
   const [triggerData, setTriggerData] = useState(0)
+  const [loadingEntities, setLoadingEntities] = useState(true)
+  const [entitiesData, setEntitiesData] = useState(null)
+  const [allowAdd, setAllowAdd] = useState(true)
 
   console.log(data, 'data')
 
@@ -476,6 +479,13 @@ export default function ViewCollection({
                     disabledBtn={!data.type_of_sumbit || (data.type_of_sumbit === 'api' && !data.submitApi)}
                     refError={refError}
                     setLayout={setLayout}
+                    findValue={
+                      filed.type === 'Date'
+                        ? notFound
+                          ? entitiesData?.[filed?.key]
+                          : new Date()
+                        : entitiesData?.[filed?.key]
+                    }
                     triggerData={triggerData}
                     data={data}
                     layout={layout}
