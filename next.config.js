@@ -9,10 +9,9 @@ module.exports = withTM({
     defaultLocale: 'en',
     localeDetection: true
   },
-
   env: {
     API_URL: 'https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api',
-    IDENTITY_URL: 'https://localhost:7000/',
+    IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
     DEV_MODE: false,
     DOMAIN: 'https://view-app-omega.vercel.app/'
   },
