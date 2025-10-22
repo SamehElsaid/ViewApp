@@ -226,7 +226,9 @@ export default function ViewCollection({
 
     if (entitiesId && collectionName) {
       if (data.onSubmit) {
-        handleSubmitEvent()
+        if (handleSubmitEvent) {
+          handleSubmitEvent()
+        }
         const evaluatedFn = eval('(' + data.onSubmit + ')')
         if (handleSubmitEvent) {
         } else {
