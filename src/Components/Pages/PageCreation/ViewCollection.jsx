@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { axiosGet, axiosPost } from 'src/Components/axiosCall'
+import { axiosGet, axiosPost, axiosPut } from 'src/Components/axiosCall'
 import DisplayField from './DisplayField'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/router'
@@ -35,9 +35,6 @@ export default function ViewCollection({
   const [triggerData, setTriggerData] = useState(0)
   const [loadingEntities, setLoadingEntities] = useState(true)
   const [entitiesData, setEntitiesData] = useState(null)
-  const [allowAdd, setAllowAdd] = useState(true)
-
-  console.log(data, 'data')
 
   const {
     query: { requestId },
@@ -57,12 +54,6 @@ export default function ViewCollection({
   const SortWithXInGroup = convertTheTheSameYToGroup.map(group => group.sort((a, b) => a.x - b.x))
   const sortedData = SortWithXInGroup.flat()
   const filterSelect = getFields
-  
-
-  console.log(entitiesData, 'entitiesData');
-  
-
-  console.log(entitiesId, collectionName)
 
   useEffect(() => {
     if (entitiesId !== null && collectionName !== null) {
@@ -70,13 +61,8 @@ export default function ViewCollection({
 
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale)
         .then(res => {
-          
           if (res.status) {
-
             setEntitiesData(res.entities?.[0])
-            if (pageName === 'MedicalMemberDetailes') {
-              setAllowAdd(res.entities?.[0].ALLOWADD)
-            }
           }
         })
         .finally(() => setLoadingEntities(false))
@@ -161,7 +147,7 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
-  const handleSubmit = (e, externalApiUrl) => {
+  const handleSubmit = (e, handleSubmitEvent) => {
     e.preventDefault()
 
     const initialSendData = { ...dataRef.current }
@@ -233,33 +219,64 @@ export default function ViewCollection({
 
     console.log(output, 'output')
 
-    const apiCall = externalApiUrl
-      ? externalApiUrl
-      : data.type_of_sumbit === 'collection'
-      ? `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
-      : data.submitApi
+    const apiCall =
+      data.type_of_sumbit === 'collection'
+        ? `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
+        : data.submitApi
 
-    axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(res => {
-      if (res.status) {
-        setReload(prev => prev + 1)
-        toast.success(messages.dialogs.dataSentSuccessfully)
-        if (data.onSubmit) {
-          const evaluatedFn = eval('(' + data.onSubmit + ')')
-
-          evaluatedFn()
-        }
-        if (data.redirect === '{{redirect}}') {
-          if (redirect) {
-            push(`/${locale}/${redirect}`)
+    if (entitiesId && collectionName) {
+      axiosPut(`generic-entities/${collectionName}/${entitiesId}`, locale, output).then(res => {
+        if (res.status) {
+          setReload(prev => prev + 1)
+          toast.success(messages.dialogs.dataSentSuccessfully)
+          if (data.onSubmit) {
+            const evaluatedFn = eval('(' + data.onSubmit + ')')
+            if (handleSubmitEvent) {
+              handleSubmitEvent()
+            } else {
+              evaluatedFn()
+            }
           }
+          if (data.redirect === '{{redirect}}') {
+            if (redirect) {
+              push(`/${locale}/${redirect}`)
+            }
 
-          return
+            return
+          }
+          if (data?.redirect) {
+            push(`/${locale}/${finalUrl}`)
+          }
         }
-        if (data?.redirect) {
-          push(`/${locale}/${finalUrl}`)
+      })
+    } else {
+      axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(
+        res => {
+          if (res.status) {
+            setReload(prev => prev + 1)
+            toast.success(messages.dialogs.dataSentSuccessfully)
+            if (data.onSubmit) {
+              const evaluatedFn = eval('(' + data.onSubmit + ')')
+              if (handleSubmitEvent) {
+                handleSubmitEvent()
+              } else {
+                evaluatedFn()
+              }
+            }
+            if (data.redirect === '{{redirect}}') {
+              if (redirect) {
+                push(`/${locale}/${redirect}`)
+              }
+
+              return
+            }
+            if (data?.redirect) {
+              push(`/${locale}/${finalUrl}`)
+            }
+          }
         }
-      }
-    })
+      )
+    }
   }
 
   const [open, setOpen] = useState(false)

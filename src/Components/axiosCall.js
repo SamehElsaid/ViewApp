@@ -2,7 +2,6 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import { decryptData } from './encryption'
 import { toast } from 'react-toastify'
-import { saveAs } from 'file-saver'
 
 export const axiosGet = async (url, locale, token, params = {}, close) => {
   const authToken = Cookies.get('sub')
@@ -43,8 +42,8 @@ export const axiosPatch = async (url, locale, data, file, close) => {
 
 
   const headerToken = file
-    ? { ...HeaderImg, Authorization: `Bearer ${decryptData(authToken).token}` }
-    : { Authorization: `Bearer ${decryptData(authToken).token}` }
+    ? { ...HeaderImg, Authorization: `Bearer ${decryptData(authToken).token.trim()}` }
+    : { Authorization: `Bearer ${decryptData(authToken).token.trim()}` }
 
   if (close) {
     delete headerToken.Authorization
@@ -100,8 +99,8 @@ export const axiosPut = async (url, locale, data, file, close) => {
   const HeaderImg = { 'Content-Type': 'multipart/form-data' }
 
   const headerToken = file
-    ? { ...HeaderImg, Authorization: `Bearer ${decryptData(authToken).token}` }
-    : { Authorization: `Bearer ${decryptData(authToken).token}` }
+    ? { ...HeaderImg, Authorization: `Bearer ${decryptData(authToken).token.trim()}` }
+    : { Authorization: `Bearer ${decryptData(authToken).token.trim()}` }
 
   if (close) {
     delete headerToken.Authorization
@@ -152,7 +151,7 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
 
   const header = {
     headers: {
-      Authorization: `Bearer  ${decryptData(authToken).token}`,
+      Authorization: `Bearer  ${decryptData(authToken).token.trim()}`,
       'Accept-Language': locale
     }
   }
@@ -184,7 +183,7 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
 
       return {
         status: true,
-        data: `${decryptData(authToken).username}/` + fileNew.name + '.' + fileNew.type.split('/')[1]
+        data: `${decryptData(authToken).username.trim()}/` + fileNew.name + '.' + fileNew.type.split('/')[1]
       }
     } catch (error) {
       toast.error(locale === 'ar' ? 'حدث خطأ في رفع الصورة' : 'Error uploading file: ' + error.message)

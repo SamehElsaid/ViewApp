@@ -552,31 +552,33 @@ export default function InputControlDesign({ open, handleClose, design, locale, 
                     />
                     {open.key === 'button' && (
                       <>
-                        <TextField
-                          fullWidth
-                          type='text'
-                          defaultValue={roles?.externalApiUrl || ''}
-                          onBlur={e => {
-                            const additional_fields = data.additional_fields ?? []
-                            const findMyInput = additional_fields.find(inp => inp.key === open.id)
-                            if (findMyInput) {
-                              findMyInput.roles.externalApiUrl = e.target.value
-                            } else {
-                              const myEdit = {
-                                key: open.id,
-                                design: objectToCss(Css).replaceAll('NaN', ''),
-                                roles: {
-                                  ...roles,
-                                  externalApiUrl: e.target.value
+                        <FormControl fullWidth variant='filled'>
+                          <InputLabel>{messages.dialogs.type}</InputLabel>
+                          <Select
+                            value={roles?.type || 'button'}
+                            onChange={e => {
+                              const additional_fields = data.additional_fields ?? []
+                              const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                              if (findMyInput) {
+                                findMyInput.roles.type = e.target.value
+                              } else {
+                                const myEdit = {
+                                  key: open.id,
+                                  design: objectToCss(Css).replaceAll('NaN', ''),
+                                  roles: {
+                                    ...roles,
+                                    type: e.target.value
+                                  }
                                 }
+                                additional_fields.push(myEdit)
                               }
-                              additional_fields.push(myEdit)
-                            }
-                            onChange({ ...data, additional_fields: additional_fields })
-                          }}
-                          variant='filled'
-                          label={messages.dialogs.externalApiUrl}
-                        />
+                              onChange({ ...data, additional_fields: additional_fields })
+                            }}
+                          >
+                            <MenuItem value='submit'>{messages.dialogs.submit}</MenuItem>
+                            <MenuItem value='button'>{messages.dialogs.button}</MenuItem>
+                          </Select>
+                        </FormControl>
                       </>
                     )}
 

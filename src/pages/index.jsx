@@ -9,6 +9,7 @@ import TableEdit from 'src/Components/TableEdit/TableEdit'
 import Link from 'next/link'
 import { IconButton } from '@mui/material'
 import { Icon } from '@iconify/react'
+import { useSelector } from 'react-redux'
 
 export default function Index() {
   const { locale, messages } = useIntl()
@@ -20,6 +21,9 @@ export default function Index() {
   const inputRef = useRef(null)
   const [refresh, setRefresh] = useState(0)
   const [data, setData] = useState([])
+  const profile = useSelector(rx => rx.auth.data)
+  console.log(profile, 'profile')
+
 
   useEffect(() => {
     setLoading(true)
@@ -105,7 +109,9 @@ export default function Index() {
         <Typography variant='subtitle2' className='text-overflow' sx={{ fontWeight: 500, color: 'text.secondary' }}>
           <IconButton
             LinkComponent={Link}
-            href={`/${row.pageName}?requestId=${row.id}&entityId=${row.entityId}&collection=${row.collectionName}`}
+            href={`/${row.pageName}?requestId=${row.id}&entityId=${row.entityId}&collection=${row.collectionName}${
+              row.caseId ? `&caseId=${row.caseId}` : ''
+            }`}
           >
             <Icon icon='mdi:eye' />
           </IconButton>
@@ -117,9 +123,7 @@ export default function Index() {
   return (
     <div>
       <Card className='w-[100%]  mb-5 py-4 '>
-        <IconButton LinkComponent={Link} href={`/facility`}>
-          <Icon icon='mdi:eye' />
-        </IconButton>
+       
         <CardContent
           className='flex-col gap-2 h-full md:flex-row'
           sx={{
@@ -138,6 +142,11 @@ export default function Index() {
               {data?.length}
             </Avatar>
           </div>
+          {(profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
+            <Button LinkComponent={Link} href={`/CreatorPage`}>
+              CreatorPage
+            </Button>
+          )}
         </CardContent>
       </Card>
       <Box sx={{ mb: 4 }}>
