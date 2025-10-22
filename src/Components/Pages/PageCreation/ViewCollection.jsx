@@ -225,30 +225,32 @@ export default function ViewCollection({
         : data.submitApi
 
     if (entitiesId && collectionName) {
-      handleSubmitEvent()
-      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output).then(res => {
-        if (res.status) {
-          setReload(prev => prev + 1)
-          toast.success(messages.dialogs.dataSentSuccessfully)
-          if (data.onSubmit) {
-            const evaluatedFn = eval('(' + data.onSubmit + ')')
-            if (handleSubmitEvent) {
-            } else {
-              evaluatedFn()
-            }
-          }
-          if (data.redirect === '{{redirect}}') {
-            if (redirect) {
-              push(`/${locale}/${redirect}`)
-            }
+      if (data.onSubmit) {
+        handleSubmitEvent()
+        const evaluatedFn = eval('(' + data.onSubmit + ')')
+        if (handleSubmitEvent) {
+        } else {
+          evaluatedFn()
+        }
+      }
+      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output).then(
+        res => {
+          if (res.status) {
+            setReload(prev => prev + 1)
+            toast.success(messages.dialogs.dataSentSuccessfully)
+            if (data.redirect === '{{redirect}}') {
+              if (redirect) {
+                push(`/${locale}/${redirect}`)
+              }
 
-            return
-          }
-          if (data?.redirect) {
-            push(`/${locale}/${finalUrl}`)
+              return
+            }
+            if (data?.redirect) {
+              push(`/${locale}/${finalUrl}`)
+            }
           }
         }
-      })
+      )
     } else {
       axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(
         res => {
