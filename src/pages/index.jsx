@@ -24,7 +24,6 @@ export default function Index() {
   const profile = useSelector(rx => rx.auth.data)
   console.log(profile, 'profile')
 
-
   useEffect(() => {
     setLoading(true)
     const loadingToast = toast.loading(locale === 'ar' ? 'جاري التحميل...' : 'Loading...')
@@ -109,9 +108,9 @@ export default function Index() {
         <Typography variant='subtitle2' className='text-overflow' sx={{ fontWeight: 500, color: 'text.secondary' }}>
           <IconButton
             LinkComponent={Link}
-            href={`/${row.pageName}?requestId=${row.id}&entityId=${row.entityId}&collection=${row.collectionName}${
-              row.caseId ? `&caseId=${row.caseId}` : ''
-            }`}
+            href={`/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}` : ''}${
+              row.collectionName ? `&collection=${row.collectionName}` : ''
+            }${row.caseId ? `&caseId=${row.caseId}` : ''}`}
           >
             <Icon icon='mdi:eye' />
           </IconButton>
@@ -123,7 +122,6 @@ export default function Index() {
   return (
     <div>
       <Card className='w-[100%]  mb-5 py-4 '>
-       
         <CardContent
           className='flex-col gap-2 h-full md:flex-row'
           sx={{
