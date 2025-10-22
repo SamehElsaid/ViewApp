@@ -225,7 +225,7 @@ export default function ViewCollection({
         : data.submitApi
 
     if (entitiesId && collectionName) {
-      axiosPut(`generic-entities/${collectionName}/${entitiesId}`, locale, output).then(res => {
+      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output).then(res => {
         if (res.status) {
           setReload(prev => prev + 1)
           toast.success(messages.dialogs.dataSentSuccessfully)
