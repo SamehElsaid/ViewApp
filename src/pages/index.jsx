@@ -140,7 +140,9 @@ export default function Index() {
               {data?.length}
             </Avatar>
           </div>
-          {(profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
+          {(Array.isArray(profile?.role)
+            ? profile.role.includes('SuperAdmin') || profile.role.includes('Pharmacist')
+            : profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
             <Button LinkComponent={Link} href={`/CreatorPage`}>
               CreatorPage
             </Button>
