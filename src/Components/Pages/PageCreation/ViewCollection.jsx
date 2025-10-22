@@ -225,6 +225,7 @@ export default function ViewCollection({
         : data.submitApi
 
     if (entitiesId && collectionName) {
+      handleSubmitEvent()
       axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output).then(res => {
         if (res.status) {
           setReload(prev => prev + 1)
@@ -232,7 +233,6 @@ export default function ViewCollection({
           if (data.onSubmit) {
             const evaluatedFn = eval('(' + data.onSubmit + ')')
             if (handleSubmitEvent) {
-              handleSubmitEvent()
             } else {
               evaluatedFn()
             }
