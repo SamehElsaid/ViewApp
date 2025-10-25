@@ -38,8 +38,6 @@ export default function DisplayField({
   isDisabled,
   hiddenLabel
 }) {
-
-  console.log(findValue, 'findValue');
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [dirty, setDirty] = useState(dirtyProps)
@@ -836,35 +834,32 @@ export default function DisplayField({
   }, [roles])
 
   useEffect(() => {
-    if (findValue || findValue == '') {
-      setValue(findValue)
-      if (input?.type == 'date') {
-        setValue(new Date(findValue))
-      } 
+    console.log(findValue, 'findValue', input)
+
+    const isDate = input?.type === 'date'
+    const isSearchOrCheckbox = ['search', 'checkbox'].includes(input?.kind)
+
+    if (findValue !== undefined && findValue !== null) {
+      setValue(isDate ? new Date(findValue) : findValue)
     } else {
-      if (input?.kind == 'search' || input?.kind == 'checkbox') {
-        setValue([])
-      }
-      if (input?.type == 'date') {
-        setValue(new Date())
-      }
+      if (isSearchOrCheckbox) setValue([])
+      else if (isDate) setValue(new Date())
     }
-  }, [input, findValue])
-  
+  }, [input?.type, input?.kind, findValue])
 
   useEffect(() => {
-    if (reload != 0) {
-      setValue('')
-      if (input?.kind == 'search' || input?.kind == 'checkbox') {
-        setValue([])
-      }
-      setRegex('')
-      setFile('')
-      setError(false)
-      setDirty(false)
-      setShowPassword(false)
-    }
-  }, [reload, input])
+    if (reload === 0) return
+
+    const isSearchOrCheckbox = ['search', 'checkbox'].includes(input?.kind)
+
+    setValue(isSearchOrCheckbox ? [] : '')
+    setRegex('')
+    setFile('')
+    setError(false)
+    setDirty(false)
+    setShowPassword(false)
+  }, [reload, input?.kind])
+
   useEffect(() => {
     if (!loading) {
       setTimeout(() => {
@@ -906,7 +901,6 @@ export default function DisplayField({
 
     setDirty(true)
     let isTypeNew = true
-    console.log('here')
 
     if (input?.kind == 'search' || input?.kind == 'checkbox') {
       isTypeNew = false
@@ -1083,6 +1077,13 @@ export default function DisplayField({
   }, [refError, input, value, dataRef, validations, setTriggerData])
 
   useEffect(() => {
+    if (!input?.getDataForm) {
+      setSelectedOptions([])
+      setOldSelectedOptions([])
+      setLoading(false)
+
+      return
+    }
     if (input?.getDataForm === 'collection') {
       axiosGet(`generic-entities/${input?.options?.source}`)
         .then(res => {
@@ -1097,7 +1098,6 @@ export default function DisplayField({
     }
 
     if (input?.getDataForm === 'api') {
-      console.log(input?.externalApi, input.apiHeaders)
       const apiHeaders = input.apiHeaders ?? {}
       axios
         .get(input?.externalApi, {
@@ -1105,9 +1105,7 @@ export default function DisplayField({
         })
 
         .then(res => {
-          console.log(res.data.result, 'res')
           const selectData = res?.data?.data || res.result || res.data.result || res.data
-          console.log(selectData, 'selectData')
 
           if (Array.isArray(selectData)) {
             setSelectedOptions(selectData)
@@ -1122,7 +1120,6 @@ export default function DisplayField({
         })
     }
     if (input?.getDataForm === 'static') {
-      console.log(input?.staticData)
       setSelectedOptions(input?.staticData)
       setOldSelectedOptions(input?.staticData)
     }
@@ -1148,8 +1145,10 @@ export default function DisplayField({
 
   const onChangeFile = async e => {
     const file = e.target.files[0]
-    if (file?.size > roles?.size * 1024) {
-      toast.error(locale == 'ar' ? `حجم الملف أكبر من ${roles?.size} كيلوبايت` : `File size exceeds ${roles?.size}KB`)
+    const size = roles?.size ? roles?.size * 1024 : 500 * 1024
+
+    if (file?.size > size) {
+      toast.error(locale == 'ar' ? `حجم الملف أكبر من ${size / 1024} كيلوبايت` : `File size exceeds ${size / 1024}KB`)
 
       return
     }

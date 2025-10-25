@@ -140,7 +140,7 @@ const ViewInput = ({
     )
   }
 
-    if (input.kind == 'search') {
+  if (input.kind == 'search') {
     const label = JSON.parse(input?.descriptionEn)
 
     return (
@@ -148,7 +148,7 @@ const ViewInput = ({
         multiple
         value={value}
         onChange={(event, newValue) => {
-          onChange(event, newValue);
+          onChange(event, newValue)
         }}
         sx={{ width: 325 }}
         options={selectedOptions}
@@ -160,11 +160,11 @@ const ViewInput = ({
       />
     )
   }
-  console.log(input.kind);
-  
+  console.log(input.kind)
+
   if (input.kind == 'checkbox') {
     const label = JSON.parse(input?.descriptionEn)
-    console.log(value,"here")
+    console.log(value, 'here')
 
     return (
       <div className='w-full'>
@@ -342,10 +342,7 @@ const ViewInput = ({
                 />
               </svg>
 
-              <p id='file-upload-text'>
-                <span className='font-semibold'>{locale == 'ar' ? 'اضف الصورة' : 'Add Image'} </span>
-                {locale == 'ar' ? 'أو اسحب وأفلت' : 'or drag and drop'}
-              </p>
+              <p id='file-upload-text'>{locale == 'ar' ? ' اسحب وأفلت' : 'Drag and Drop'}</p>
               <p id='file-upload-subtext'>
                 {locale == 'ar' ? 'SVG, PNG, JPG or GIF (MAX. 800x400px)' : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
               </p>
@@ -582,8 +579,6 @@ const ViewInput = ({
       />
     )
   }
-
-
 }
 
 export default ViewInput
