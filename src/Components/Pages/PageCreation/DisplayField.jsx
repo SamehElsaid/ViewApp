@@ -12,6 +12,8 @@ import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
 import axios from 'axios'
+import { decryptData } from 'src/Components/encryption'
+import Cookies from 'js-cookie'
 
 export default function DisplayField({
   from,
@@ -843,7 +845,7 @@ export default function DisplayField({
     if (findValue !== undefined && findValue !== null) {
       console.log(findValue, 'findValue', input, isDate)
 
-      setValue(isDate ?findValue?  new Date(findValue):null : findValue)
+      setValue(isDate ? (findValue ? new Date(findValue) : null) : findValue)
     } else {
       if (isSearchOrCheckbox) setValue([])
       else if (isDate) setValue(new Date())
@@ -1101,14 +1103,21 @@ export default function DisplayField({
     }
 
     if (input?.getDataForm === 'api') {
+      console.log(input?.externalApi, input.apiHeaders)
       const apiHeaders = input.apiHeaders ?? {}
+      const authToken = Cookies.get('sub')
+      if (authToken) {
+        apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
+      }
       axios
         .get(input?.externalApi, {
-          headers: input.apiHeaders
+          headers: apiHeaders
         })
 
         .then(res => {
+          console.log(res.data.result, 'res')
           const selectData = res?.data?.data || res.result || res.data.result || res.data
+          console.log(selectData, 'selectData')
 
           if (Array.isArray(selectData)) {
             setSelectedOptions(selectData)
