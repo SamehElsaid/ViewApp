@@ -833,14 +833,17 @@ export default function DisplayField({
     }
   }, [roles])
 
+  console.log(findValue)
   useEffect(() => {
     console.log(findValue, 'findValue', input)
 
-    const isDate = input?.type === 'date'
+    const isDate = input?.type === 'Date'
     const isSearchOrCheckbox = ['search', 'checkbox'].includes(input?.kind)
 
     if (findValue !== undefined && findValue !== null) {
-      setValue(isDate ? new Date(findValue) : findValue)
+      console.log(findValue, 'findValue', input, isDate)
+
+      setValue(isDate ?findValue?  new Date(findValue):null : findValue)
     } else {
       if (isSearchOrCheckbox) setValue([])
       else if (isDate) setValue(new Date())
