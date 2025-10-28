@@ -11,6 +11,7 @@ import 'react-resizable/css/styles.css'
 import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
+import { CircularProgress } from '@mui/material'
 
 const ResponsiveGridLayout = WidthProvider(GridLayout)
 
@@ -397,6 +398,11 @@ export default function ViewCollection({
 
   return (
     <div className={`${disabled ? 'text-main' : ''}`}>
+      {loading && (
+        <div className='fixed inset-0 z-10 flex justify-center items-center w-full h-full bg-white/50'>
+          <CircularProgress />
+        </div>
+      )}
       <InputControlDesign
         open={open}
         handleClose={handleClose}

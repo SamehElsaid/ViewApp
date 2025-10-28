@@ -6,19 +6,22 @@ import { useIntl } from 'react-intl'
 
 export default function useContainer({ locale, buttonRef }) {
   const { messages } = useIntl()
-  
+
   const ContainerPlugin = useMemo(() => {
     return {
       Renderer: ({ data, children }) => (
-        <div
-          style={{
-            padding: `${data.paddingStart ?? 0}px ${data.paddingEnd ?? 0}px ${data.paddingTop ?? 0}px ${
-              data.paddingBottom ?? 0
-            }px`
-          }}
-          className='container'
-        >
-          {children}
+        <div className='container'>
+          <div
+            className=''
+            style={{
+              paddingTop: data.paddingTop + 'px' ?? 0,
+              paddingBlockEnd: data.paddingBlockEnd + 'px' ?? 0,
+              paddingBlockStart: data.paddingBlockStart + 'px' ?? 0,
+              paddingBottom: data.paddingBottom + 'px' ?? 0
+            }}
+          >
+            {children}
+          </div>
         </div>
       ),
       id: 'containerPlugin',
@@ -68,7 +71,7 @@ export default function useContainer({ locale, buttonRef }) {
         )
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale])
 
   return { ContainerPlugin }

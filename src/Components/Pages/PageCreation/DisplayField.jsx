@@ -7,7 +7,7 @@ import { Icon } from '@iconify/react'
 import { FaEyeSlash } from 'react-icons/fa'
 import NewElement from '../NewElement'
 import { toast } from 'react-toastify'
-import { VaildId } from 'src/Components/_Shared'
+import { replacePlaceholders, VaildId } from 'src/Components/_Shared'
 import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
@@ -888,7 +888,20 @@ export default function DisplayField({
           if (roles?.api_url) {
             setValue(roles?.apiKeyData)
           } else {
-            setValue(roles?.onMount?.value)
+            let newValue = roles?.onMount?.value
+            if (input?.type == 'Date') {
+              const valueDate = new Date(roles?.onMount?.value)
+
+              if (isNaN(valueDate.getTime())) {
+                // invalid date
+                newValue = new Date()
+              } else {
+                newValue = valueDate
+              }
+
+            }
+
+            setValue(newValue)
           }
         }
       }, 0)
@@ -896,6 +909,11 @@ export default function DisplayField({
   }, [roles?.onMount?.type, roles?.onMount?.value, loading])
 
   const onChange = (e, newValue) => {
+    if (roles?.onMount?.includeInQuery) {
+      const query = new URLSearchParams(window.location.search)
+      query.set(input.key, e.target.value)
+      window.history.pushState({}, '', window.location.pathname + '?' + query.toString())
+    }
     try {
       if (roles?.event?.onChange) {
         const evaluatedFn = eval('(' + roles.event.onChange + ')')
@@ -1102,15 +1120,49 @@ export default function DisplayField({
         })
     }
 
+    if (input?.getDataForm === 'static') {
+      console.log(input?.staticData)
+      setSelectedOptions(input?.staticData)
+      setOldSelectedOptions(input?.staticData)
+    }
+  }, [input])
+
+  const [queryParams, setQueryParams] = useState(null)
+
+  console.log(queryParams, 'name')
+  useEffect(() => {
+    const handleChange = () => {
+      const params = new URLSearchParams(window.location.search)
+      const api = input?.externalApi
+      const queryParams = typeof api === 'string' ? [...api.matchAll(/\{(.*?)\}/g)].map(m => m[1]) : []
+      const filteredQuery = queryParams.map(param => params.get(param))
+      setQueryParams(filteredQuery.length > 0 ? JSON.stringify(filteredQuery) : null)
+    }
+
+    window.addEventListener('popstate', handleChange)
+    window.addEventListener('pushstate', handleChange)
+    window.addEventListener('replacestate', handleChange)
+
+    handleChange()
+
+    return () => {
+      window.removeEventListener('popstate', handleChange)
+      window.removeEventListener('pushstate', handleChange)
+      window.removeEventListener('replacestate', handleChange)
+    }
+  }, [])
+
+  useEffect(() => {
     if (input?.getDataForm === 'api') {
       console.log(input?.externalApi, input.apiHeaders)
       const apiHeaders = input.apiHeaders ?? {}
       const authToken = Cookies.get('sub')
+      const resolvedLink = replacePlaceholders(input?.externalApi, window.location)
       if (authToken) {
         apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
       }
       axios
-        .get(input?.externalApi, {
+        .get(resolvedLink, {
           headers: apiHeaders
         })
 
@@ -1125,17 +1177,14 @@ export default function DisplayField({
           }
         })
         .catch(err => {
-          console.log(err)
+          setSelectedOptions([])
+          setOldSelectedOptions([])
         })
         .finally(() => {
           setLoading(false)
         })
     }
-    if (input?.getDataForm === 'static') {
-      setSelectedOptions(input?.staticData)
-      setOldSelectedOptions(input?.staticData)
-    }
-  }, [input])
+  }, [input?.getDataForm, queryParams])
 
   useEffect(() => {
     setTimeout(() => {

@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl'
 import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
+import { replacePlaceholders } from 'src/Components/_Shared'
 import { setApiData } from 'src/store/apps/apiSlice/apiSlice'
 
 export default function ApiData({ open, setOpen, initialDataApi }) {
@@ -25,15 +26,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
     setLinks(initialDataApi ?? [])
   }, [initialDataApi])
 
-  // ✅ دالة لاستبدال {param} من URL params
-  const replacePlaceholders = (url) => {
-    return url.replace(/\{([^}]+)\}/g, (_, paramName) => {
-      const params = new URLSearchParams(window.location.search)
-      const value = params.get(paramName)
 
-      return value ? value : ''
-    })
-  }
 
   useEffect(() => {
     const linksToFetch = links.filter(link => link.loading)
@@ -41,7 +34,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
     if (linksToFetch.length > 0) {
       Promise.all(
         linksToFetch.map(linkObj => {
-          const resolvedLink = replacePlaceholders(linkObj.link)
+          const resolvedLink = replacePlaceholders(linkObj.link, window.location)
 
           return axios
             .get(resolvedLink)

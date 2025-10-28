@@ -255,3 +255,12 @@ export const getDomain = () => {
 export const getZIndex = value => {
   return `!z-[${value}]`
 }
+
+export const replacePlaceholders = (url, windowLocation) => {
+  return url.replace(/\{([^}]+)\}/g, (_, paramName) => {
+    const params = new URLSearchParams(windowLocation.search)
+    const value = params.get(paramName)
+
+    return value ? value : ''
+  })
+}
