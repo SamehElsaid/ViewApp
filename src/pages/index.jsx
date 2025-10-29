@@ -144,6 +144,7 @@ export default function Index() {
               Create incident report
             </Button>
           )}
+          
         </CardContent>
       </Card>
       <Box sx={{ mb: 4 }}>
