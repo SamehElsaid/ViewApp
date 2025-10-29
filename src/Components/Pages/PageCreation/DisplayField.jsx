@@ -7,13 +7,14 @@ import { Icon } from '@iconify/react'
 import { FaEyeSlash } from 'react-icons/fa'
 import NewElement from '../NewElement'
 import { toast } from 'react-toastify'
-import { replacePlaceholders, VaildId } from 'src/Components/_Shared'
+import { getData, replacePlaceholders, VaildId } from 'src/Components/_Shared'
 import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
 import axios from 'axios'
 import { decryptData } from 'src/Components/encryption'
 import Cookies from 'js-cookie'
+import { useSelector } from 'react-redux'
 
 export default function DisplayField({
   from,
@@ -55,6 +56,7 @@ export default function DisplayField({
   const [regex, setRegex] = useState(roles?.regex?.regex)
   const [isDisable, setIsDisable] = useState(null)
   const [lastValue, setLastValue] = useState(null)
+  const getApiData = useSelector(rx => rx.api.data)
 
   useEffect(() => {
     if (isDisabled) {
@@ -886,7 +888,9 @@ export default function DisplayField({
 
         if (roles?.onMount?.value) {
           if (roles?.api_url) {
-            setValue(roles?.apiKeyData)
+            const items = getApiData.find(item => item.link === roles.api_url)?.data
+            const valueFromApi = getData(items, roles?.onMount?.value, '')
+            setValue(valueFromApi)
           } else {
             let newValue = roles?.onMount?.value
             if (input?.type == 'Date') {
