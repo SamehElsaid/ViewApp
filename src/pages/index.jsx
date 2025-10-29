@@ -40,12 +40,6 @@ export default function Index() {
       })
   }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh])
 
-  const [deletePage, setDeletePage] = useState(false)
-
-  const handleClose = () => {
-    setOpen(false)
-  }
-
   const columns = [
     {
       flex: 0.05,
@@ -110,7 +104,9 @@ export default function Index() {
             LinkComponent={Link}
             href={`/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}` : ''}${
               row.collectionName ? `&collection=${row.collectionName}` : ''
-            }${row.caseId ? `&caseId=${row.caseId}` : ''}`}
+            }${row.caseId ? `&caseId=${row.caseId}` : ''}${profile.sub ? `&sub=${profile.sub}` : ''}${
+              profile.name ? `&name=${profile.name}` : ''
+            }`}
           >
             <Icon icon='mdi:eye' />
           </IconButton>
@@ -143,8 +139,9 @@ export default function Index() {
           {(Array.isArray(profile?.role)
             ? profile.role.includes('SuperAdmin') || profile.role.includes('Pharmacist')
             : profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
-            <Button LinkComponent={Link} href={`/CreatorPage`}>
-              CreatorPage
+            <Button variant='contained' color='primary' LinkComponent={Link} href={`/CreatorPage`}>
+              <Icon icon='mdi:plus' className='text-2xl' />
+              Create incident report
             </Button>
           )}
         </CardContent>

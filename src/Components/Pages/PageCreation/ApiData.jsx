@@ -6,14 +6,19 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
+  MenuItem,
+  Select,
   TextField
 } from '@mui/material'
 import axios from 'axios'
-import { useState, useEffect } from 'react'
+import Cookies from 'js-cookie'
+import { useState, useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
 import { replacePlaceholders } from 'src/Components/_Shared'
+import { decryptData } from 'src/Components/encryption'
+import JsonEditor from 'src/Components/JsonEditor'
 import { setApiData } from 'src/store/apps/apiSlice/apiSlice'
 
 export default function ApiData({ open, setOpen, initialDataApi }) {
@@ -22,39 +27,96 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
   const [link, setLink] = useState('')
   const dispatch = useDispatch()
 
+  console.log(links, 'link')
+
   useEffect(() => {
     setLinks(initialDataApi ?? [])
   }, [initialDataApi])
 
+  const replaceVars = value => {
+    const params = new URLSearchParams(window.location.search)
+    const query = Object.fromEntries(params.entries())
+    if (typeof value === 'string') {
+      return value.replace(/\{\{(.*?)\}\}/g, (_, key) => query[key] ?? '')
+    }
+    if (Array.isArray(value)) {
+      return value.map(replaceVars)
+    }
+    if (typeof value === 'object' && value !== null) {
+      const result = {}
+      for (const k in value) result[k] = replaceVars(value[k])
 
+      return result
+    }
+
+    return value
+  }
 
   useEffect(() => {
     const linksToFetch = links.filter(link => link.loading)
 
+    const authToken = Cookies.get('sub')
+    const apiHeaders = {}
+    if (authToken) {
+      apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
+    }
+    console.log(linksToFetch, 'linksToFetch')
+    
     if (linksToFetch.length > 0) {
       Promise.all(
         linksToFetch.map(linkObj => {
           const resolvedLink = replacePlaceholders(linkObj.link, window.location)
+          const body = replaceVars(linkObj.headers)
+          console.log(body, 'body')
+          let headers = {}
+          console.log(linkObj.headers, 'linkObj.headers')
+          
+          try {
+            headers = JSON.parse(body)
+          } catch (error) {
+            headers = {}
+          }
 
-          return axios
-            .get(resolvedLink)
-            .then(response => ({
-              ...linkObj,
-              data: response.data,
-              loading: false
-            }))
-            .catch(error => ({
-              ...linkObj,
-              data: null,
-              loading: false,
-              error: error.message
-            }))
+          return linkObj.method === 'GET'
+            ? axios.get(resolvedLink, {
+                headers: apiHeaders
+              })
+            : axios[linkObj.method.toLowerCase()](resolvedLink, headers, {
+                headers: apiHeaders
+              })
+                .then(response => ({
+                  ...linkObj,
+                  data: response.data,
+                  headers: linkObj.headers ?? {},
+                  method: linkObj.method,
+                  loading: false
+                }))
+                .catch(error => ({
+                  ...linkObj,
+                  data: null,
+                  loading: true,
+                  headers: linkObj.headers ?? {},
+                  method: linkObj.method,
+                  error: error.message
+                }))
         })
       ).then(updatedLinks => {
+        console.log(updatedLinks, 'updatedLinks')
         dispatch(setApiData(updatedLinks))
       })
     }
   }, [links, dispatch])
+
+  const [apiHeaders, setApiHeaders] = useState('{}')
+  const [method, setMethod] = useState('GET')
+
+  const headersParsed = useMemo(() => {
+    try {
+      return JSON.parse(apiHeaders)
+    } catch (e) {
+      return null
+    }
+  }, [apiHeaders])
 
   const linkRegex =
     /^(https?:\/\/)?(www\.)?[a-zA-Z0-9@:%._+~#?&//=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)?(\{[a-zA-Z0-9_]+\})?/i
@@ -72,30 +134,23 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
           InputProps={{
             endAdornment: (
               <InputAdornment position='end'>
-                <Button
-                  onClick={() => {
-                    if (!linkRegex.test(link.trim())) {
-                      return toast.error(messages.Api.invalidLink)
-                    }
-
-                    setLinks(prev => [
-                      ...prev,
-                      {
-                        data: null,
-                        link: link.trim(),
-                        loading: true
-                      }
-                    ])
-                    setLink('')
-                  }}
-                >
-                  {messages.add}
-                </Button>
+                <Select variant='filled' value={method} onChange={e => setMethod(e.target.value)}>
+                  <MenuItem value='GET'>GET</MenuItem>
+                  <MenuItem value='POST'>POST</MenuItem>
+                </Select>
               </InputAdornment>
             )
           }}
         />
-
+        <div className='mt-4'>
+          <JsonEditor
+            value={apiHeaders}
+            onChange={setApiHeaders}
+            height='150px'
+            isError={headersParsed === null}
+            helperText={headersParsed === null ? messages?.dialogs?.invalidJson || 'Invalid JSON format' : ''}
+          />
+        </div>
         <div className='flex flex-col gap-2 mt-4'>
           {links.map((link, index) => (
             <div className='p-2 rounded-md border border-dashed border-main-color' key={index}>
@@ -107,6 +162,33 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
               </div>
             </div>
           ))}
+        </div>
+        <div className='flex justify-end'>
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={() => {
+              // if (!linkRegex.test(link.trim())) {
+              //   return toast.error(messages.Api.invalidLink)
+              // }
+
+              setLinks(prev => [
+                ...prev,
+                {
+                  data: null,
+                  headers: apiHeaders,
+                  method: method,
+                  link: link.trim(),
+                  loading: true
+                }
+              ])
+              setLink('')
+              setApiHeaders('{}')
+              setMethod('GET')
+            }}
+          >
+            {messages.add}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -8,6 +8,7 @@ import { useIntl } from 'react-intl'
 import { SET_ACTIVE_LOADING } from 'src/store/apps/LoadingMainSlice/LoadingMainSlice'
 import { REMOVE_USER, SET_ACTIVE_USER } from 'src/store/apps/authSlice/authSlice'
 import { getUser } from 'src/services/AuthService'
+import { useRouter } from 'next/router'
 
 function useInitialization() {
   const theme = useTheme()
@@ -16,7 +17,7 @@ function useInitialization() {
   const dispatch = useDispatch()
   const [login, setLogin] = useState(true)
   const { locale } = useIntl()
-
+  const router = useRouter()
   useEffect(() => {
     const userFind = async () => {
       const user = await getUser()
@@ -25,6 +26,7 @@ function useInitialization() {
         removeCookie('sub', { path: '/' })
         dispatch(REMOVE_USER())
         setLogin(false)
+        router.push('/login')
 
         return
       }
