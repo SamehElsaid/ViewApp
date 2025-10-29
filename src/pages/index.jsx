@@ -139,7 +139,9 @@ export default function Index() {
           {(Array.isArray(profile?.role)
             ? profile.role.includes('SuperAdmin') || profile.role.includes('Pharmacist')
             : profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
-            <Button variant='contained' color='primary' LinkComponent={Link} href={`/CreatorPage`}>
+            <Button variant='contained' color='primary' LinkComponent={Link} href={`/CreatorPage?${profile.sub ? `sub=${profile.sub}` : ''}${
+              profile.name ? `&name=${profile.name}` : ''
+            }`}>
               <Icon icon='mdi:plus' className='text-2xl' />
               Create incident report
             </Button>
