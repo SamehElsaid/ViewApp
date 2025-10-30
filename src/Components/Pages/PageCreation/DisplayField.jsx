@@ -892,20 +892,32 @@ export default function DisplayField({
             const valueFromApi = getData(items, roles?.onMount?.value, '')
             setValue(valueFromApi)
           } else {
-            let newValue = roles?.onMount?.value
-            if (input?.type == 'Date') {
-              const valueDate = new Date(roles?.onMount?.value)
-
-              if (isNaN(valueDate.getTime())) {
-                // invalid date
-                newValue = new Date()
+            if (roles?.onMount?.value) {
+              if (roles?.api_url) {
+                const items = getApiData.find(item => item.link === roles.api_url)?.data
+                const valueFromApi = getData(items, roles?.onMount?.value, '')
+                setValue(valueFromApi)
               } else {
-                newValue = valueDate
+                let newValue = roles?.onMount?.value
+                const searchParams = new URLSearchParams(window.location.search)
+    
+                if (input?.type == 'Date') {
+                  const valueDate = new Date(roles?.onMount?.value)
+    
+                  if (isNaN(valueDate.getTime())) {
+                    // invalid date
+                    newValue = new Date()
+                  } else {
+                    newValue = valueDate
+                  }
+                }
+                if (newValue.startsWith('{') && newValue.endsWith('}')) {
+                  const key = newValue.slice(1, -1)
+                  newValue = searchParams.get(key) || ''
+                }
+                setValue(newValue)
               }
-
             }
-
-            setValue(newValue)
           }
         }
       }, 0)
