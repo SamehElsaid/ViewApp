@@ -150,7 +150,7 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
-  const handleSubmit = (e, handleSubmitEvent) => {
+  const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
 
     const initialSendData = { ...dataRef.current }
@@ -214,7 +214,7 @@ export default function ViewCollection({
 
     console.log(output, 'output')
     setLoading(true)
-    console.log(data?.redirect, 'data?.redirect',"from before")
+    console.log(data?.redirect, 'data?.redirect', 'from before')
 
     const apiCall =
       data.type_of_sumbit === 'collection'
@@ -232,29 +232,22 @@ export default function ViewCollection({
           evaluatedFn()
         }
       }
-      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output).then(
-        res => {
+      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output)
+        .then(res => {
           if (res.status) {
             setReload(prev => prev + 1)
             toast.success(messages.dialogs.dataSentSuccessfully)
-            if (data.redirect === '{{redirect}}') {
-              if (redirect) {
-                push(`/${locale}/${redirect}`)
-              }
 
-              return
-            }
             if (data?.redirect) {
-              console.log(data?.redirect, 'data?.redirect',"from put")
-              push(`/${locale}/${data?.redirect}`)
+              console.log(data?.redirect, 'data?.redirect', 'from put')
+              push(`/${locale}/${data?.redirect === "/" ? "" : data?.redirect}`)
             }
           }
-        }
-      )
-      .finally(() => setLoading(false))
+        })
+        .finally(() => setLoading(false))
     } else {
-      axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(
-        res => {
+      axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false)
+        .then(res => {
           if (res.status) {
             setReload(prev => prev + 1)
             toast.success(messages.dialogs.dataSentSuccessfully)
@@ -266,22 +259,15 @@ export default function ViewCollection({
                 evaluatedFn()
               }
             }
-            if (data.redirect === '{{redirect}}') {
-              if (redirect) {
-                push(`/${locale}/${redirect}`)
-              }
 
-              return
-            }
             if (data?.redirect) {
-              console.log(data?.redirect, 'data?.redirect',"from post")
-              
-              // push(`/${locale}/${data?.redirect}`)
+              console.log(data?.redirect, 'data?.redirect', 'from post')
+
+              push(`/${locale}/${data?.redirect === "/" ? "" : data?.redirect}`)
             }
           }
-        }
-      )
-      .finally(() => setLoading(false))
+        })
+        .finally(() => setLoading(false))
     }
   }
 
@@ -396,8 +382,6 @@ export default function ViewCollection({
       (sortedData.findIndex(f => f.i === a.id) === -1 ? Infinity : sortedData.findIndex(f => f.i === a.id)) -
       (sortedData.findIndex(f => f.i === b.id) === -1 ? Infinity : sortedData.findIndex(f => f.i === b.id))
   )
-
-  
 
   return (
     <div className={`${disabled ? 'text-main' : ''}`}>
