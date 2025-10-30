@@ -172,14 +172,6 @@ export default function ViewCollection({
       return
     }
 
-    // const dynamicUrl = data?.redirect?.replace(/\{(\w+)\}/g, (match, key) => {
-    //   const value = sendData[key]
-
-    //   return value ? encodeURIComponent(value) : ''
-    // })
-
-    // const finalUrl = dynamicUrl?.includes('=') && !dynamicUrl?.endsWith('=') ? dynamicUrl : '/otp'
-
     const errors = []
     if (refError.current) {
       for (const key in refError.current) {
@@ -222,6 +214,7 @@ export default function ViewCollection({
 
     console.log(output, 'output')
     setLoading(true)
+    console.log(data?.redirect, 'data?.redirect',"from before")
 
     const apiCall =
       data.type_of_sumbit === 'collection'
@@ -252,6 +245,7 @@ export default function ViewCollection({
               return
             }
             if (data?.redirect) {
+              console.log(data?.redirect, 'data?.redirect',"from put")
               push(`/${locale}/${data?.redirect}`)
             }
           }
@@ -280,7 +274,9 @@ export default function ViewCollection({
               return
             }
             if (data?.redirect) {
-              push(`/${locale}/${data?.redirect}`)
+              console.log(data?.redirect, 'data?.redirect',"from post")
+              
+              // push(`/${locale}/${data?.redirect}`)
             }
           }
         }
