@@ -401,10 +401,12 @@ export default function ViewCollection({
       (sortedData.findIndex(f => f.i === b.id) === -1 ? Infinity : sortedData.findIndex(f => f.i === b.id))
   )
 
+  
+
   return (
     <div className={`${disabled ? 'text-main' : ''}`}>
       {loading && (
-        <div className='fixed inset-0 z-10 flex justify-center items-center w-full h-full bg-white/50'>
+        <div className='fixed inset-0 z-10 flex justify-center items-center w-full h-full glass-effect'>
           <CircularProgress />
         </div>
       )}

@@ -452,7 +452,7 @@ const ViewInput = ({
         <div className='relative w-full'>
           <div
             onClick={() => {
-              if (!disabled) {
+              if (isDisable !== 'disabled') {
                 setIsOpen(true)
               }
             }}
@@ -592,7 +592,11 @@ const ViewInput = ({
       <>
         <div className='relative w-full'>
           <div
-            onClick={() => setIsOpen(true)}
+            onClick={() => {
+              if (isDisable !== 'disabled') {
+                setIsOpen(true)
+              }
+            }}
             className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
           ></div>
           <DatePickerWrapper className='w-full'>
