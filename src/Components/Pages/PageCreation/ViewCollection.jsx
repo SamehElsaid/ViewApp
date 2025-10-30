@@ -221,6 +221,7 @@ export default function ViewCollection({
     })
 
     console.log(output, 'output')
+    setLoading(true)
 
     const apiCall =
       data.type_of_sumbit === 'collection'
@@ -256,6 +257,7 @@ export default function ViewCollection({
           }
         }
       )
+      .finally(() => setLoading(false))
     } else {
       axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(
         res => {
@@ -283,6 +285,7 @@ export default function ViewCollection({
           }
         }
       )
+      .finally(() => setLoading(false))
     }
   }
 

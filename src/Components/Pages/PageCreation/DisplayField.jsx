@@ -1322,10 +1322,15 @@ export default function DisplayField({
       setError('Required')
     }
   }
+  useEffect(() => {
+    if (data?.type_of_sumbit === 'read-only') {
+      setIsDisable('disabled')
+    }
+  }, [data?.type_of_sumbit])
 
   const label = hiddenLabel ? null : (
     <label htmlFor={input.key} style={{ textTransform: 'capitalize' }}>
-      {locale == 'ar' ? input.nameAr : input.nameEn}
+      {locale == 'ar' ? roles?.label?.label_ar || input.nameAr : roles?.label?.label_en || input.nameEn}
     </label>
   )
 
@@ -1335,11 +1340,11 @@ export default function DisplayField({
   return (
     <div
       className={`reset ${isDisable == 'hidden' && !readOnly ? 'hidden' : ''} relative group w-full`}
-      id={input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim())}
-    >
-      <style>{`#${input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim())} {
-        ${input.kind == 'search' ? '' : design}
-      }`}</style>
+      id={input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))}
+      >
+        <style>{`#${input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))} {
+          ${input.kind == 'search' ? '' : design}
+        }`}</style>
       {hoverText && (
         <div className='absolute bg-white w-full glass-effect z-10 start-0 border border-main-color border-dashed top-[calc(100%+5px)] invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300'>
           <div className='arrow-up w-fit absolute top-[-8px] '></div>
@@ -1373,6 +1378,7 @@ export default function DisplayField({
           )}
           {input.type == 'new_element' ? (
             <NewElement
+              typeOfSubmit={data?.type_of_sumbit}
               handleSubmit={handleSubmit}
               isDisable={isDisable}
               readOnly={readOnly}

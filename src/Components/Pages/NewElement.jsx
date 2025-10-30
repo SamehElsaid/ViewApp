@@ -15,7 +15,8 @@ function NewElement({
   disabledBtn,
   isDisable,
   readOnly,
-  handleSubmit
+  handleSubmit,
+  typeOfSubmit
 }) {
   const [open, setOpen] = useState(false)
   const { locale, messages } = useIntl()
@@ -207,65 +208,67 @@ function NewElement({
 
     if (input.kind === 'submit') {
       return (
-        <>
-          {input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn'] && (
-            <Dialog
-              open={Boolean(open)}
-              aria-labelledby='alert-dialog-title'
-              aria-describedby='alert-dialog-description'
-              onClose={() => {
-                setOpen(false)
-              }}
-            >
-              <DialogContent>
-                <div className='flex flex-col gap-5 justify-center items-center px-1 py-5'>
-                  <Typography variant='body1' className='!text-lg' id='alert-dialog-description'>
-                    {input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn']}
-                  </Typography>
-                  <div className='flex gap-5 justify-between items-end'>
-                    <LoadingButton
-                      variant='contained'
-                      color='primary'
-                      type='submit'
-                      loading={loadingButton}
-                      onClick={e => {
-                        handleClick(e)
-                        buttonRef.current.type = 'submit'
-                        setTimeout(() => {
-                          buttonRef.current.click()
-                          buttonRef.current.type = 'button'
-                          setOpen(false)
-                        }, 0)
-                      }}
-                    >
-                      {messages.dialogs.submit}
-                    </LoadingButton>
-                    <Button color='secondary' variant='contained' onClick={() => setOpen(false)}>
-                      {messages.dialogs.cancel}
-                    </Button>
+        typeOfSubmit !== 'read-only' && (
+          <>
+            {input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn'] && (
+              <Dialog
+                open={Boolean(open)}
+                aria-labelledby='alert-dialog-title'
+                aria-describedby='alert-dialog-description'
+                onClose={() => {
+                  setOpen(false)
+                }}
+              >
+                <DialogContent>
+                  <div className='flex flex-col gap-5 justify-center items-center px-1 py-5'>
+                    <Typography variant='body1' className='!text-lg' id='alert-dialog-description'>
+                      {input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn']}
+                    </Typography>
+                    <div className='flex gap-5 justify-between items-end'>
+                      <LoadingButton
+                        variant='contained'
+                        color='primary'
+                        type='submit'
+                        loading={loadingButton}
+                        onClick={e => {
+                          handleClick(e)
+                          buttonRef.current.type = 'submit'
+                          setTimeout(() => {
+                            buttonRef.current.click()
+                            buttonRef.current.type = 'button'
+                            setOpen(false)
+                          }, 0)
+                        }}
+                      >
+                        {messages.dialogs.submit}
+                      </LoadingButton>
+                      <Button color='secondary' variant='contained' onClick={() => setOpen(false)}>
+                        {messages.dialogs.cancel}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-          <button
-            ref={buttonRef}
-            onClick={e => {
-              if (input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn']) {
-                if (!open) {
-                  setOpen(true)
+                </DialogContent>
+              </Dialog>
+            )}
+            <button
+              ref={buttonRef}
+              onClick={e => {
+                if (input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn']) {
+                  if (!open) {
+                    setOpen(true)
+                  }
+                } else {
+                  handleClick(e)
                 }
-              } else {
-                handleClick(e)
-              }
-            }}
-            type={input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn'] ? 'button' : 'submit'}
-            className='btn'
-            disabled={disabledBtn}
-          >
-            {input[`name_${locale}`]}
-          </button>
-        </>
+              }}
+              type={input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn'] ? 'button' : 'submit'}
+              className='btn'
+              disabled={disabledBtn}
+            >
+              {input[`name_${locale}`]}
+            </button>
+          </>
+        )
       )
     }
 

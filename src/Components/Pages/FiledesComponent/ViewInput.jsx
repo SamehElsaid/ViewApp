@@ -43,7 +43,9 @@ const ViewInput = ({
   isRedirect,
   setRedirect
 }) => {
-  console.log(input)
+  const [isOpen, setIsOpen] = useState(false)
+
+  
 
   const handleKeyDown = event => {
     if (input.type != 'Phone') return
@@ -447,7 +449,7 @@ const ViewInput = ({
     return !readOnly ? (
       <>
         <div className='relative w-full'>
-          <div className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'></div>
+          <div onClick={() => setIsOpen(true)} className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'></div>
           <DatePickerWrapper className='w-full'>
             <DatePicker
               selected={value}
@@ -456,6 +458,7 @@ const ViewInput = ({
               }}
               dateFormat='h:mm aa'
               showTimeSelect
+              inline
               showTimeSelectOnly
               locale={locale == 'ar' ? ar : en}
               onBlur={e => {
@@ -466,7 +469,12 @@ const ViewInput = ({
                 }
               }}
               customInput={
-                <ExampleCustomInput value={value?.toString()} type='time' className='example-custom-input' />
+                <ExampleCustomInput
+                  disabled={isDisable == 'disabled'}
+                  value={value?.toString()}
+                  type='time'
+                  className='example-custom-input'
+                />
               }
               disabled={isDisable == 'disabled'}
               minDate={minDate}
@@ -474,6 +482,51 @@ const ViewInput = ({
             />
           </DatePickerWrapper>
         </div>
+        <Dialog
+          open={isOpen}
+          onClose={() => setIsOpen(false)}
+          aria-labelledby='alert-dialog-title'
+          aria-describedby='alert-dialog-description'
+        >
+          {' '}
+          <div className='absolute top-0 end-2 py-2'>
+            <IconButton size='small' color='error' onClick={() => setIsOpen(false)} className=''>
+              <Icon icon='tabler:x' fontSize='1.25rem' />
+            </IconButton>
+          </div>
+          <DatePickerWrapper className='w-full'>
+            <DatePicker
+              selected={value}
+              onChange={date => {
+                onChange(date)
+                setIsOpen(false)
+              }}
+              dateFormat='h:mm aa'
+              showTimeSelect
+              inline
+              showTimeSelectOnly
+              locale={locale == 'ar' ? ar : en}
+              onBlur={e => {
+                if (onBlur) {
+                  const evaluatedFn = eval('(' + onBlur + ')')
+
+                  evaluatedFn(e)
+                }
+              }}
+              customInput={
+                <ExampleCustomInput
+                  disabled={isDisable == 'disabled'}
+                  value={value?.toString()}
+                  type='time'
+                  className='example-custom-input'
+                />
+              }
+              disabled={isDisable == 'disabled'}
+              minDate={minDate}
+              maxDate={maxDate}
+            />
+          </DatePickerWrapper>
+        </Dialog>
       </>
     ) : (
       <DatePicker
@@ -481,9 +534,13 @@ const ViewInput = ({
         open={false}
         locale={locale == 'ar' ? ar : en}
         popperPlacement='bottom-start'
-        onChange={date => onChange(date)}
+        onChange={date => {
+          onChange(date)
+          setIsOpen(false)
+        }}
         timeInputLabel='Time:'
         dateFormat='h:mm aa'
+        inline
         onBlur={e => {
           if (onBlur) {
             const evaluatedFn = eval('(' + onBlur + ')')
@@ -491,13 +548,15 @@ const ViewInput = ({
             evaluatedFn(e)
           }
         }}
-        customInput={<ExampleCustomInput className='example-custom-input' />}
+        customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
         disabled={isDisable == 'disabled'}
       />
     )
   }
 
   if (input.type == 'Date') {
+    console.log('here', readOnly)
+
     const raw = JSON.parse(input?.descriptionEn ?? '{}')
 
     const format = convertMomentToDateFnsFormat(raw.format)
@@ -526,18 +585,61 @@ const ViewInput = ({
     return !readOnly ? (
       <>
         <div className='relative w-full'>
-          <div className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'>
-            <DatePickerWrapper className='w-full'>
+          <div
+            onClick={() => setIsOpen(true)}
+            className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
+          ></div>
+          <DatePickerWrapper className='w-full'>
+            <DatePicker
+              selected={value}
+              onChange={date => {
+                onChange(date)
+              }}
+              timeInputLabel={label.showTime == 'true' ? (locale == 'ar' ? 'الوقت:' : 'Time:') : ''}
+              dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
+              showMonthDropdown
+              locale={locale == 'ar' ? ar : en}
+              showYearDropdown
+              onBlur={e => {
+                if (onBlur) {
+                  const evaluatedFn = eval('(' + onBlur + ')')
+
+                  evaluatedFn(e)
+                }
+              }}
+              showTimeSelect={label.showTime == 'true'}
+              customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
+              disabled={isDisable == 'disabled'}
+              minDate={minDate}
+              maxDate={maxDate}
+              popperPlacement='bottom-start'
+            />
+          </DatePickerWrapper>
+          <Dialog
+            open={isOpen}
+            onClose={() => setIsOpen(false)}
+            aria-labelledby='alert-dialog-title'
+            aria-describedby='alert-dialog-description'
+          >
+            {' '}
+            <div className='absolute top-0 end-2 py-2'>
+              <IconButton size='small' color='error' onClick={() => setIsOpen(false)} className=''>
+                <Icon icon='tabler:x' fontSize='1.25rem' />
+              </IconButton>
+            </div>
+            <DatePickerWrapper className='w-full mx-auto flex justify-center items-center py-10'>
               <DatePicker
                 selected={value}
                 onChange={date => {
                   onChange(date)
+                  setIsOpen(false)
                 }}
                 timeInputLabel={label.showTime == 'true' ? (locale == 'ar' ? 'الوقت:' : 'Time:') : ''}
                 dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
                 showMonthDropdown
                 locale={locale == 'ar' ? ar : en}
                 showYearDropdown
+                inline
                 onBlur={e => {
                   if (onBlur) {
                     const evaluatedFn = eval('(' + onBlur + ')')
@@ -546,13 +648,14 @@ const ViewInput = ({
                   }
                 }}
                 showTimeSelect={label.showTime == 'true'}
-                customInput={<ExampleCustomInput className='example-custom-input' />}
+                customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
                 disabled={isDisable == 'disabled'}
                 minDate={minDate}
                 maxDate={maxDate}
+                popperPlacement='bottom-start'
               />
             </DatePickerWrapper>
-          </div>
+          </Dialog>
         </div>
       </>
     ) : (
@@ -565,6 +668,7 @@ const ViewInput = ({
         timeInputLabel='Time:'
         dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
         showMonthDropdown
+        inline
         onBlur={e => {
           if (onBlur) {
             const evaluatedFn = eval('(' + onBlur + ')')
@@ -574,7 +678,7 @@ const ViewInput = ({
         }}
         showYearDropdown
         showTimeInput={label.showTime == 'true'}
-        customInput={<ExampleCustomInput className='example-custom-input' />}
+        customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
         disabled={isDisable == 'disabled'}
       />
     )
