@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { IconButton } from '@mui/material'
 import { Icon } from '@iconify/react'
 import { useSelector } from 'react-redux'
+import GetTimeinTable from 'src/Components/GetTimeinTable'
 
 export default function Index() {
   const { locale, messages } = useIntl()
@@ -70,6 +71,18 @@ export default function Index() {
     {
       flex: 0.5,
       minWidth: 200,
+      field: 'caseId',
+      disableColumnMenu: true,
+      headerName: messages.caseId || 'Case ID',
+      renderCell: ({ row }) => (
+        <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+          {row.caseId ? row.caseId : '-'}
+        </Typography>
+      )
+    },
+    {
+      flex: 0.5,
+      minWidth: 200,
       field: 'status',
       disableColumnMenu: true,
       headerName: messages.status,
@@ -91,7 +104,22 @@ export default function Index() {
         />
       )
     },
-
+    {
+      flex: 0.05,
+      minWidth: 150,
+      field: 'createdAt',
+      disableColumnMenu: true,
+      headerName: messages.createdAt,
+      renderCell: ({ row }) => (
+        <Typography
+          variant='subtitle2'
+          className='capitalize text-overflow'
+          sx={{ fontWeight: 500, color: 'text.secondary' }}
+        >
+          {row.createdAt ? <GetTimeinTable data={row.createdAt} /> : '-'}
+        </Typography>
+      )
+    },
     {
       flex: 0.5,
       minWidth: 200,
@@ -139,14 +167,18 @@ export default function Index() {
           {(Array.isArray(profile?.role)
             ? profile.role.includes('SuperAdmin') || profile.role.includes('Pharmacist')
             : profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
-            <Button variant='contained' color='primary' LinkComponent={Link} href={`/CreatorPage?${profile.sub ? `sub=${profile.sub}` : ''}${
-              profile.name ? `&name=${profile.name}` : ''
-            }`}>
+            <Button
+              variant='contained'
+              color='primary'
+              LinkComponent={Link}
+              href={`/CreatorPage?${profile.sub ? `sub=${profile.sub}` : ''}${
+                profile.name ? `&name=${profile.name}` : ''
+              }`}
+            >
               <Icon icon='mdi:plus' className='text-2xl' />
               Create incident report
             </Button>
           )}
-          
         </CardContent>
       </Card>
       <Box sx={{ mb: 4 }}>

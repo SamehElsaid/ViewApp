@@ -450,7 +450,14 @@ const ViewInput = ({
     return !readOnly ? (
       <>
         <div className='relative w-full'>
-          <div onClick={() => setIsOpen(true)} className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'></div>
+          <div
+            onClick={() => {
+              if (!disabled) {
+                setIsOpen(true)
+              }
+            }}
+            className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
+          ></div>
           <DatePickerWrapper className='w-full'>
             <DatePicker
               selected={value}
@@ -459,7 +466,6 @@ const ViewInput = ({
               }}
               dateFormat='h:mm aa'
               showTimeSelect
-              inline
               showTimeSelectOnly
               locale={locale == 'ar' ? ar : en}
               onBlur={e => {
@@ -541,7 +547,6 @@ const ViewInput = ({
         }}
         timeInputLabel='Time:'
         dateFormat='h:mm aa'
-        inline
         onBlur={e => {
           if (onBlur) {
             const evaluatedFn = eval('(' + onBlur + ')')
@@ -618,7 +623,11 @@ const ViewInput = ({
           </DatePickerWrapper>
           <Dialog
             open={isOpen}
-            onClose={() => setIsOpen(false)}
+            onClose={() => {
+              if (!disabled) {
+                setIsOpen(false)
+              }
+            }}
             aria-labelledby='alert-dialog-title'
             aria-describedby='alert-dialog-description'
           >
@@ -669,7 +678,6 @@ const ViewInput = ({
         timeInputLabel='Time:'
         dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
         showMonthDropdown
-        inline
         onBlur={e => {
           if (onBlur) {
             const evaluatedFn = eval('(' + onBlur + ')')
