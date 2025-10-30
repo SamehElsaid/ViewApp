@@ -80,7 +80,6 @@ const AppBarContent = props => {
               textDecoration: 'none'
             }}
           >
-            {messages.logo}
           </Typography>
         </div>
 
