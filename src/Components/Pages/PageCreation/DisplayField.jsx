@@ -1168,6 +1168,26 @@ export default function DisplayField({
     }
   }, [])
 
+
+  const replaceVars = value => {
+    const params = new URLSearchParams(window.location.search)
+    const query = Object.fromEntries(params.entries())
+    if (typeof value === 'string') {
+      return value.replace(/\{\{(.*?)\}\}/g, (_, key) => query[key] ?? '')
+    }
+    if (Array.isArray(value)) {
+      return value.map(replaceVars)
+    }
+    if (typeof value === 'object' && value !== null) {
+      const result = {}
+      for (const k in value) result[k] = replaceVars(value[k])
+
+      return result
+    }
+
+    return value
+  }
+  
   useEffect(() => {
     if (input?.getDataForm === 'api') {
       const apiHeaders = input.apiHeaders ?? {}

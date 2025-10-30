@@ -11,10 +11,10 @@ module.exports = withTM({
   },
   env: {
     API_URL: 'https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api',
-    IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
+    // IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
   
-    // IDENTITY_URL: 'https://localhost:7000/',
-    DEV_MODE: false,
+    IDENTITY_URL: 'https://localhost:7000/',
+    DEV_MODE: true,
     DOMAIN: 'https://view-app-omega.vercel.app/'
   },
   images: {
