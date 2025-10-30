@@ -172,13 +172,13 @@ export default function ViewCollection({
       return
     }
 
-    const dynamicUrl = data?.redirect?.replace(/\{(\w+)\}/g, (match, key) => {
-      const value = sendData[key]
+    // const dynamicUrl = data?.redirect?.replace(/\{(\w+)\}/g, (match, key) => {
+    //   const value = sendData[key]
 
-      return value ? encodeURIComponent(value) : ''
-    })
+    //   return value ? encodeURIComponent(value) : ''
+    // })
 
-    const finalUrl = dynamicUrl?.includes('=') && !dynamicUrl?.endsWith('=') ? dynamicUrl : '/otp'
+    // const finalUrl = dynamicUrl?.includes('=') && !dynamicUrl?.endsWith('=') ? dynamicUrl : '/otp'
 
     const errors = []
     if (refError.current) {
@@ -252,7 +252,7 @@ export default function ViewCollection({
               return
             }
             if (data?.redirect) {
-              push(`/${locale}/${finalUrl}`)
+              push(`/${locale}/${data?.redirect}`)
             }
           }
         }
