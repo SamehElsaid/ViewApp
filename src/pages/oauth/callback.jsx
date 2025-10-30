@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useCookies } from "react-cookie";
 import { useDispatch } from "react-redux";
 import { encryptData } from "src/Components/encryption";
+import LoadingMain from "src/Components/LoadingMain";
 import { getUser, handleOAuthCallback, isAuthenticated } from "src/services/AuthService";
 import { SET_ACTIVE_USER } from "src/store/apps/authSlice/authSlice";
 import { SET_ACTIVE_LOADING } from "src/store/apps/LoadingMainSlice/LoadingMainSlice";
@@ -27,14 +28,12 @@ function OAuthCallback() {
             try {
                 const currentUrl = window.location.href;
                 await handleOAuthCallback(currentUrl);
-                console.log(currentUrl);
 
 
                 const data = await isAuthenticated()
                 const dataUser = await getUser()
-                console.log(dataUser);
-                
-                //s   
+
+                //s
                 if (data) {
                     dispatch(SET_ACTIVE_USER(dataUser.profile))
                     setTimeout(() => {
@@ -58,6 +57,10 @@ function OAuthCallback() {
 
         processOAuthResponse();
     }, [])
+
+    return (
+        <LoadingMain login={true} />
+    )
 }
 
 export default OAuthCallback;

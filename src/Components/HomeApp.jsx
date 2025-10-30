@@ -19,20 +19,19 @@ function HomeApp({ children }) {
 
   useEffect(() => {
     setLoading(true)
-
   }, [])
 
   useTriggerError()
 
   useEffect(() => {
-    if (patch && '/' + patch.split('/')[1] === '/setting' && user !== 'loading' && user === 'no') {
+    if (patch && '/' + patch.split('/')[1] === '/' && user !== 'loading' && user === 'no') {
       router.push(`/${locale}/login`)
     }
   }, [locale, router, user, patch])
-  if (patch && '/' + patch.split('/')[1] === '/setting' && user !== 'loading' && user === 'no') {
+  console.log(patch, 'patch', user)
+  if (patch && patch === '/' && user !== 'loading' && user === 'no') {
     return <LoadingMain login={true} />
   }
-
 
   return (
     <>

@@ -1,7 +1,6 @@
 import { Avatar, Button, Card, CardContent, Chip, Typography } from '@mui/material'
 import { Box } from '@mui/system'
 import React, { useEffect, useRef, useState } from 'react'
-import CustomTextField from 'src/@core/components/mui/text-field'
 import { useIntl } from 'react-intl'
 import { axiosDelete, axiosGet } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
@@ -23,7 +22,6 @@ export default function Index() {
   const [refresh, setRefresh] = useState(0)
   const [data, setData] = useState([])
   const profile = useSelector(rx => rx.auth.data)
-  console.log(profile, 'profile')
 
   useEffect(() => {
     setLoading(true)
@@ -205,3 +203,6 @@ export default function Index() {
     </div>
   )
 }
+
+
+
