@@ -1168,7 +1168,6 @@ export default function DisplayField({
     }
   }, [])
 
-
   const replaceVars = value => {
     const params = new URLSearchParams(window.location.search)
     const query = Object.fromEntries(params.entries())
@@ -1187,7 +1186,7 @@ export default function DisplayField({
 
     return value
   }
-  
+
   useEffect(() => {
     if (input?.getDataForm === 'api') {
       const apiHeaders = input.apiHeaders ?? {}
@@ -1209,29 +1208,32 @@ export default function DisplayField({
       if (authToken) {
         apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
       }
-      method === 'GET'
-        ? axios.get(resolvedLink, {
-            headers: apiHeaders
-          })
-        : axios[method.toLowerCase()](resolvedLink, sendBody, {
-            headers: apiHeaders
-          })
+      setLoading(true)
 
-            .then(res => {
-              const selectData = res?.data?.data || res.result || res.data.result || res.data
+      let request
 
-              if (Array.isArray(selectData)) {
-                setSelectedOptions(selectData)
-                setOldSelectedOptions(selectData)
-              }
-            })
-            .catch(err => {
-              setSelectedOptions([])
-              setOldSelectedOptions([])
-            })
-            .finally(() => {
-              setLoading(false)
-            })
+      if (method === 'GET') {
+        request = axios.get(resolvedLink, { headers: apiHeaders })
+      } else {
+        request = axios[method.toLowerCase()](resolvedLink, sendBody, { headers: apiHeaders })
+      }
+
+      request
+        .then(res => {
+          const selectData = res?.data?.data || res.result || res.data.result || res.data
+
+          if (Array.isArray(selectData)) {
+            setSelectedOptions(selectData)
+            setOldSelectedOptions(selectData)
+          }
+        })
+        .catch(err => {
+          setSelectedOptions([])
+          setOldSelectedOptions([])
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     }
   }, [input?.getDataForm, queryParams])
 

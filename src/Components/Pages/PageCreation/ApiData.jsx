@@ -67,44 +67,49 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
         linksToFetch.map(linkObj => {
           const resolvedLink = replacePlaceholders(linkObj.link, window.location)
           const body = replaceVars(linkObj.headers)
-          console.log(body, 'body')
           let headers = {}
-          console.log(linkObj.headers, 'linkObj.headers')
-          
+    
           try {
             headers = JSON.parse(body)
           } catch (error) {
             headers = {}
           }
-
-          return linkObj.method === 'GET'
-            ? axios.get(resolvedLink, {
-                headers: apiHeaders
-              })
-            : axios[linkObj.method.toLowerCase()](resolvedLink, headers, {
-                headers: apiHeaders
-              })
-                .then(response => ({
-                  ...linkObj,
-                  data: response.data,
-                  headers: linkObj.headers ?? {},
-                  method: linkObj.method,
-                  loading: false
-                }))
-                .catch(error => ({
-                  ...linkObj,
-                  data: null,
-                  loading: true,
-                  headers: linkObj.headers ?? {},
-                  method: linkObj.method,
-                  error: error.message
-                }))
+    
+          let request
+    
+          if (linkObj.method === 'GET') {
+            request = axios.get(resolvedLink, { headers: apiHeaders })
+          } else {
+            request = axios[linkObj.method.toLowerCase()](
+              resolvedLink,
+              headers,
+              { headers: apiHeaders }
+            )
+          }
+    
+          return request
+            .then(response => ({
+              ...linkObj,
+              data: response.data,
+              headers: linkObj.headers ?? {},
+              method: linkObj.method,
+              loading: false
+            }))
+            .catch(error => ({
+              ...linkObj,
+              data: null,
+              loading: true,
+              headers: linkObj.headers ?? {},
+              method: linkObj.method,
+              error: error.message
+            }))
         })
       ).then(updatedLinks => {
         console.log(updatedLinks, 'updatedLinks')
         dispatch(setApiData(updatedLinks))
       })
     }
+    
   }, [links, dispatch])
 
   const [apiHeaders, setApiHeaders] = useState('{}')
