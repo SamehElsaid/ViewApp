@@ -280,7 +280,7 @@ export default function ViewCollection({
               return
             }
             if (data?.redirect) {
-              push(`/${locale}/${finalUrl}`)
+              push(`/${locale}/${data?.redirect}`)
             }
           }
         }
