@@ -900,10 +900,10 @@ export default function DisplayField({
               } else {
                 let newValue = roles?.onMount?.value
                 const searchParams = new URLSearchParams(window.location.search)
-    
+
                 if (input?.type == 'Date') {
                   const valueDate = new Date(roles?.onMount?.value)
-    
+
                   if (isNaN(valueDate.getTime())) {
                     // invalid date
                     newValue = new Date()
@@ -1170,35 +1170,48 @@ export default function DisplayField({
 
   useEffect(() => {
     if (input?.getDataForm === 'api') {
-      console.log(input?.externalApi, input.apiHeaders)
       const apiHeaders = input.apiHeaders ?? {}
       const authToken = Cookies.get('sub')
       const resolvedLink = replacePlaceholders(input?.externalApi, window.location)
+      const body = replaceVars(input?.body ?? '')
+      const method = input?.method ?? 'GET'
+
+      console.log(body, method)
+
+      let sendBody = {}
+
+      try {
+        sendBody = JSON.parse(body)
+      } catch (error) {
+        sendBody = {}
+      }
+
       if (authToken) {
         apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
       }
-      axios
-        .get(resolvedLink, {
-          headers: apiHeaders
-        })
+      method === 'GET'
+        ? axios.get(resolvedLink, {
+            headers: apiHeaders
+          })
+        : axios[method.toLowerCase()](resolvedLink, sendBody, {
+            headers: apiHeaders
+          })
 
-        .then(res => {
-          console.log(res.data.result, 'res')
-          const selectData = res?.data?.data || res.result || res.data.result || res.data
-          console.log(selectData, 'selectData')
+            .then(res => {
+              const selectData = res?.data?.data || res.result || res.data.result || res.data
 
-          if (Array.isArray(selectData)) {
-            setSelectedOptions(selectData)
-            setOldSelectedOptions(selectData)
-          }
-        })
-        .catch(err => {
-          setSelectedOptions([])
-          setOldSelectedOptions([])
-        })
-        .finally(() => {
-          setLoading(false)
-        })
+              if (Array.isArray(selectData)) {
+                setSelectedOptions(selectData)
+                setOldSelectedOptions(selectData)
+              }
+            })
+            .catch(err => {
+              setSelectedOptions([])
+              setOldSelectedOptions([])
+            })
+            .finally(() => {
+              setLoading(false)
+            })
     }
   }, [input?.getDataForm, queryParams])
 

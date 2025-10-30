@@ -125,6 +125,8 @@ export default function ViewCollection({
                   filedData.staticData = find.staticData
                   filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
                   filedData.apiHeaders = find.apiHeaders
+                  filedData.body = find.body
+                  filedData.method = find.method
                 }
 
                 return filedData

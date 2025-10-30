@@ -14,7 +14,10 @@ import {
   FormLabel,
   FormControlLabel,
   Checkbox,
-  Chip
+  Chip,
+  InputAdornment,
+  Select,
+  MenuItem
 } from '@mui/material'
 import { Box, Button, Divider, Stack, Typography } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
@@ -47,6 +50,8 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [valueSendInput, setValueSendInput] = useState('')
   const [selectedValueSend, setSelectedValueSend] = useState([])
+  const [method, setMethod] = useState(initialConfig?.method || 'GET')
+  const [body, setBody] = useState(initialConfig?.body || '{}')
 
   const staticParsed = useMemo(() => {
     try {
@@ -64,6 +69,14 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
     }
   }, [apiHeaders])
 
+  const bodyParsed = useMemo(() => {
+    try {
+      return JSON.parse(body)
+    } catch (e) {
+      return null
+    }
+  }, [body])
+
   // no step 3
 
   const handleNext = () => setActiveStep(prev => Math.min(prev + 1, steps.length - 1))
@@ -80,6 +93,8 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
     setSelectedOptions([])
     setSelectedValueSend([])
     setValueSendInput('')
+    setMethod('GET')
+    setBody('{}')
   }
 
   useEffect(() => {
@@ -148,7 +163,9 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
         })(),
         key: open.key,
         selectedOptions,
-        selectedValueSend
+        selectedValueSend,
+        method,
+        body
       }
       onSave?.(config)
       onClose?.()
@@ -201,16 +218,15 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
             <Typography variant='subtitle2' sx={{ mb: 2 }}>
               {messages?.dialogs?.selectView || 'Select View'}
             </Typography>
-            {console.log(open)}
 
             <ToggleButtonGroup value={viewType} exclusive onChange={(e, value) => value && setViewType(value)}>
-              {(open?.field?.type !== 'ManyToMany'  || open.type === 'normal') && (
+              {(open?.field?.type !== 'ManyToMany' || open.type === 'normal') && (
                 <ToggleButton value='select'>select</ToggleButton>
               )}
-              {(open?.field?.type === 'ManyToMany' && open.type !== 'normal') && (
+              {open?.field?.type === 'ManyToMany' && open.type !== 'normal' && (
                 <ToggleButton value='search'>search</ToggleButton>
               )}
-              {(open?.field?.type === 'ManyToMany' && open.type !== 'normal') && (
+              {open?.field?.type === 'ManyToMany' && open.type !== 'normal' && (
                 <ToggleButton value='checkbox'>checkbox</ToggleButton>
               )}
               {(open?.field?.type !== 'ManyToMany' || open.type === 'normal') && (
@@ -231,7 +247,7 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
                 exclusive
                 onChange={(e, value) => value && setDataSourceType(value)}
               >
-                {open?.source && <ToggleButton value='collection'>form collection</ToggleButton>}
+                {open?.source && <ToggleButton value='collection'>{open?.source}</ToggleButton>}
                 {!open?.source && <ToggleButton value='api'>form external api</ToggleButton>}
                 {!open?.source && <ToggleButton value='static'>staticData</ToggleButton>}
               </ToggleButtonGroup>
@@ -243,25 +259,27 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
                   <FormLabel component='legend'>{messages.View_Value}</FormLabel>
                   <div className='!flex !flex-row !flex-wrap gap-2'>
                     {getFields.map(field =>
-                      field.type === 'OneToOne' || field.type === 'ManyToMany' || field.type === 'ManyToMany' ? null : (
-                        <FormControlLabel
-                          key={field.key}
-                          className='!w-fit capitalize'
-                          checked={selectedOptions.includes(field.key)}
-                          onChange={() => {
-                            setSelectedOptions(prev => {
-                              if (prev.includes(field.key)) {
-                                return prev.filter(item => item !== field.key)
-                              }
+                      field.type === 'OneToOne' || field.type === 'ManyToMany' || field.type === 'ManyToMany'
+                        ? null
+                        : field.options?.isSystemField === false && (
+                            <FormControlLabel
+                              key={field.key}
+                              className='!w-fit capitalize'
+                              checked={selectedOptions.includes(field.key)}
+                              onChange={() => {
+                                setSelectedOptions(prev => {
+                                  if (prev.includes(field.key)) {
+                                    return prev.filter(item => item !== field.key)
+                                  }
 
-                              return [...prev, field.key]
-                            })
-                          }}
-                          value={field.key}
-                          control={<Checkbox />}
-                          label={field.key.replace('_', ' ')}
-                        />
-                      )
+                                  return [...prev, field.key]
+                                })
+                              }}
+                              value={field.key}
+                              control={<Checkbox />}
+                              label={field.key.replace('_', ' ')}
+                            />
+                          )
                     )}
                   </div>
                 </FormControl>
@@ -276,6 +294,16 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
                   placeholder='https://api.example.com/items'
                   value={externalApi}
                   onChange={e => setExternalApi(e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <Select variant='filled' value={method} onChange={e => setMethod(e.target.value)}>
+                          <MenuItem value='GET'>GET</MenuItem>
+                          <MenuItem value='POST'>POST</MenuItem>
+                        </Select>
+                      </InputAdornment>
+                    )
+                  }}
                 />
                 <Box>
                   <Typography variant='subtitle2' sx={{ mb: 1 }}>
@@ -286,7 +314,19 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
                     onChange={setApiHeaders}
                     height='150px'
                     isError={headersParsed === null}
-                    helperText={headersParsed === null ? (messages?.dialogs?.invalidJson || 'Invalid JSON format') : ''}
+                    helperText={headersParsed === null ? messages?.dialogs?.invalidJson || 'Invalid JSON format' : ''}
+                  />
+                </Box>
+                <Box>
+                  <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                    {messages?.dialogs?.body || 'Body'}
+                  </Typography>
+                  <JsonEditor
+                    value={body}
+                    onChange={setBody}
+                    height='150px'
+                    isError={bodyParsed === null}
+                    helperText={bodyParsed === null ? messages?.dialogs?.invalidJson || 'Invalid JSON format' : ''}
                   />
                 </Box>
               </Stack>
@@ -303,7 +343,7 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
                     onChange={setStaticData}
                     height='200px'
                     isError={staticParsed === null}
-                    helperText={staticParsed === null ? (messages?.dialogs?.invalidJson || 'Invalid JSON format') : ''}
+                    helperText={staticParsed === null ? messages?.dialogs?.invalidJson || 'Invalid JSON format' : ''}
                   />
                 </Box>
               </Stack>
