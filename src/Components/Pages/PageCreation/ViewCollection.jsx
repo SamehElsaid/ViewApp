@@ -74,21 +74,23 @@ export default function ViewCollection({
 
   useEffect(() => {
     if (!loading) {
-      if (data?.layout?.length === [...filterSelect, ...addMoreElement].length) {
-        setLayout([...data.layout])
-      } else {
-        setLayout(
-          [...filterSelect, ...addMoreElement].map((item, index) => {
-            return {
-              i: item.id,
-              x: 0,
-              y: index,
-              w: 12,
-              h: item.type === 'LongText' ? 1.8 : 1
-            }
+      const layout = [...data.layout]
+      const items = [...filterSelect, ...addMoreElement]
+      const lastY = layout.at(-1)?.y ?? 0
+      items.forEach((item) => {
+        if (!layout.find(l => l.i === item.id)) {
+          layout.push({
+            i: item.id,
+            x: 0,
+            y: lastY + 1,
+            w: 12,
+            h: item.type === 'LongText' ? 1.8 : 1
           })
-        )
-      }
+        }
+      })
+
+      setLayout(layout)
+      
     }
   }, [loading, data?.selected, dataLength])
 
@@ -152,6 +154,8 @@ export default function ViewCollection({
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
+    setLoading(true)
+
 
     const initialSendData = { ...dataRef.current }
     if (data.submitApi?.includes('/api/Account/Register')) {
@@ -213,7 +217,6 @@ export default function ViewCollection({
     })
 
     console.log(output, 'output')
-    setLoading(true)
     console.log(data?.redirect, 'data?.redirect', 'from before')
 
     const apiCall =

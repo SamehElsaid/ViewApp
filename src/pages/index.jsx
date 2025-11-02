@@ -130,9 +130,9 @@ export default function Index() {
             LinkComponent={Link}
             href={`/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}` : ''}${
               row.collectionName ? `&collection=${row.collectionName}` : ''
-            }${row.caseId ? `&caseId=${row.caseId}` : ''}${profile.sub ? `&sub=${profile.sub}` : ''}${
-              profile.name ? `&name=${profile.name}` : ''
-            }`}
+            }${row.MainWfInstanceId ? `&MainWfInstanceId=${row.MainWfInstanceId}` : ''}${
+              row.caseId ? `&caseId=${row.caseId}` : ''
+            }${profile.sub ? `&sub=${profile.sub}` : ''}${profile.name ? `&name=${profile.name}` : ''}`}
           >
             <Icon icon='mdi:eye' />
           </IconButton>
@@ -203,6 +203,3 @@ export default function Index() {
     </div>
   )
 }
-
-
-
