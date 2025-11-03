@@ -14,7 +14,7 @@ function GetTimeinTable({ data }) {
     if (data) {
       const createdDate = new Date(data)
 
-      const adjustedDate = new Date(createdDate.getTime() + 3 * 60 * 60 * 1000)
+      const adjustedDate = new Date(createdDate.getTime() + 2 * 60 * 60 * 1000)
 
       const today = new Date()
       const timeDiff = Math.abs(today - adjustedDate)

@@ -1,7 +1,7 @@
 import { forwardRef } from 'react'
 import { FaCalendarAlt } from 'react-icons/fa'
 
-const ExampleCustomInput = forwardRef(({ value, onClick, input }, ref) => {
+const ExampleCustomInput = forwardRef(({ value, onClick, input,disabled }, ref) => {
   let label
 
   try {
@@ -22,6 +22,7 @@ const ExampleCustomInput = forwardRef(({ value, onClick, input }, ref) => {
         onClick={onClick}
         ref={ref}
         readOnly
+        disabled={disabled}
         value={value}
       />
       <div className='absolute top-0 start-[10px] w-[20px] h-full flex items-center justify-center z-10'>

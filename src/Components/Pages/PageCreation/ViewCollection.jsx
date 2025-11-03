@@ -154,7 +154,6 @@ export default function ViewCollection({
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
-    setLoading(true)
 
 
     const initialSendData = { ...dataRef.current }
@@ -218,6 +217,7 @@ export default function ViewCollection({
 
     console.log(output, 'output')
     console.log(data?.redirect, 'data?.redirect', 'from before')
+    setLoading(true)
 
     const apiCall =
       data.type_of_sumbit === 'collection'

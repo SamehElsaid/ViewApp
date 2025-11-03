@@ -40,6 +40,14 @@ const ReactPageEditor = ({ initialData, initialDataApi, pageId, entitiesId, coll
     setEditorValue(initialData)
   }, [initialData])
 
+  useEffect(() => {
+    document.body.classList.add('page-control')
+
+    return () => {
+      document.body.classList.remove('page-control')
+    }
+  }, [])
+
   return (
     <div className='relative'>
       <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />

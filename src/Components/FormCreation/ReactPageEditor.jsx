@@ -49,6 +49,15 @@ const ReactPageEditor = () => {
     }
   }, [addFiles])
 
+
+  useEffect(() => {
+    document.body.classList.add('page-control')
+
+    return () => {
+      document.body.classList.remove('page-control')
+    }
+  }, [])
+  
   return (
     <div className='relative'>
       <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>

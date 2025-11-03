@@ -347,23 +347,45 @@ const ViewInput = ({
 
               <p id='file-upload-text'>{locale == 'ar' ? ' اسحب وأفلت' : 'Drag and Drop'}</p>
               <p id='file-upload-subtext'>
-                {locale == 'ar' ? 'SVG, PNG, JPG or GIF (MAX. 800x400px)' : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
+                {input?.options?.uiSchema?.xComponentProps?.fileTypes?.length > 0
+                  ? input.options.uiSchema.xComponentProps.fileTypes.join(', ').toUpperCase()
+                  : locale == 'ar'
+                  ? 'SVG, PNG, JPG أو GIF (MAX. 800x400px)'
+                  : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
               </p>
 
               {value && (
                 <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
                   <div className='flex gap-3 items-center file-name-item'>
-                    <span className='flex gap-1 items-center file-name w-[calc(100%-25px)]'>
+                    <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
                       <BsPaperclip className='text-xl text-main-color' />
                       <span className='flex-1'>{fileName}</span>
                     </span>
-                    <button
-                      type='button'
-                      className='delete-button w-[25px] h-[25px] bg-red-500/70 rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                      onClick={e => handleDelete(e)}
-                    >
-                      <BsTrash />
-                    </button>
+                    <div className='flex gap-2 items-center'>
+                      <a
+                        href={process.env.API_URL + '/file/download/' + value.replaceAll('/Uploads/', '')}
+                        target='_blank'
+                        rel='noreferrer'
+                        className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                      >
+                        <Icon icon='tabler:eye' fontSize='1.25rem' />
+                      </a>
+                      <a
+                        href={process.env.API_URL + '/file/download/' + value.replaceAll('/Uploads/', '')}
+                        download
+                        target='_blank'
+                        className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                      >
+                        <Icon icon='tabler:download' fontSize='1.25rem' />
+                      </a>
+                      <button
+                        type='button'
+                        className='delete-button w-[25px] h-[25px] bg-red-500/70 rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                        onClick={e => handleDelete(e)}
+                      >
+                        <BsTrash />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -380,7 +402,11 @@ const ViewInput = ({
                   evaluatedFn(e)
                 }
               }}
-              accept={input?.options?.uiSchema?.xComponentProps?.fileTypes?.join(',')}
+              accept={
+                input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
+                  ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
+                  : undefined
+              }
             />
           </label>
         </div>
@@ -422,7 +448,11 @@ const ViewInput = ({
                   evaluatedFn(e)
                 }
               }}
-              accept={input?.options?.uiSchema?.xComponentProps?.fileTypes?.join(',')}
+              accept={
+                input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
+                  ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
+                  : undefined
+              }
             />
           </Button>
         </div>
