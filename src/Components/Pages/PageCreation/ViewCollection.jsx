@@ -217,9 +217,8 @@ export default function ViewCollection({
       }
     })
     setLoading(true)
+    let success = false
     try {
-      let success = false 
-
       const apiCall =
         data.type_of_sumbit === 'collection'
           ? `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
@@ -231,52 +230,51 @@ export default function ViewCollection({
             handleSubmitEvent()
           }
           const evaluatedFn = eval('(' + data.onSubmit + ')')
-          if (!handleSubmitEvent) {
+          if (handleSubmitEvent) {
+          } else {
             evaluatedFn()
           }
         }
-
-        const res = await axiosPut(
+        axiosPut(
           `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
           locale,
           output
-        )
-
-        if (res.status) {
-          success = true
-          setReload(prev => prev + 1)
-          toast.success(messages.dialogs.dataSentSuccessfully)
-        }
+        ).then(res => {
+          if (res.status) {
+            setReload(prev => prev + 1)
+            toast.success(messages.dialogs.dataSentSuccessfully)
+            success = true
+          }
+        })
       } else {
-        const res = await axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection')
+        axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(
+          res => {
+            if (res.status) {
+              setReload(prev => prev + 1)
+              toast.success(messages.dialogs.dataSentSuccessfully)
+              if (data.onSubmit) {
+                const evaluatedFn = eval('(' + data.onSubmit + ')')
+                if (handleSubmitEvent) {
+                  handleSubmitEvent()
+                } else {
+                  evaluatedFn()
+                }
+              }
 
-        if (res.status) {
-          success = true
-          setReload(prev => prev + 1)
-          toast.success(messages.dialogs.dataSentSuccessfully)
-
-          if (data.onSubmit) {
-            const evaluatedFn = eval('(' + data.onSubmit + ')')
-            if (handleSubmitEvent) {
-              handleSubmitEvent()
-            } else {
-              evaluatedFn()
+              success = true
             }
           }
-        }
+        )
       }
-
-      // نحتفظ بالـ success علشان نتحقق منه في finally
-      return success
     } catch (error) {
-      return false
+      console.log(error, 'error')
     } finally {
-      setLoading(false)
+      console.log(success, 'success')
 
-      // هنا الشرط إننا نعمل redirect بس لو العملية نجحت
-      if (data?.redirect && (await Promise.resolve(success))) {
+      if (data?.redirect) {
         push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
       }
+      setLoading(false)
     }
   }
 
