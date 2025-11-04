@@ -216,65 +216,73 @@ export default function ViewCollection({
         }
       }
     })
+
     setLoading(true)
-    let success = false
+
+    const apiCall =
+      data.type_of_sumbit === 'collection'
+        ? `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
+        : data.submitApi
+
     try {
-
-      const apiCall =
-        data.type_of_sumbit === 'collection'
-          ? `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
-          : data.submitApi
-
-      let mainRes
-
       if (entitiesId && collectionName) {
         if (data.onSubmit) {
-          const evaluatedFn = eval('(' + data.onSubmit + ')')
-
           if (handleSubmitEvent) {
-            await handleSubmitEvent()
+            handleSubmitEvent()
+          }
+          const evaluatedFn = eval('(' + data.onSubmit + ')')
+          if (handleSubmitEvent) {
           } else {
-            const result = evaluatedFn()
-            if (result instanceof Promise) await result
+            evaluatedFn()
           }
         }
-
-        mainRes = await axiosPut(
+        axiosPut(
           `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
           locale,
           output
         )
+          .then(res => {
+            if (res.status) {
+              setReload(prev => prev + 1)
+              toast.success(messages.dialogs.dataSentSuccessfully)
+  
+              // if (data?.redirect) {
+              //   push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
+              // }
+            }
+          })
+          .finally(() => setLoading(false))
       } else {
-        mainRes = await axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection')
-
-        if (mainRes?.status && data.onSubmit) {
-          const evaluatedFn = eval('(' + data.onSubmit + ')')
-
-          if (handleSubmitEvent) {
-            await handleSubmitEvent()
-          } else {
-            const result = evaluatedFn()
-            if (result instanceof Promise) await result
-          }
-        }
+        axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false)
+          .then(res => {
+            if (res.status) {
+              setReload(prev => prev + 1)
+              toast.success(messages.dialogs.dataSentSuccessfully)
+              if (data.onSubmit) {
+                const evaluatedFn = eval('(' + data.onSubmit + ')')
+                if (handleSubmitEvent) {
+                  handleSubmitEvent()
+                } else {
+                  evaluatedFn()
+                }
+              }
+  
+              // if (data?.redirect) {
+              //   push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
+              // }
+            }
+          })
+          .finally(() => setLoading(false))
       }
-
-      if (mainRes?.status) {
-        success = true
-        setReload(prev => prev + 1)
-        toast.success(messages.dialogs.dataSentSuccessfully)
-
-      
-      }
-    } catch (err) {
-      console.error(err)
+    } catch (error) {
+      console.log(error, 'error')
     } finally {
-      if (data?.redirect && success) {
-        push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
-      }
-      success = false
-      setLoading(false)
+      console.log('finally');
+      
+      // setLoading(false)
     }
+
+  
   }
 
   const [open, setOpen] = useState(false)
