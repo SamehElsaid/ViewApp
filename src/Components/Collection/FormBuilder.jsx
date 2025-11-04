@@ -65,7 +65,6 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       return toast.error(messages.generateInput.keyMustBeString)
     }
     if (activeStep === 2 && !isOptionsStep && !isFileStep) {
-      console.log('activeStep', validations.maxLength, validations.minLength)
       if(+validations.maxLength < +validations.minLength && validations.maxLength !== '') {
         return toast.error(messages.maxLengthMustBeGreaterThanMinLength)
       }

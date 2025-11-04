@@ -99,7 +99,6 @@ const ViewInput = ({
     const label = JSON.parse(input?.descriptionEn)
     const valueSend = JSON.parse(input?.selectedValueSend) || []
 
-    console.log('ds')
 
     return (
       <div className=''>
@@ -117,7 +116,6 @@ const ViewInput = ({
                         name={input.nameEn}
                         checked={valueSendOption === value}
                         onChange={e => {
-                          console.log(e.target.value)
                           onChange(e)
                         }}
                         type='radio'
@@ -163,11 +161,9 @@ const ViewInput = ({
       />
     )
   }
-  console.log(input.kind)
 
   if (input.kind == 'checkbox') {
     const label = JSON.parse(input?.descriptionEn)
-    console.log(value, 'here')
 
     return (
       <div className='w-full'>
@@ -591,7 +587,6 @@ const ViewInput = ({
   }
 
   if (input.type == 'Date') {
-    console.log('here', readOnly)
 
     const raw = JSON.parse(input?.descriptionEn ?? '{}')
 

@@ -58,7 +58,6 @@ export default function ViewCollection({
 
   useEffect(() => {
     if (entitiesId !== null && collectionName !== null) {
-      console.log(`generic-entities/${collectionName}/${entitiesId}`, locale)
 
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale)
         .then(res => {
@@ -77,7 +76,7 @@ export default function ViewCollection({
       const layout = [...data.layout]
       const items = [...filterSelect, ...addMoreElement]
       const lastY = layout.at(-1)?.y ?? 0
-      items.forEach((item) => {
+      items.forEach(item => {
         if (!layout.find(l => l.i === item.id)) {
           layout.push({
             i: item.id,
@@ -90,7 +89,6 @@ export default function ViewCollection({
       })
 
       setLayout(layout)
-      
     }
   }, [loading, data?.selected, dataLength])
 
@@ -112,7 +110,6 @@ export default function ViewCollection({
           if (res.status) {
             const associationsConfig = data.associationsConfig || []
 
-            console.log(associationsConfig, 'associationsConfig')
 
             const filterData = res.data
               .filter(field => data?.selected?.includes(field?.key))
@@ -155,7 +152,6 @@ export default function ViewCollection({
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
 
-
     const initialSendData = { ...dataRef.current }
     if (data.submitApi?.includes('/api/Account/Register')) {
       delete initialSendData.pageWorkflows
@@ -164,6 +160,7 @@ export default function ViewCollection({
     const sendData = {}
     Object.keys(initialSendData).forEach(key => {
       const keyData = key
+
       if (initialSendData[keyData] !== null) {
         sendData[keyData] = initialSendData[keyData]
       }
@@ -211,12 +208,17 @@ export default function ViewCollection({
         output[subKey] = output[subKey] || {}
         output[subKey][mainKey] = value
       } else {
-        output[key] = value
+        if (value instanceof Date && !isNaN(value)) {
+          const date = value
+          const localISO = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 19) // remove milliseconds and 'Z'
+
+          output[key] = localISO
+        } else {
+          output[key] = value
+        }
       }
     })
 
-    console.log(output, 'output')
-    console.log(data?.redirect, 'data?.redirect', 'from before')
     setLoading(true)
 
     const apiCall =
@@ -235,15 +237,18 @@ export default function ViewCollection({
           evaluatedFn()
         }
       }
-      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`, locale, output)
+      axiosPut(
+        `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
+        locale,
+        output
+      )
         .then(res => {
           if (res.status) {
             setReload(prev => prev + 1)
             toast.success(messages.dialogs.dataSentSuccessfully)
 
             if (data?.redirect) {
-              console.log(data?.redirect, 'data?.redirect', 'from put')
-              push(`/${locale}/${data?.redirect === "/" ? "" : data?.redirect}`)
+              push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
             }
           }
         })
@@ -264,9 +269,7 @@ export default function ViewCollection({
             }
 
             if (data?.redirect) {
-              console.log(data?.redirect, 'data?.redirect', 'from post')
-
-              push(`/${locale}/${data?.redirect === "/" ? "" : data?.redirect}`)
+              push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
             }
           }
         })

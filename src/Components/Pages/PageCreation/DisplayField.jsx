@@ -837,17 +837,14 @@ export default function DisplayField({
     }
   }, [roles])
 
-  console.log(findValue)
   useEffect(() => {
-    console.log(findValue, 'findValue', input)
 
     const isDate = input?.type === 'Date'
     const isSearchOrCheckbox = ['search', 'checkbox'].includes(input?.kind)
 
     if (findValue !== undefined && findValue !== null) {
-      console.log(findValue, 'findValue', input, isDate)
 
-      setValue(isDate ? (findValue ? new Date(findValue) : null) : findValue)
+      setValue(isDate ? (findValue ? new Date(findValue.toLocaleString()) : null) : findValue)
     } else {
       if (isSearchOrCheckbox) setValue([])
       else if (isDate) setValue(new Date())
@@ -1137,7 +1134,6 @@ export default function DisplayField({
     }
 
     if (input?.getDataForm === 'static') {
-      console.log(input?.staticData)
       setSelectedOptions(input?.staticData)
       setOldSelectedOptions(input?.staticData)
     }
@@ -1145,7 +1141,6 @@ export default function DisplayField({
 
   const [queryParams, setQueryParams] = useState(null)
 
-  console.log(queryParams, 'name')
   useEffect(() => {
     const handleChange = () => {
       const params = new URLSearchParams(window.location.search)
@@ -1195,7 +1190,6 @@ export default function DisplayField({
       const body = replaceVars(input?.body ?? '')
       const method = input?.method ?? 'GET'
 
-      console.log(body, method)
 
       let sendBody = {}
 

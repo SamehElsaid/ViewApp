@@ -122,7 +122,6 @@ function Select({ onChange, data, type, buttonRef, title }) {
     const { value, checked } = event.target
     const isChecked = skipCheck || checked
 
-    console.log(isChecked && fieldCategory === 'Associations')
     if (fieldCategory === 'Associations' && isChecked) {
       setAssociationsOpen({ key: event.target.value, source: field?.options?.source, field })
 
@@ -130,14 +129,12 @@ function Select({ onChange, data, type, buttonRef, title }) {
     }
 
     // if(filed)
-    console.log(field)
     if (field?.type === 'SingleText' && isChecked) {
       setSingleTextChoice({ value, field, fieldCategory })
 
       return
     }
 
-    console.log(isChecked, value)
     setSelectedOptions(prevSelected =>
       isChecked ? [...prevSelected, value] : prevSelected.filter(item => item !== value)
     )
@@ -146,9 +143,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
     const oldAdditionalFields = data?.additional_fields ?? []
     const filteredAdditionalFields = oldAdditionalFields.filter(inp => inp.key !== field?.id)
 
-    console.log(filteredAdditionalFields, field)
     if (skipCheck) {
-      console.log(skipCheck)
       onChange({
         ...data,
         selected,
@@ -242,9 +237,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
         }}
         initialConfig={associationsConfig}
         onSave={config => {
-          console.log(config)
           let newConfig = data?.associationsConfig ?? []
-          console.log(newConfig, 'newConfig')
 
           const found = newConfig.find(item => item.key === config.key)
           if (found) {

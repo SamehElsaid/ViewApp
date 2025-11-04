@@ -261,7 +261,6 @@ const AddPage = props => {
                 </div>
               )}
 
-              {console.log(getValues('workflow'))}
               <Controller
                 name='workflow'
                 control={control}

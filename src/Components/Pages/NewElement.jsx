@@ -272,7 +272,6 @@ function NewElement({
       )
     }
 
-    console.log(roles, 'roles')
 
     return (
       <button

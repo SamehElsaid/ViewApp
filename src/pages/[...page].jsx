@@ -18,11 +18,8 @@ let ReactPageEditor = dynamic(
 )
 
 const Mypage = ({ pageName, initialData, initialDataApi, pageId, entitiesId, collectionName }) => {
-  console.log('pageName', pageName)
-  console.log('pageId', pageId)
   const loading = useSelector(rx => rx.LoadingPages.loading)
 
-  console.log('entitiesId', { entitiesId })
 
   return (
     <div className=''>

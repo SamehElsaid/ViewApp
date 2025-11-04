@@ -28,7 +28,6 @@ function HomeApp({ children }) {
       router.push(`/${locale}/login`)
     }
   }, [locale, router, user, patch])
-  console.log(patch, 'patch', user)
   if (patch && patch === '/' && user !== 'loading' && user === 'no') {
     return <LoadingMain login={true} />
   }

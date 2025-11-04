@@ -5,7 +5,6 @@ import { axiosGet } from 'src/Components/axiosCall'
 export default function ViewValueInTable({ data, value }) {
   const [dataView, setDataView] = useState(false)
 
-  console.log(data, value)
 
   // useEffect(() => {
   //   if (data?.options?.source) {
