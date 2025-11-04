@@ -219,61 +219,60 @@ export default function ViewCollection({
     setLoading(true)
     let success = false
     try {
+
       const apiCall =
         data.type_of_sumbit === 'collection'
           ? `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
           : data.submitApi
 
+      let mainRes
+
       if (entitiesId && collectionName) {
         if (data.onSubmit) {
-          if (handleSubmitEvent) {
-            handleSubmitEvent()
-          }
           const evaluatedFn = eval('(' + data.onSubmit + ')')
+
           if (handleSubmitEvent) {
+            await handleSubmitEvent()
           } else {
-            evaluatedFn()
+            const result = evaluatedFn()
+            if (result instanceof Promise) await result
           }
         }
-        axiosPut(
+
+        mainRes = await axiosPut(
           `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
           locale,
           output
-        ).then(res => {
-          if (res.status) {
-            setReload(prev => prev + 1)
-            toast.success(messages.dialogs.dataSentSuccessfully)
-            success = true
-          }
-        })
-      } else {
-        axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false).then(
-          res => {
-            if (res.status) {
-              setReload(prev => prev + 1)
-              toast.success(messages.dialogs.dataSentSuccessfully)
-              if (data.onSubmit) {
-                const evaluatedFn = eval('(' + data.onSubmit + ')')
-                if (handleSubmitEvent) {
-                  handleSubmitEvent()
-                } else {
-                  evaluatedFn()
-                }
-              }
-
-              success = true
-            }
-          }
         )
-      }
-    } catch (error) {
-      console.log(error, 'error')
-    } finally {
-      console.log(success, 'success')
+      } else {
+        mainRes = await axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection')
 
-      if (data?.redirect) {
+        if (mainRes?.status && data.onSubmit) {
+          const evaluatedFn = eval('(' + data.onSubmit + ')')
+
+          if (handleSubmitEvent) {
+            await handleSubmitEvent()
+          } else {
+            const result = evaluatedFn()
+            if (result instanceof Promise) await result
+          }
+        }
+      }
+
+      if (mainRes?.status) {
+        success = true
+        setReload(prev => prev + 1)
+        toast.success(messages.dialogs.dataSentSuccessfully)
+
+      
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      if (data?.redirect && success) {
         push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
       }
+      success = false
       setLoading(false)
     }
   }
