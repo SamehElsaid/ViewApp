@@ -235,7 +235,7 @@ export default function ViewCollection({
           evaluatedFn()
         }
       }
-      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}`, locale, output)
+      axiosPut(`generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`, locale, output)
         .then(res => {
           if (res.status) {
             setReload(prev => prev + 1)
