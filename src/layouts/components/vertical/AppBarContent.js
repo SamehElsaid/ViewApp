@@ -1,5 +1,5 @@
 // ** MUI Imports
-import { Typography } from '@mui/material'
+import { Typography, Step, StepLabel } from '@mui/material'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import Link from 'next/link'
@@ -9,6 +9,7 @@ import { useIntl } from 'react-intl'
 import Icon from 'src/@core/components/icon'
 import ModeToggler from 'src/@core/layouts/components/shared-components/ModeToggler'
 import UserDropdown from 'src/@core/layouts/components/shared-components/UserDropdown'
+import { svg } from 'src/Components/svg'
 
 const AppBarContent = props => {
   const { hidden, settings, saveSettings, toggleNavVisibility } = props
@@ -81,7 +82,8 @@ const AppBarContent = props => {
             }}
           >
             {/* {messages.logo} */}
-            <img src={'./images/logo.png'} alt='logo' style={{ height: '50px' }} />
+
+            <span className='w-[60px] h-[60px]' dangerouslySetInnerHTML={{ __html: svg.logo }}></span>
           </Typography>
         </div>
 

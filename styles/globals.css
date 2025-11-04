@@ -1509,7 +1509,7 @@ sortable-list {
 .page-control input:disabled,
 .page-control select:disabled ,
 .page-control textarea:disabled {
-  @apply !bg-gray-200 hover:!border-gray-200;
+  @apply !bg-gray-200 hover:!border-gray-200 !opacity-60;
 }
 .MuiInputBase-input.MuiFilledInput-input[type='color'] {
   @apply !mt-3;

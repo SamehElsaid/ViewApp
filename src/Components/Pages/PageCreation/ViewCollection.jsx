@@ -58,7 +58,6 @@ export default function ViewCollection({
 
   useEffect(() => {
     if (entitiesId !== null && collectionName !== null) {
-
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale)
         .then(res => {
           if (res.status) {
@@ -109,7 +108,6 @@ export default function ViewCollection({
         axiosGet(`collection-fields/get?CollectionId=${data.collectionId}`, locale).then(res => {
           if (res.status) {
             const associationsConfig = data.associationsConfig || []
-
 
             const filterData = res.data
               .filter(field => data?.selected?.includes(field?.key))
