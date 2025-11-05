@@ -25,19 +25,29 @@ export default function Index() {
 
   useEffect(() => {
     setLoading(true)
-    const loadingToast = toast.loading(locale === 'ar' ? 'جاري التحميل...' : 'Loading...')
     axiosGet(`request/get-requests`, locale)
       .then(res => {
         if (res.status) {
           setData(res.data)
-          console.log(res.data)
         }
       })
       .finally(() => {
         setLoading(false)
-        toast.dismiss(loadingToast)
       })
   }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh])
+
+
+  useEffect(() => {
+    const handleKeyPress = e => {
+     setRefresh(prev => prev + 1)
+    }
+  
+    window.addEventListener('keydown', handleKeyPress)
+  
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress)
+    }
+  }, [])
 
   const columns = [
     {
