@@ -10,12 +10,11 @@ module.exports = withTM({
     localeDetection: true
   },
   env: {
-    API_URL: 'https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api',
-    IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
-  
-    // IDENTITY_URL: 'https://localhost:7000/',
-    DEV_MODE: false,
-    DOMAIN: 'https://view-app-omega.vercel.app/'
+     // API_URL: 'https://localhost:7101/api',
+     API_URL: 'https://localhost:44375/api',
+     IDENTITY_URL: 'https://localhost:7000/',
+     DEV_MODE: true,
+     DOMAIN: 'http://localhost:3000/'
   },
   images: {
     domains: []
