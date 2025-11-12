@@ -3,6 +3,7 @@ import { FaBars, FaChevronDown } from 'react-icons/fa'
 import { MdMenu } from 'react-icons/md'
 import HeaderControl from './HeaderControl'
 import { useIntl } from 'react-intl'
+import { Autocomplete, TextField } from '@mui/material'
 
 export default function useHeader({ locale, buttonRef }) {
   const { messages } = useIntl()
@@ -73,32 +74,30 @@ export default function useHeader({ locale, buttonRef }) {
                   </button>
                 )}
 
-                {data?.showSelector && (
-                  <div className='relative'>
-                    <select
-                      value={selectedOption}
-                      onChange={handleSelectChange}
-                      className='px-3 py-2 pr-8 rounded-md appearance-none'
-                      style={{
-                        backgroundColor: data?.selectorBgColor || '#f3f4f6',
-                        color: data?.selectorTextColor || '#374151',
-                        border: `1px solid ${data?.selectorBorderColor || '#d1d5db'}`,
-                        fontWeight: data?.selectorFontWeight || 'normal'
+{data?.showSelector && (
+                  <div className='relative min-w-[200px]'>
+                    <Autocomplete
+                      options={(data?.options || []).map(o => ({ label: o?.[`label_${locale}`], value: o.value }))}
+                      getOptionLabel={o => o?.label || ''}
+                      value={(data?.options || [])
+                        .map(o => ({ label: o?.[`label_${locale}`], value: o.value }))
+                        .find(o => o.value === selectedOption) || null}
+                      onChange={(e, newVal) => {
+                        const v = newVal?.value || ''
+                        setSelectedOption(v)
+                        if (data?.onSelectChange && typeof data.onSelectChange === 'function') {
+                          data.onSelectChange(v)
+                        }
                       }}
-                    >
-                      {!data?.options || data?.options.length === 0 ? (
-                        <option value=''>{messages.dialogs.select}</option>
-                      ) : (
-                        data.options.map((option, index) => (
-                          <option key={index} value={option.value}>
-                            {option?.[`label_${locale}`]}
-                          </option>
-                        ))
+                      clearOnEscape
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          placeholder={'---select---'}
+                          size='small'
+                        />
                       )}
-                    </select>
-                    <div className='absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none'>
-                      <FaChevronDown size={12} style={{ color: data?.selectorTextColor || '#374151' }} />
-                    </div>
+                    />
                   </div>
                 )}
 

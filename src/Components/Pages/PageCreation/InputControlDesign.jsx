@@ -698,33 +698,55 @@ export default function InputControlDesign({ open, handleClose, design, locale, 
                         </FormControl>
                         <FormControl fullWidth margin='normal'>
                           <InputLabel> {messages.dialogs.afterDateType}</InputLabel>
+                          <div className='flex items-center gap-2'>
                           <Select
-                            variant='filled'
-                            value={roles?.afterDateType}
-                            onChange={e => {
+                              className='flex-1'
+                              variant='filled'
+                              value={roles?.beforeDateType}
+                              displayEmpty
+                              renderValue={selected => {
+                                if (!selected) return '---select---'
+                                return selected
+                              }}
+                              onChange={e => {
                               const additional_fields = data.additional_fields ?? []
                               const findMyInput = additional_fields.find(inp => inp.key === open.id)
                               if (findMyInput) {
-                                findMyInput.roles.afterDateType = e.target.value
+                                findMyInput.roles.beforeDateType = e.target.value
                               } else {
                                 const myEdit = {
                                   key: open.id,
                                   design: objectToCss(Css).replaceAll('NaN', ''),
                                   roles: {
                                     ...roles,
-                                    afterDateType: e.target.value
+                                    beforeDateType: e.target.value === '' ? false : e.target.value
                                   }
                                 }
                                 additional_fields.push(myEdit)
                               }
                               onChange({ ...data, additional_fields: additional_fields })
-                            }}
-                          >
-                            <MenuItem value=''>{messages.dialogs.select}</MenuItem>
+                              }}
+                            >
+                              <MenuItem value='' disabled>---select---</MenuItem>
                             <MenuItem value='date'>{messages.dialogs.insertDate}</MenuItem>
                             <MenuItem value='days'>{messages.dialogs.insertDays}</MenuItem>
-                          </Select>
-
+                            </Select>
+                            <button
+                              type='button'
+                              className='px-2 py-1 text-xs border rounded'
+                              onClick={() => {
+                                const additional_fields = data.additional_fields ?? []
+                                const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                                if (findMyInput) {
+                                  findMyInput.roles.beforeDateType = ''
+                                  findMyInput.roles.beforeDateValue = ''
+                                }
+                                onChange({ ...data, additional_fields: additional_fields })
+                              }}
+                            >
+                              {messages?.Clear || 'Clear'}
+                            </button>
+                          </div>
                           <Collapse
                             transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
                             isOpen={Boolean(roles?.afterDateType === 'date')}

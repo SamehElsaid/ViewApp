@@ -42,8 +42,7 @@ export default function ViewCollection({
     push
   } = useRouter()
   const { messages } = useIntl()
-
-  const [layout, setLayout] = useState()
+  const [layout, setLayout] = useState(Array.isArray(data?.layout) ? data.layout : [])
   const addMoreElement = data.addMoreElement ?? []
   const dataLength = getFields.length + addMoreElement.length
 
@@ -72,7 +71,7 @@ export default function ViewCollection({
 
   useEffect(() => {
     if (!loading) {
-      const layout = [...data.layout]
+      const layout = Array.isArray(data?.layout) ? [...data.layout] : []
       const items = [...filterSelect, ...addMoreElement]
       const lastY = layout.at(-1)?.y ?? 0
       items.forEach(item => {
@@ -412,7 +411,7 @@ export default function ViewCollection({
         <form className={'w-[calc(100%)]'} onClick={() => setErrors(false)} onSubmit={handleSubmit}>
           <ResponsiveGridLayout
             className='layout'
-            layout={layout}
+            layout={Array.isArray(layout) ? layout : []}
             ref={refTest}
             cols={12}
             rowHeight={71}
