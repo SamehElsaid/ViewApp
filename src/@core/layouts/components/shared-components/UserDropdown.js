@@ -192,32 +192,33 @@ const UserDropdown = props => {
                     )}
                   </Avatar>
                 </Badge>
-                <Box sx={{ display: 'flex', ml: 2.5, alignItems: 'flex-start', flexDirection: 'column' }}>
-                  <Typography className='uppercase' sx={{ fontWeight: 500 }}>
+                <Box sx={{ display: 'flex', ml: 2.5, alignItems: 'flex-start', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                  <Typography className='uppercase' sx={{ fontWeight: 500, maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'normal' }}>
                     {profile?.name}
                   </Typography>
-                  <Typography className='capitalize' variant='body2'>
+                  <Typography className='capitalize' variant='body2' sx={{ maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'normal' }}>
                     {profile?.kind && profile?.kind}
                   </Typography>
                 </Box>
               </Box>
-            </Box>
-            <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
-            <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
-              <Box component={Link} href={`/${locale}/setting/profile`} sx={styles}>
-                <Icon icon='tabler:user-check' />
-                {messages.myProfile}
               </Box>
-            </MenuItemStyled>
+              
+              <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
+              <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
+                <Box component={Link} href={`/${locale}/setting/profile`} sx={styles}>
+                  <Icon icon='tabler:user-check' />
+                  {messages.myProfile}
+                </Box>
+              </MenuItemStyled>
 
 
-            <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
-            <MenuItemStyled sx={{ p: 0 }} onClick={logout}>
-              <Box sx={styles}>
-                <Icon icon='tabler:logout' />
-                {messages.signOut}
-              </Box>
-            </MenuItemStyled>
+              <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
+              <MenuItemStyled sx={{ p: 0 }} onClick={logout}>
+                <Box sx={styles}>
+                  <Icon icon='tabler:logout' />
+                  {messages.signOut}
+                </Box>
+              </MenuItemStyled>
           </Menu>
         </Fragment>
       ) : (
