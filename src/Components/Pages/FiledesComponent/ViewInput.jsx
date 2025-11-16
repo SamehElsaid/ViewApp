@@ -63,37 +63,39 @@ const ViewInput = ({
   if (input?.kind == 'select') {
     const label = JSON.parse(input?.descriptionEn) || []
     const valueSend = JSON.parse(input?.selectedValueSend) || []
+    const options = (selectedOptions || []).map(option => {
+      const optionValue = valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id
+      const optionLabel = (label || []).map(ele => option[ele]).join('-')
+      return { label: optionLabel, value: optionValue }
+    })
+
+    const selected = options.find(o => String(o.value) == String(value)) || null
 
     return (
-      <div id='custom-select'>
-        <select
-          value={value}
-          onChange={e => onChange(e)}
-          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
-          onBlur={e => {
-            if (isRedirect) {
-              const findOption = selectedOptions.find(option => option.Id == e.target.value)
-              setRedirect(findOption.redirect)
-            }
-            if (onBlur) {
-              const evaluatedFn = eval('(' + onBlur + ')')
-
-              evaluatedFn(e)
-            }
+      <div id='custom-select' className='flex items-center gap-2 w-full'>
+        <Autocomplete
+          options={options}
+          getOptionLabel={o => o?.label || ''}
+          value={selected}
+          onChange={(event, newValue) => {
+            onChange({ target: { value: newValue?.value || '' } })
           }}
-        >
-          <option selected value={''}>
-            {placeholder ? placeholder : locale == 'ar' ? 'اختر ' : 'Select'}
-          </option>
-          {selectedOptions.map((option, index) => (
-            <option key={index} value={valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id}>
-              {label?.map(ele => option[ele]).join('-')}
-            </option>
-          ))}
-        </select>
+          disabled={isDisable == 'disabled' || options.length == 0}
+          isOptionEqualToValue={(opt, val) => String(opt.value) == String(val.value)}
+          clearOnEscape
+          renderInput={params => (
+            <TextField
+              {...params}
+              placeholder={placeholder ? placeholder : '---select---'}
+              fullWidth
+            />
+          )}
+        />
       </div>
     )
   }
+
+    
 
   if (input.kind == 'radio') {
     const label = JSON.parse(input?.descriptionEn)

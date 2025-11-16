@@ -71,12 +71,25 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
         <label htmlFor='fruit4'>Strawberry</label>
       </div>
     ) : type === 'select' ? (
-      <div id='custom-select'>
-        <select>
-          <option value='apple'>Apple</option>
-          <option value='cherry'>Cherry</option>
-          <option value='strawberry'>Strawberry</option>
-        </select>
+      <div id='custom-select' className='flex items-center gap-2 w-full'>
+      <select defaultValue='' className='flex-1'>
+        <option value='' disabled>---select---</option>
+        <option value='apple'>Apple</option>
+        <option value='cherry'>Cherry</option>
+        <option value='strawberry'>Strawberry</option>
+      </select>
+      <button
+        type='button'
+        className='px-2 py-1 text-xs border rounded'
+        onClick={e => {
+          const sel = e.currentTarget.previousElementSibling
+          if (sel && sel.tagName === 'SELECT') {
+            sel.value = ''
+          }
+        }}
+      >
+        {messages?.Clear || 'Clear'}
+      </button>
       </div>
     ) : type === 'date' ? (
       <div style={{ width: '100%' }} className='mainParent-date'>

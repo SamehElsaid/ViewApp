@@ -10,11 +10,11 @@ module.exports = withTM({
     localeDetection: true
   },
   env: {
-    // API_URL: 'https://localhost:7101/api',
-    API_URL: 'https://localhost:44375/api',
-    IDENTITY_URL: 'https://localhost:7000/',
-    DEV_MODE: true,
-    DOMAIN: 'http://localhost:3000/'
+     // API_URL: 'https://localhost:7101/api',
+     API_URL: 'https://localhost:44375/api',
+     IDENTITY_URL: 'https://localhost:7000/',
+     DEV_MODE: true,
+     DOMAIN: 'http://localhost:3000/'
   },
   images: {
     domains: []

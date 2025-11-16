@@ -12,8 +12,8 @@ import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
 import axios from 'axios'
-import { decryptData } from 'src/Components/encryption'
 import Cookies from 'js-cookie'
+import { decryptData } from 'src/Components/encryption'
 import { useSelector } from 'react-redux'
 
 export default function DisplayField({
@@ -39,7 +39,8 @@ export default function DisplayField({
   isRedirect,
   setRedirect,
   isDisabled,
-  hiddenLabel
+  hiddenLabel,
+  loadingBtn
 }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
@@ -55,8 +56,8 @@ export default function DisplayField({
   const [isOpen, setIsOpen] = useState(false)
   const [regex, setRegex] = useState(roles?.regex?.regex)
   const [isDisable, setIsDisable] = useState(null)
-  const [lastValue, setLastValue] = useState(null)
   const getApiData = useSelector(rx => rx.api.data)
+  const [lastValue, setLastValue] = useState(null)
 
   useEffect(() => {
     if (isDisabled) {
@@ -105,17 +106,105 @@ export default function DisplayField({
 
     // ! Start disable Control
 
-    if (roles?.trigger?.typeOfValidation == 'disable' && !roles?.trigger?.mainValue && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-        setIsDisable('disabled')
-      } else {
-        setIsDisable(prev => {
-          if (roles?.onMount?.type == 'hide') {
-            return 'hidden'
+    if (roles?.trigger?.typeOfValidation == 'disable' && !loading) {
+      // If a specific mainValue is provided, disable when condition matches
+      if (roles?.trigger?.mainValue) {
+        if (input.fieldCategory == 'Basic') {
+          if (roles?.trigger?.parentKey) {
+            if (dataRef?.current?.[roles?.trigger?.selectedField]) {
+              axiosGet(
+                `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
+              ).then(res => {
+                if (res.status) {
+                  const data = res.entities?.[0] ?? false
+                  if (data) {
+                    if (roles?.trigger.isEqual == 'equal') {
+                      if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
+                        setIsDisable('disabled')
+                      } else {
+                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+                      }
+                    } else {
+                      if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
+                        setIsDisable('disabled')
+                      } else {
+                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+                      }
+                    }
+                  }
+                }
+              })
+            }
+          } else {
+            if (roles?.trigger.isEqual == 'equal') {
+              if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
+                setIsDisable('disabled')
+              } else {
+                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+              }
+            } else {
+              if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
+                setIsDisable('disabled')
+              } else {
+                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+              }
+            }
           }
+        } else {
+          if (roles?.trigger?.parentKey) {
+            if (dataRef?.current?.[roles?.trigger?.selectedField]) {
+              axiosGet(
+                `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
+              ).then(res => {
+                if (res.status) {
+                  const data = res.entities?.[0] ?? false
+                  if (data) {
+                    if (roles?.trigger.isEqual == 'equal') {
+                      if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
+                        setIsDisable('disabled')
+                      } else {
+                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+                      }
+                    } else {
+                      if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
+                        setIsDisable('disabled')
+                      } else {
+                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+                      }
+                    }
+                  }
+                }
+              })
+            }
+          } else {
+            if (roles?.trigger.isEqual == 'equal') {
+              if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
+                setIsDisable('disabled')
+              } else {
+                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+              }
+            } else {
+              if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
+                setIsDisable('disabled')
+              } else {
+                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
+              }
+            }
+          }
+        }
+      } else {
+        // No mainValue provided: if selectedField has any value, disable
+        if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
+          setIsDisable('disabled')
+        } else {
+          setIsDisable(prev => {
+            if (roles?.onMount?.type == 'hide') {
+              return 'hidden'
+            }
 
-          return null
-        })
+            return null
+          })
+        }
       }
     }
 
@@ -267,6 +356,31 @@ export default function DisplayField({
       }
     }
     if (roles?.trigger?.typeOfValidation == 'optional' && roles?.trigger?.mainValue && !loading) {
+      const setOptional = (shouldBeOptional) => {
+        if (shouldBeOptional) {
+          if (validations?.Required) {
+            setValidations(prev => {
+              const newPrev = { ...prev }
+              delete newPrev.Required
+              return newPrev
+            })
+          }
+        } else {
+          if (!validations?.Required) {
+            setValidations(prev => ({ ...prev, Required: true }))
+          }
+        }
+      }
+
+      const compare = (left, right, equalMode) => equalMode ? left == right : left != right
+
+      const handleLocal = () => {
+        const equalMode = roles?.trigger.isEqual == 'equal'
+        const left = dataRef?.current?.[roles?.trigger?.selectedField]
+        const optionalNow = compare(left, roles?.trigger?.mainValue, equalMode)
+        setOptional(optionalNow)
+      }
+
       if (input.fieldCategory == 'Basic') {
         if (roles?.trigger?.parentKey) {
           if (dataRef?.current?.[roles?.trigger?.selectedField]) {
@@ -274,75 +388,17 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      if (!validations?.Required) {
-                        setValidations(prev => ({ ...prev, Required: true }))
-                      }
-                    } else {
-                      if (validations?.Required) {
-                        setValidations(prev => {
-                          const newPrev = { ...prev }
-                          delete newPrev.Required
-
-                          return newPrev
-                        })
-                      }
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      if (!validations?.Required) {
-                        setValidations(prev => ({ ...prev, Required: true }))
-                      }
-                    } else {
-                      if (validations?.Required) {
-                        setValidations(prev => {
-                          const newPrev = { ...prev }
-                          delete newPrev.Required
-
-                          return newPrev
-                        })
-                      }
-                    }
-                  }
+                const ent = res.entities?.[0] ?? false
+                if (ent) {
+                  const equalMode = roles?.trigger.isEqual == 'equal'
+                  const optionalNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
+                  setOptional(optionalNow)
                 }
               }
             })
           }
         } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              if (!validations?.Required) {
-                setValidations(prev => ({ ...prev, Required: true }))
-              }
-            } else {
-              if (validations?.Required) {
-                setValidations(prev => {
-                  const newPrev = { ...prev }
-                  delete newPrev.Required
-
-                  return newPrev
-                })
-              }
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              if (validations?.Required) {
-                setValidations(prev => {
-                  const newPrev = { ...prev }
-                  delete newPrev.Required
-
-                  return newPrev
-                })
-              }
-            } else {
-              if (!validations?.Required) {
-                setValidations(prev => ({ ...prev, Required: true }))
-              }
-            }
-          }
+          handleLocal()
         }
       } else {
         if (roles?.trigger?.parentKey) {
@@ -351,73 +407,17 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      if (!validations?.Required) {
-                        setValidations(prev => ({ ...prev, Required: true }))
-                      }
-                    } else {
-                      if (validations?.Required) {
-                        setValidations(prev => {
-                          delete prev.Required
-
-                          return prev
-                        })
-                      }
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      if (validations?.Required) {
-                        setValidations(prev => {
-                          delete prev.Required
-
-                          return prev
-                        })
-                      }
-                    } else {
-                      if (!validations?.Required) {
-                        setValidations(prev => ({ ...prev, Required: true }))
-                      }
-                    }
-                  }
+                const ent = res.entities?.[0] ?? false
+                if (ent) {
+                  const equalMode = roles?.trigger.isEqual == 'equal'
+                  const optionalNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
+                  setOptional(optionalNow)
                 }
               }
             })
           }
         } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              if (validations?.Required) {
-                setValidations(prev => {
-                  const newPrev = { ...prev }
-                  delete newPrev.Required
-
-                  return newPrev
-                })
-              }
-            } else {
-              if (!validations?.Required) {
-                setValidations(prev => ({ ...prev, Required: true }))
-              }
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              if (validations?.Required) {
-                setValidations(prev => {
-                  const newPrev = { ...prev }
-                  delete newPrev.Required
-
-                  return newPrev
-                })
-              }
-            } else {
-              if (!validations?.Required) {
-                setValidations(prev => ({ ...prev, Required: true }))
-              }
-            }
-          }
+          handleLocal()
         }
       }
     }
@@ -434,6 +434,87 @@ export default function DisplayField({
         }
       }
     }
+
+    // ! Start Required Control (mirror of optional)
+    if (roles?.trigger?.typeOfValidation == 'required' && roles?.trigger?.mainValue && !loading) {
+      const setReq = (shouldBeRequired) => {
+        if (shouldBeRequired) {
+          if (!validations?.Required) setValidations(prev => ({ ...prev, Required: true }))
+        } else {
+          if (validations?.Required) {
+            setValidations(prev => {
+              const newPrev = { ...prev }
+              delete newPrev.Required
+              return newPrev
+            })
+          }
+        }
+      }
+
+      const compare = (left, right, equalMode) => equalMode ? left == right : left != right
+
+      const handleLocal = () => {
+        const left = dataRef?.current?.[roles?.trigger?.selectedField]
+        // If the compared value is not yet available, do nothing to avoid removing existing Required
+        if (left === undefined || left === null || left === '') return
+        const equalMode = roles?.trigger.isEqual == 'equal'
+        const requiredNow = compare(left, roles?.trigger?.mainValue, equalMode)
+        setReq(requiredNow)
+      }
+
+      if (input.fieldCategory == 'Basic') {
+        if (roles?.trigger?.parentKey) {
+          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
+            axiosGet(`generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`).then(res => {
+              if (res.status) {
+                const ent = res.entities?.[0] ?? false
+                if (ent) {
+                  const equalMode = roles?.trigger.isEqual == 'equal'
+                  const requiredNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
+                  setReq(requiredNow)
+                }
+              }
+            })
+          }
+        } else {
+          handleLocal()
+        }
+      } else {
+        if (roles?.trigger?.parentKey) {
+          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
+            axiosGet(`generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`).then(res => {
+              if (res.status) {
+                const ent = res.entities?.[0] ?? false
+                if (ent) {
+                  const equalMode = roles?.trigger.isEqual == 'equal'
+                  const requiredNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
+                  setReq(requiredNow)
+                }
+              }
+            })
+          }
+        } else {
+          handleLocal()
+        }
+      }
+    }
+
+    if (roles?.trigger?.typeOfValidation == 'required' && !roles?.trigger?.mainValue && !loading) {
+      const left = dataRef?.current?.[roles?.trigger?.selectedField]
+      const hasValue = (Array.isArray(left) ? left.length != 0 : left !== undefined && left !== null && left !== '')
+      if (hasValue) {
+        if (!validations?.Required) setValidations(prev => ({ ...prev, Required: true }))
+      } else {
+        if (validations?.Required) {
+          setValidations(prev => {
+            const newPrev = { ...prev }
+            delete newPrev.Required
+            return newPrev
+          })
+        }
+      }
+    }
+    //  End Required Control
 
     //  End enable Control
 
@@ -812,6 +893,102 @@ export default function DisplayField({
     }
 
     // End Visible Control
+
+    // ! Start Visible Control for Hidden Fields
+    if (roles?.trigger?.typeOfValidation == 'visible' && roles?.trigger?.mainValue && !loading) {
+      if (input.fieldCategory == 'Basic') {
+        if (roles?.trigger?.parentKey) {
+          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
+            axiosGet(
+              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
+            ).then(res => {
+              if (res.status) {
+                const data = res.entities?.[0] ?? false
+                if (data) {
+                  if (roles?.trigger.isEqual == 'equal') {
+                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
+                      setIsDisable(null) // Make visible
+                    } else {
+                      setIsDisable('hidden') // Keep hidden
+                    }
+                  } else {
+                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
+                      setIsDisable(null) // Make visible
+                    } else {
+                      setIsDisable('hidden') // Keep hidden
+                    }
+                  }
+                }
+              }
+            })
+          }
+        } else {
+          if (roles?.trigger.isEqual == 'equal') {
+            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
+              setIsDisable(null) // Make visible
+            } else {
+              setIsDisable('hidden') // Keep hidden
+            }
+          } else {
+            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
+              setIsDisable(null) // Make visible
+            } else {
+              setIsDisable('hidden') // Keep hidden
+            }
+          }
+        }
+      } else {
+        if (roles?.trigger?.parentKey) {
+          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
+            axiosGet(
+              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
+            ).then(res => {
+              if (res.status) {
+                const data = res.entities?.[0] ?? false
+                if (data) {
+                  if (roles?.trigger.isEqual == 'equal') {
+                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
+                      setIsDisable(null) // Make visible
+                    } else {
+                      setIsDisable('hidden') // Keep hidden
+                    }
+                  } else {
+                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
+                      setIsDisable(null) // Make visible
+                    } else {
+                      setIsDisable('hidden') // Keep hidden
+                    }
+                  }
+                }
+              }
+            })
+          }
+        } else {
+          if (roles?.trigger.isEqual == 'equal') {
+            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
+              setIsDisable(null) // Make visible
+            } else {
+              setIsDisable('hidden') // Keep hidden
+            }
+          } else {
+            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
+              setIsDisable(null) // Make visible
+            } else {
+              setIsDisable('hidden') // Keep hidden
+            }
+          }
+        }
+      }
+    }
+    if (roles?.trigger?.typeOfValidation == 'visible' && !roles?.trigger?.mainValue && !loading) {
+      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
+        setIsDisable(null) // Make visible when field has value
+      } else {
+        setIsDisable('hidden') // Keep hidden when field is empty
+      }
+    }
+
+    // End Visible Control for Hidden Fields
   }, [roles, loading, triggerData])
 
   useEffect(() => {
@@ -838,38 +1015,41 @@ export default function DisplayField({
   }, [roles])
 
   useEffect(() => {
-
-    const isDate = input?.type === 'Date'
-    const isSearchOrCheckbox = ['search', 'checkbox'].includes(input?.kind)
-
-    if (findValue !== undefined && findValue !== null) {
-
-      setValue(isDate ? (findValue ? new Date(findValue.toLocaleString()) : null) : findValue)
+    if (findValue || findValue == '') {
+      setValue(findValue)
+      if (input?.type == 'Date') {
+        setValue(new Date(findValue))
+      }
     } else {
-      if (isSearchOrCheckbox) setValue([])
-      else if (isDate) setValue(new Date())
+      if (input?.kind == 'search' || input?.kind == 'checkbox') {
+        setValue([])
+      }
+      if (input?.type == 'Date') {
+        setValue(new Date())
+      }
     }
-  }, [input?.type, input?.kind, findValue])
+  }, [input, findValue])
 
   useEffect(() => {
-    if (reload === 0) return
-
-    const isSearchOrCheckbox = ['search', 'checkbox'].includes(input?.kind)
-
-    setValue(isSearchOrCheckbox ? [] : '')
-    setRegex('')
-    setFile('')
-    setError(false)
-    setDirty(false)
-    setShowPassword(false)
-  }, [reload, input?.kind])
-
+    if (reload != 0) {
+      setValue('')
+      if (input?.kind == 'search' || input?.kind == 'checkbox') {
+        setValue([])
+      }
+      setRegex('')
+      setFile('')
+      setError(false)
+      setDirty(false)
+      setShowPassword(false)
+    }
+  }, [reload, input])
   useEffect(() => {
     if (!loading) {
       setTimeout(() => {
         if (roles?.onMount?.type == 'disable') {
           setIsDisable('disabled')
         }
+
         if (roles?.onMount?.type == 'required') {
           setValidations(prev => ({ ...prev, Required: true }))
         }
@@ -889,32 +1069,24 @@ export default function DisplayField({
             const valueFromApi = getData(items, roles?.onMount?.value, '')
             setValue(valueFromApi)
           } else {
-            if (roles?.onMount?.value) {
-              if (roles?.api_url) {
-                const items = getApiData.find(item => item.link === roles.api_url)?.data
-                const valueFromApi = getData(items, roles?.onMount?.value, '')
-                setValue(valueFromApi)
+            let newValue = roles?.onMount?.value
+            const searchParams = new URLSearchParams(window.location.search)
+
+            if (input?.type == 'Date') {
+              const valueDate = new Date(roles?.onMount?.value)
+
+              if (isNaN(valueDate.getTime())) {
+                // invalid date
+                newValue = new Date()
               } else {
-                let newValue = roles?.onMount?.value
-                const searchParams = new URLSearchParams(window.location.search)
-
-                if (input?.type == 'Date') {
-                  const valueDate = new Date(roles?.onMount?.value)
-
-                  if (isNaN(valueDate.getTime())) {
-                    // invalid date
-                    newValue = new Date()
-                  } else {
-                    newValue = valueDate
-                  }
-                }
-                if (newValue.startsWith('{') && newValue.endsWith('}')) {
-                  const key = newValue.slice(1, -1)
-                  newValue = searchParams.get(key) || ''
-                }
-                setValue(newValue)
+                newValue = valueDate
               }
             }
+            if (newValue.startsWith('{') && newValue.endsWith('}')) {
+              const key = newValue.slice(1, -1)
+              newValue = searchParams.get(key) || ''
+            }
+            setValue(newValue)
           }
         }
       }, 0)
@@ -964,7 +1136,7 @@ export default function DisplayField({
       }
     } else {
       if (input?.type == 'Date') {
-        setValue(new Date(e))
+        setValue(e || '')
       } else {
         input.type == 'Number' ? setValue(+e.target.value) : setValue(e.target.value)
       }
@@ -1088,12 +1260,10 @@ export default function DisplayField({
     if (dataRef) {
       if (input.type == 'Date') {
         try {
-          const lable = JSON.parse(input?.descriptionEn) ?? {
-            format: 'yyyy-MM-dd',
-            showTime: 'false'
-          }
+          const parsed = JSON.parse(input?.descriptionEn)
+          const lable = parsed && typeof parsed === 'object' ? parsed : { format: 'yyyy-MM-dd', showTime: 'false' }
 
-          dataRef.current[input.type == 'new_element' ? input.id : input.key] = value ?? formatDate(value, lable.format)
+          dataRef.current[input.type == 'new_element' ? input.id : input.key] = value ?? formatDate(value, lable?.format)
         } catch (error) {
           dataRef.current[input.type == 'new_element' ? input.id : input.key] = ''
         }
@@ -1140,6 +1310,8 @@ export default function DisplayField({
   }, [input])
 
   const [queryParams, setQueryParams] = useState(null)
+
+  // console.log(, 'input?.getDataForm');
 
   useEffect(() => {
     const handleChange = () => {
@@ -1190,6 +1362,7 @@ export default function DisplayField({
       const body = replaceVars(input?.body ?? '')
       const method = input?.method ?? 'GET'
 
+      console.log(body, method)
 
       let sendBody = {}
 
@@ -1202,6 +1375,7 @@ export default function DisplayField({
       if (authToken) {
         apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
       }
+
       setLoading(true)
 
       let request
@@ -1245,7 +1419,7 @@ export default function DisplayField({
         }
       }
     }, 100)
-  }, [isDisable, readOnly, layout?.length, loading])
+  }, [isDisable, readOnly, layout?.length, loading, triggerData])
 
   const mainRef = useRef()
 
@@ -1316,6 +1490,7 @@ export default function DisplayField({
       setError('Required')
     }
   }
+
   useEffect(() => {
     if (data?.type_of_sumbit === 'read-only') {
       setIsDisable('disabled')
@@ -1331,14 +1506,37 @@ export default function DisplayField({
   const hoverText = roles?.hover?.hover_ar || roles?.hover?.hover_en
   const hintText = roles?.hint?.hint_ar || roles?.hint?.hint_en
 
+  const shouldHideForTab = (() => {
+    try {
+      const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+      if (tabsElement && input.type !== 'new_element') {
+        const assignedIndex = Array.isArray(tabsElement.data)
+          ? tabsElement.data.findIndex(t => {
+              const fieldId = input.type === 'new_element' ? input.id : input.key
+              return Array.isArray(t.fields) && t.fields.includes(fieldId)
+            })
+          : -1
+        if (assignedIndex > -1) {
+          const activeIndex = Number(dataRef?.current?.[tabsElement.id])
+          if (!Number.isNaN(activeIndex) && activeIndex !== assignedIndex) {
+            return true
+          }
+        }
+      }
+    } catch (_) {}
+
+    return false
+  })()
+
   return (
     <div
       className={`reset ${isDisable == 'hidden' && !readOnly ? 'hidden' : ''} relative group w-full`}
       id={input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))}
-      >
-        <style>{`#${input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))} {
-          ${input.kind == 'search' ? '' : design}
-        }`}</style>
+      style={{ display: shouldHideForTab ? 'none' : undefined }}
+    >
+      <style>{`#${input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))} {
+        ${input.kind == 'search' ? '' : design}
+      }`}</style>
       {hoverText && (
         <div className='absolute bg-white w-full glass-effect z-10 start-0 border border-main-color border-dashed top-[calc(100%+5px)] invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300'>
           <div className='arrow-up w-fit absolute top-[-8px] '></div>
@@ -1362,7 +1560,31 @@ export default function DisplayField({
             </button>
           )}
         </div>
-        <div className='relative' style={{ display: 'flex' }}>
+        <div
+          className='relative'
+          style={{
+            display: (() => {
+              try {
+                const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+                if (tabsElement && input.type !== 'new_element') {
+                  const assignedIndex = Array.isArray(tabsElement.data)
+                    ? tabsElement.data.findIndex(t => {
+                        const fieldId = input.type === 'new_element' ? input.id : input.key
+                        return Array.isArray(t.fields) && t.fields.includes(fieldId)
+                      })
+                    : -1
+                  if (assignedIndex > -1) {
+                    const activeIndex = Number(dataRef?.current?.[tabsElement.id])
+                    if (!Number.isNaN(activeIndex) && activeIndex !== assignedIndex) {
+                      return 'none'
+                    }
+                  }
+                }
+              } catch (_) {}
+              return 'flex'
+            })()
+          }}
+        >
           {isDisable == 'hidden' && readOnly && (
             <div className='flex absolute inset-0 z-10 justify-center items-center text-sm text-white rounded-md bg-main-color/20'>
               <div className=' w-[30px] || h-[30px] || bg-main-color || rounded-full || flex || items-center || justify-center'>
@@ -1374,10 +1596,13 @@ export default function DisplayField({
             <NewElement
               typeOfSubmit={data?.type_of_sumbit}
               handleSubmit={handleSubmit}
+              loadingBtn={loadingBtn}
               isDisable={isDisable}
               readOnly={readOnly}
               onChangeData={onChange}
               data={data}
+              dataRef={dataRef}
+              refError={refError}
               disabledBtn={disabledBtn}
               input={input}
               roles={roles}
@@ -1385,6 +1610,7 @@ export default function DisplayField({
               onBlur={roles?.event?.onBlur}
               value={value}
               setValue={setValue}
+              setTriggerData={setTriggerData}
             />
           ) : (
             <ViewInput
