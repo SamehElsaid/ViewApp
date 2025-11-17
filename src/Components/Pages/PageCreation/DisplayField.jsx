@@ -362,6 +362,7 @@ export default function DisplayField({
             setValidations(prev => {
               const newPrev = { ...prev }
               delete newPrev.Required
+              
               return newPrev
             })
           }
@@ -445,6 +446,7 @@ export default function DisplayField({
             setValidations(prev => {
               const newPrev = { ...prev }
               delete newPrev.Required
+           
               return newPrev
             })
           }
@@ -455,7 +457,6 @@ export default function DisplayField({
 
       const handleLocal = () => {
         const left = dataRef?.current?.[roles?.trigger?.selectedField]
-        // If the compared value is not yet available, do nothing to avoid removing existing Required
         if (left === undefined || left === null || left === '') return
         const equalMode = roles?.trigger.isEqual == 'equal'
         const requiredNow = compare(left, roles?.trigger?.mainValue, equalMode)
@@ -509,11 +510,13 @@ export default function DisplayField({
           setValidations(prev => {
             const newPrev = { ...prev }
             delete newPrev.Required
+            
             return newPrev
           })
         }
       }
     }
+
     //  End Required Control
 
     //  End enable Control
@@ -1513,6 +1516,7 @@ export default function DisplayField({
         const assignedIndex = Array.isArray(tabsElement.data)
           ? tabsElement.data.findIndex(t => {
               const fieldId = input.type === 'new_element' ? input.id : input.key
+              
               return Array.isArray(t.fields) && t.fields.includes(fieldId)
             })
           : -1
@@ -1570,6 +1574,7 @@ export default function DisplayField({
                   const assignedIndex = Array.isArray(tabsElement.data)
                     ? tabsElement.data.findIndex(t => {
                         const fieldId = input.type === 'new_element' ? input.id : input.key
+
                         return Array.isArray(t.fields) && t.fields.includes(fieldId)
                       })
                     : -1
@@ -1581,6 +1586,7 @@ export default function DisplayField({
                   }
                 }
               } catch (_) {}
+              
               return 'flex'
             })()
           }}

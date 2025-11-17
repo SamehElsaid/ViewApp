@@ -706,6 +706,7 @@ export default function InputControlDesign({ open, handleClose, design, locale, 
                               displayEmpty
                               renderValue={selected => {
                                 if (!selected) return '---select---'
+                                
                                 return selected
                               }}
                               onChange={e => {

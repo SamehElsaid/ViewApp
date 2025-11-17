@@ -63,9 +63,11 @@ const ViewInput = ({
   if (input?.kind == 'select') {
     const label = JSON.parse(input?.descriptionEn) || []
     const valueSend = JSON.parse(input?.selectedValueSend) || []
+
     const options = (selectedOptions || []).map(option => {
       const optionValue = valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id
       const optionLabel = (label || []).map(ele => option[ele]).join('-')
+      
       return { label: optionLabel, value: optionValue }
     })
 

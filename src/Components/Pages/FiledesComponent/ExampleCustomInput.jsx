@@ -1,7 +1,7 @@
 import { forwardRef } from 'react'
-import { FaCalendarAlt } from 'react-icons/fa'
+import { FaCalendarAlt, FaClock } from 'react-icons/fa'
 
-const ExampleCustomInput = forwardRef(({ value, onClick, input,disabled }, ref) => {
+const ExampleCustomInput = forwardRef(({ value, onClick, input, disabled, type }, ref) => {
   let label
 
   try {
@@ -15,19 +15,19 @@ const ExampleCustomInput = forwardRef(({ value, onClick, input,disabled }, ref) 
 
 
   return (
-    <div className='relative w-full'>
+    <div className='relative w-full' style={{ position: 'relative' }}>
       <input
         placeholder={label?.format}
-        className='!ps-[35px] relative'
+        className='!ps-[35px] !pe-[40px] relative bg-white'
         onClick={onClick}
         ref={ref}
         readOnly
-        disabled={disabled}
         value={value}
+        disabled={disabled}
       />
       <div className='absolute top-0 start-[10px] w-[20px] h-full flex items-center justify-center z-10'>
         <span id='calendar-icon'>
-          <FaCalendarAlt className='text-xl' />
+          {type !== 'time' ? <FaCalendarAlt className='text-xl' /> : <FaClock className='text-xl' />}
         </span>
       </div>
     </div>
