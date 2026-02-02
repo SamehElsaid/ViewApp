@@ -61,7 +61,7 @@ code[class*='language-'] {
   padding: 0;
 }
 .helperText {
-  color: #00cfe8;
+  color: #0050b3;
   font-size: 0.8125rem;
 }
 
@@ -115,7 +115,7 @@ input:-webkit-autofill {
 }
 .dark-mode .error.phoneNumber,
 .error.phoneNumber {
-  border: 1px solid #00cfe8 !important;
+  border: 1px solid #0050b3 !important;
 }
 .phoneNumber ::placeholder {
   font-weight: 300 !important;
@@ -187,8 +187,8 @@ input:-webkit-autofill {
   border-radius: 5px !important;
 }
 .menuDe.active {
-  box-shadow: rgba(0, 207, 232, 0.48) 0px 2px 6px;
-  background: linear-gradient(72.47deg, rgb(0, 207, 232) 22.16%, rgba(0, 207, 232, 0.7) 76.47%);
+  box-shadow: rgba(0 80 179 / 48%) 0px 2px 6px;
+  background: linear-gradient(72.47deg, rgb(0 80 179) 22.16%, rgba(0, 80, 197, 0.7) 76.47%);
 }
 .menuDe.active span {
   color: white !important;
@@ -259,21 +259,21 @@ input:-webkit-autofill {
   @apply !-mt-[1px];
 }
 .cityStyle .stdropdown-container:focus-within {
-  @apply !border-[#00cfe8];
+  @apply !border-[#0050b3];
 }
 
 .rtl .MuiButton-containedPrimary {
-  background-color: #00cfe8;
+  background-color: #0050b3;
 }
 .rtl .MuiButton-containedPrimary.Mui-disabled {
   background-color: rgba(208, 212, 241, 0.12);
 }
 
 .rtl .MuiFab-primary {
-  background-color: #00cfe8;
+  background-color: #0050b3;
 }
 .cityStyle.error .stdropdown-container {
-  @apply !border-[#00cfe8];
+  @apply !border-[#0050b3];
 }
 .dark-mode .cityStyle .stdropdown-container {
   border: 1px solid rgba(208, 212, 241, 0.2);
@@ -308,7 +308,7 @@ input:-webkit-autofill {
   opacity: 0 !important;
 }
 .bgSkekton {
-  background: linear-gradient(100deg, #00cfe8 40%, rgba(255, 255, 255, 0.222) 50%, #00cfe8 60%) #00cfe8;
+  background: linear-gradient(100deg, #0050b3 40%, rgba(255, 255, 255, 0.222) 50%, #0050b3 60%) #0050b3;
   background-size: 200% 100%;
   background-position-x: 180%;
   animation: 1s loading2 ease-in-out infinite;
@@ -326,7 +326,7 @@ input:-webkit-autofill {
 #nprogress .bar {
   animation: 1s loading2 ease-in-out infinite;
 
-  background: linear-gradient(100deg, #00cfe8 40%, rgba(255, 255, 255, 0.222) 50%, #00cfe8 60%) #00cfe8 !important;
+  background: linear-gradient(100deg, #0050b3 40%, rgba(255, 255, 255, 0.222) 50%, #0050b3 60%) #0050b3 !important;
 
   z-index: 11111111111111111 !important;
 }
@@ -347,10 +347,10 @@ input:-webkit-autofill {
   max-height: 300px !important;
 }
 .MuiButton-containedError {
-  background-color: #00cfe8 !important;
+  background-color: #0050b3 !important;
 }
 .MuiButton-containedError:hover {
-  background-color: #06a7b9 !important;
+  background-color: #043a7c !important;
 }
 .react-datepicker__day {
   @apply !select-none;
@@ -444,7 +444,7 @@ input:-webkit-autofill {
 }
 
 .phoneNumber.error {
-  border-color: #00cfe8 !important;
+  border-color: #0050b3 !important;
 }
 .phoneNumber.main {
   @apply !border-main-color;
@@ -809,6 +809,7 @@ video:fullscreen {
     ),
     linear-gradient(90deg, rgb(57, 8, 200), rgb(240, 145, 202));
 }
+
 .loader22 {
   --size: 400px;
   --duration: 2.5s;
@@ -944,9 +945,6 @@ sortable-list {
 
 .sortable-button:hover {
   background-color: #303f9f;
-}
-.react-page-toolbar-draggable:nth-child(1) {
-  display: none !important;
 }
 
 .MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiDrawer-paper.MuiDrawer-paperAnchorBottom.MuiDrawer-paperAnchorDockedBottom {
@@ -1141,9 +1139,6 @@ sortable-list {
   height: 100%; /* Set a height */
 }
 
-.dark-mode .logoControl {
-  filter: invert(1);
-}
 .MuiDrawer-root.MuiDrawer-modal.MuiModal-root {
   z-index: 11111;
 }
@@ -1507,9 +1502,9 @@ sortable-list {
   }
 }
 .page-control input:disabled,
-.page-control select:disabled ,
+.page-control select:disabled,
 .page-control textarea:disabled {
-  @apply !bg-gray-200 hover:!border-gray-200 !opacity-60;
+  @apply !bg-gray-200 hover:!border-gray-200;
 }
 .MuiInputBase-input.MuiFilledInput-input[type='color'] {
   @apply !mt-3;
@@ -1521,9 +1516,9 @@ sortable-list {
   background-color: gray !important;
 }
 
-input[placeholder='Search for blocks'] {
+/* input[placeholder='Search for blocks'] {
   display: none;
-}
+} */
 li:has(:contains("Add blocks to page")), /* Modern browsers */
 li:contains("Add blocks to page") {
   /* jQuery pseudo-selector */
@@ -1549,39 +1544,181 @@ li:contains("Add blocks to page") {
 .arrow-up {
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-bottom: 8px solid #00cfe8;
+  border-bottom: 8px solid #0050b3;
 }
-
 
 .react-page-toolbar-draggable span {
- @apply  !text-sm
+  @apply !text-sm;
 }
 .react-page-toolbar-draggable p {
- @apply  !text-xs
+  @apply !text-xs;
 }
-.react-grid-layout{
+.react-grid-layout {
   z-index: 1;
 }
 
-input:focus-visible ,textarea:focus-visible{
+input:focus-visible,
+textarea:focus-visible {
   outline: none !important;
 }
+.react-page-row {
+  justify-content: center;
+}
+.MuiDataGrid-panelFooter {
+  justify-content: end !important;
+}
+.MuiDataGrid-panelFooter button:first-of-type {
+  display: none;
+}
+
 select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
- 
 }
-.glass-effect{
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
 
 #custom-select:has(select:disabled)::after {
-  color:#a4b0bc !important;
+  color: #a4b0bc !important;
 }
+
+.truncate-text {
+  word-break: break-all;
+}
+.MuiAvatar-root.MuiAvatar-circular.MuiAvatar-colorDefault {
+  margin-right: 0 !important;
+  @apply !me-3;
+}
+.rtl .MuiTablePagination-actions button {
+  transform: rotate(180deg) !important;
+}
+.generate-pdf .react-grid-layout {
+  width: 72% !important;
+  margin: auto !important;
+}
+
+.customView .se-resizing-bar.sun-editor-common {
+  display: none !important;
+}
+.customView .sun-editor-editable[contenteditable='true'] .se-component {
+  outline: none !important;
+}
+.customView .sun-editor {
+  border: none !important;
+}
+.customView .sun-editor .se-wrapper .se-wrapper-wysiwyg {
+  padding: 0 !important;
+}
+.customView .se-read-only {
+  caret-color: #ededed !important;
+  background-color: #ededed !important;
+}
+.customView.white .se-read-only {
+  caret-color: #fff !important;
+  background-color: #fff !important;
+}
+.customView .se-controller.se-resizing-container {
+  display: none !important;
+}
+.customView .se-line-breaker-component {
+  display: none !important;
+}
+.customView .se-controller.se-controller-resizing {
+  display: none !important;
+}
+.customViewEdit .se-read-only {
+  caret-color: white !important;
+  background-color: white !important;
+}
+.customView .sun-editor .se-wrapper .se-wrapper-inner {
+  min-height: 0 !important;
+}
+@media screen and (max-width: 768px) {
+  .customView figure {
+    @apply !w-full;
+  }
+  .customView figure img {
+    @apply !object-cover;
+  }
+  .customView .__se__float-center figure img {
+    width: 100% !important;
+    text-align: center;
+    height: auto !important;
+    margin: auto;
+  }
+}
+.customView .sun-editor .se-wrapper .se-wrapper-wysiwyg {
+  height: fit-content !important;
+}
+
+.customView .sun-editor .se-wrapper .se-wrapper-inner {
+  padding: 0 !important;
+}
+.customView .sun-editor {
+  border: none !important;
+}
+
+.print-body .print-content {
+  display: none !important;
+}
+
+
+
+.print-container {
+border: 20px solid red;      /* ✅ الـ Border */
+box-sizing: border-box;
+
+page-break-after: avoid;    /* ✅ صفحة جديدة */
+
+}
+@media print {
+
+  body {
+    -webkit-print-color-adjust: exact; /* لو عندك ألوان */
+  }
+}
+
+[data-command="Circle"] {
+  width: 200px;
+  height: 100px;
+  border: 1px solid black;
+  border-radius: 50%;
+}
+[data-command="rectangular"] {
+  width: 200px;
+  height: 100px;
+  border: 1px solid black;
+}
+.bg-transparent-popup .MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation24.MuiDialog-paper.MuiDialog-paperScrollPaper {
+  background-color: transparent !important;
+  width: fit-content !important;
+  box-shadow: none !important;
+}
+.bg-transparent-popup .react-datepicker {
+  padding-top: 2rem !important;
+}
+.bg-transparent-popup .react-datepicker>.react-datepicker__navigation{
+  top: 3rem !important;
+}
+
+.bg-transparent-popup .react-datepicker__time-list-item {
+  margin: 0 9.6px !important;
+}
+
+
+.react-page-controls-mode-toggle-control-group{
+  right: auto !important;
+  @apply !end-0;
+}
+.react-page-controls-mode-toggle-control,.react-page-controls-mode-toggle-button{
+  display: flex !important;
+  flex-direction: row-reverse !important;
+}
+.MuiButtonBase-root.MuiFab-root.MuiFab-circular.MuiFab-sizeLarge.MuiFab-secondary.MuiFab-root{
+  background-color: #9c27b0 !important;
+  &:hover{
+    background-color: #7b1fa2 !important;
+  }
+
+
+}
+

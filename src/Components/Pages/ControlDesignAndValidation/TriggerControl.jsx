@@ -2,8 +2,12 @@ import { Button } from '@mui/material'
 import { useState } from 'react'
 import DeletePopUp from 'src/Components/DeletePopUp'
 
-function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open, objectToCss, Css }) {
+function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open, objectToCss, Css, type }) {
   const [openDelete, setOpenDelete] = useState(false)
+  const findWithRowId = roles?.triggerRow?.rowId === open.rowId
+  const triggerProperty = type === 'column' ? 'triggerColumn' : findWithRowId ? 'triggerRow' : 'trigger'
+  const currentTrigger = type === 'column' ? roles?.triggerColumn : findWithRowId ? roles?.triggerRow : roles?.trigger
+  console.log(roles, 'roles', triggerProperty)
 
   const deleteTrigger = () => {
     const sendData = {
@@ -17,14 +21,14 @@ function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open,
     const additional_fields = data.additional_fields ?? []
     const findMyInput = additional_fields.find(inp => inp.key === open.id)
     if (findMyInput) {
-      findMyInput.roles.trigger = sendData
+      findMyInput.roles[triggerProperty] = sendData
     } else {
       const myEdit = {
         key: open.id,
         design: objectToCss(Css).replaceAll('NaN', ''),
         roles: {
           ...roles,
-          trigger: sendData
+          [triggerProperty]: sendData
         }
       }
       additional_fields.push(myEdit)
@@ -33,40 +37,43 @@ function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open,
     setOpenDelete(false)
   }
 
+  {
+    console.log(data)
+  }
+
   return (
     <>
       <DeletePopUp handleDelete={deleteTrigger} open={openDelete} setOpen={setOpenDelete} />
-      {roles?.trigger?.selectedField && (
+      {currentTrigger?.selectedField && (
         <div className='capitalize rounded-md p-2 border border-main-color border-dashed m-3'>
           <div className='  py-2 '>
             <>
-              <span className=' text-main-color'>{messages.Input_Field}</span> : {roles?.trigger?.selectedField}
+              <span className=' text-main-color'>{messages.Input_Field}</span> : {currentTrigger?.selectedField}
               <br />
             </>
-
-            {roles?.trigger?.typeOfValidation && (
+            {currentTrigger?.typeOfValidation && (
               <>
                 <span className=' text-main-color'>{messages.Type_Of_Validation}</span> :{' '}
-                {messages[roles?.trigger?.typeOfValidation]}
+                {messages[currentTrigger?.typeOfValidation]}
                 <br />
               </>
             )}
-            {roles?.trigger?.parentKey && (
+            {currentTrigger?.parentKey && (
               <>
-                <span className=' text-main-color'>{messages.Key}</span> : {roles?.trigger?.triggerKey}
+                <span className=' text-main-color'>{messages.Key}</span> : {currentTrigger?.triggerKey}
                 <br />
               </>
             )}
-            {roles?.trigger?.isEqual && (
+            {currentTrigger?.isEqual && (
               <>
                 <span className=' text-main-color'>{messages.when}</span> :{' '}
-                {roles?.trigger?.isEqual === 'equal' ? messages.Equal : messages.Not_Equal}
+                {currentTrigger?.isEqual === 'equal' ? messages.Equal : messages.Not_Equal}
                 <br />
               </>
             )}
-            {roles?.trigger?.mainValue && (
+            {currentTrigger?.mainValue && (
               <>
-                <span className=' text-main-color'>{messages.Value}</span> : {roles?.trigger?.mainValue}
+                <span className=' text-main-color'>{messages.Value}</span> : {currentTrigger?.mainValue}
                 <br />
               </>
             )}

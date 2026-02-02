@@ -15,7 +15,9 @@ import { toast } from 'react-toastify'
 import { LoadingButton } from '@mui/lab'
 import { axiosPost, axiosGet, axiosPatch } from '../axiosCall'
 import CustomAutocomplete from 'src/@core/components/mui/autocomplete'
-import { CircularProgress } from '@mui/material'
+import { CircularProgress, FormControl, InputLabel, MenuItem, Select } from '@mui/material'
+import { appViewOptions } from '../_Shared'
+import axios from 'axios'
 
 const Header = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -24,9 +26,12 @@ const Header = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between'
 }))
 
+
 const AddPage = props => {
   // ** Props
   const { open, toggle, setRefresh } = props
+  const editorValue = open?.editorValue || ''
+  const apiData = open?.apiData || ''
   const { messages, locale } = useIntl()
 
   const schema = yup.object().shape({
@@ -34,7 +39,8 @@ const AddPage = props => {
       .string()
       .required(messages['required'])
       .trim()
-      .matches(/^(?!-)([A-Za-z0-9]+-?)*[A-Za-z0-9]+$/, messages.nameNotValid),
+      .matches(/^(?![-_])[A-Za-z0-9]+([_-]?[A-Za-z0-9]+)*$/,
+        messages.nameNotValid),
     description: yup.string().required(messages['required']).trim().max(512, messages.maxLengthMustBe512)
   })
 
@@ -42,7 +48,10 @@ const AddPage = props => {
     name: '',
     description: '',
     versionReason: '',
-    workflow: []
+    workflow: [],
+    jsonData: '',
+    pageTypeId: '',
+    pageRoles: []
   }
 
   const {
@@ -69,13 +78,20 @@ const AddPage = props => {
     const sendData = {
       name: data.name,
       description: data.description,
-      versionReason: data.versionReason
+      versionReason: data.versionReason,
+      pageComponents: [],
+      jsonData: JSON.stringify({ editorValue, apiData }),
+      pageTypeId: data.pageTypeId || 0
     }
     if (data.workflow?.length > 0) {
       sendData.pageWorkflows = data.workflow.map((workflow, index) => ({
         workflowId: workflow.id,
         order: index + 1
       }))
+    }
+    console.log(data.pageRoles);
+    if (data.pageRoles?.length > 0) {
+      sendData.pageRoles = data.pageRoles.map(role => (typeof role === 'object' && role?.id != null ? role.id : role))
     }
 
     if (typeof open !== 'boolean') {
@@ -112,32 +128,45 @@ const AddPage = props => {
   }
 
   const [loadingWorkflow, setLoadingWorkflow] = useState(true)
+  const [roles, setRoles] = useState([])
 
+  console.log(getValues('pageRoles'));
+
+  // تعبئة الحقول عند فتح صفحة للتعديل (بدون roles/workflows عشان الـ select ما يقفلش)
   useEffect(() => {
     if (typeof open !== 'boolean') {
       setValue('name', open.name)
       setValue('description', open.description)
       setValue('versionReason', open.versionReason)
-      const workflowArray = []
-
-      open.pageWorkflowNames.forEach(workflow => {
-        const workflowData = workflows.find(workflowData => workflowData.name === workflow)
-        if (workflowData) {
-          workflowArray.push(workflowData)
-        }
-      })
-
-      setValue('workflow', workflowArray)
-
-      // setValue(
-      //   'workflow',
-      //   open.pageWorkflows.map(workflow => workflow.workflowId)
-      // )
       trigger('name')
       trigger('description')
       trigger('versionReason')
     }
-  }, [open, setValue, trigger, loadingWorkflow, workflows])
+  }, [open, setValue, trigger])
+
+  // تعبئة workflow لما البيانات تتحمل (effect منفصل عشان ميعملش re-render يغلق الـ dropdownات)
+  useEffect(() => {
+    if (typeof open !== 'boolean' && workflows?.length > 0) {
+      const workflowArray = []
+      open.pageWorkflowNames?.forEach(workflow => {
+        const workflowData = workflows.find(w => w.name === workflow)
+        if (workflowData) workflowArray.push(workflowData)
+      })
+      setValue('workflow', workflowArray)
+    }
+  }, [open, workflows, setValue])
+
+  // تعبئة pageRoles لما الـ roles تتحمل (effect منفصل عشان الـ roles select ما يقفلش)
+  useEffect(() => {
+    if (typeof open !== 'boolean' && roles?.length >= 0 && open.pageRoles && Array.isArray(open.pageRoles)) {
+      const rolesArray = []
+      open.pageRoles.forEach(roleName => {
+        const roleData = roles.find(role => role.name === roleName)
+        if (roleData) rolesArray.push(roleData)
+      })
+      setValue('pageRoles', rolesArray)
+    }
+  }, [open, roles, setValue])
 
   useEffect(() => {
     setLoadingWorkflow(true)
@@ -157,6 +186,21 @@ const AddPage = props => {
     reset()
     setLoadingWorkflow(true)
   }
+  const [loadingRoles, setLoadingRoles] = useState(true)
+
+  useEffect(() => {
+    setLoadingRoles(true)
+    axios
+      .get(`${process.env.IDENTITY_URL}api/Role/GetRolesWithAssignedUsers`)
+      .then(res => {
+        if (res.status) {
+          setRoles(res?.data?.result?.roles || [])
+        }
+      })
+      .finally(() => {
+        setLoadingRoles(false)
+      })
+  }, [])
 
   return (
     <>
@@ -179,7 +223,7 @@ const AddPage = props => {
               color: 'text.primary',
               backgroundColor: 'action.selected',
               '&:hover': {
-                backgroundColor: theme => `rgba(${theme.palette.customColors.main}, 0.16)`
+                backgroundColor: theme => `rgba(${theme.palette.customColors?.main}, 0.16)`
               }
             }}
           >
@@ -254,6 +298,64 @@ const AddPage = props => {
               )}
             />
 
+            <Controller
+              name='pageTypeId'
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <FormControl fullWidth sx={{ mb: 4 }}>
+                  <InputLabel>{messages['appView'] || 'App View'}</InputLabel>
+                  <Select
+                    variant='outlined'
+                    value={value || ''}
+                    onChange={onChange}
+                    label={messages['appView'] || 'App View'}
+                  >
+                    {appViewOptions.map(option => (
+                      <MenuItem key={option.id} value={option.id}>
+                        {locale === 'ar' ? option.name_ar : option.name_en}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            />
+
+            <div className='relative'>
+              {loadingRoles && (
+                <div className='absolute top-[10px] left-0 w-full h-full flex justify-end px-3 items-center'>
+                  <CircularProgress size={20} />
+                </div>
+              )}
+
+              <Controller
+                name='pageRoles'
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <CustomAutocomplete
+                    multiple
+                    disabled={loadingRoles}
+                    value={value || []}
+                    options={roles}
+                    filterSelectedOptions
+                    disablePortal
+                    id='autocomplete-page-roles'
+                    getOptionLabel={option => (option?.name != null ? option.name : '')}
+                    isOptionEqualToValue={(option, val) => option?.id === val?.id}
+                    renderInput={params => (
+                      <CustomTextField
+                        placeholder={value?.length > 0 ? '' : messages['pageRoles'] || 'Page Roles'}
+                        {...params}
+                        label={messages['pageRoles'] || 'Page Roles'}
+                      />
+                    )}
+                    onChange={(event, newValue) => {
+                      onChange(newValue)
+                    }}
+                  />
+                )}
+              />
+            </div>
+
             <div className='relative'>
               {loadingWorkflow && (
                 <div className='absolute top-[10px] left-0 w-full h-full flex justify-end px-3 items-center'>
@@ -274,7 +376,7 @@ const AddPage = props => {
                     filterSelectedOptions
                     id='autocomplete-multiple-outlined'
                     getOptionLabel={option => option.name || ''}
-                    renderInput={params => <CustomTextField {...params} label={messages['workflow']} />}
+                    renderInput={params => <CustomTextField placeholder={value.length > 0 ? '' : messages['workflow']} {...params} label={messages['workflow']} />}
                     onChange={(event, newValue) => {
                       onChange(newValue)
                     }}

@@ -44,7 +44,7 @@ const UserLayout = ({ children, contentHeightFixed }) => {
   return (
     <Layout
       hidden={hidden}
-      settings={{ ...settings, navHidden: true }}
+      settings={patch === '/login' || patch === '/register' || !patch.includes('/setting/') ? { ...settings, navHidden: true } : settings}
       saveSettings={saveSettings}
       contentHeightFixed={contentHeightFixed}
       verticalLayoutProps={{

@@ -9,7 +9,7 @@ import { useIntl } from 'react-intl'
 import { IoTimerOutline } from 'react-icons/io5'
 
 export default function useOtp({ locale, buttonRef }) {
-  const { messages } = useIntl()
+  const { messages, locale: intlLocale } = useIntl()
 
   const Otp = useMemo(() => {
     return {
@@ -73,7 +73,9 @@ export default function useOtp({ locale, buttonRef }) {
                     toast.success(messages.useOtp.processHasCompleted)
                     setOtp('')
                     if (data?.redirectLink) {
-                      router.push(data?.redirectLink)
+                      const currentLocale = router.locale || intlLocale || 'en'
+                      const cleaned = (data?.redirectLink || '').replace(/^\/+/, '')
+                      router.push(`/${currentLocale}/${cleaned}`)
                     }
                   }
                 })
@@ -101,7 +103,7 @@ export default function useOtp({ locale, buttonRef }) {
                   value={otp}
                   onChange={setOtp}
                   numInputs={data?.numberOfOtp ? (data?.numberOfOtp > 20 ? 20 : data?.numberOfOtp) : 5}
-                  renderSeparator={<span style={{ color: data?.titleColor || '#00cfe8' }}>-</span>}
+                  renderSeparator={<span style={{ color: data?.titleColor || '#0050b3' }}>-</span>}
                   containerStyle={{
                     flexWrap: 'wrap',
                     gap: '5px',
@@ -111,7 +113,7 @@ export default function useOtp({ locale, buttonRef }) {
                     <input
                       {...props}
                       style={{
-                        border: `1px solid ${data?.titleColor || '#00cfe8'}`,
+                        border: `1px solid ${data?.titleColor || '#0050b3'}`,
                         outline: 'none'
                       }}
                       className='inputFix rounded-md  !mx-2 w-[40px] || !h-[50px] !px-0 md:!px-2 text-center'
@@ -124,7 +126,7 @@ export default function useOtp({ locale, buttonRef }) {
               <button
                 type='submit'
                 style={{
-                  backgroundColor: data?.titleColor || '#00cfe8'
+                  backgroundColor: data?.titleColor || '#0050b3'
                 }}
                 className=' || relative  px-4 || overflow-hidden || hover:bg-mainColor/80 || duration-300 || text-white || block || w-fit || py-2 || rounded-xl '
               >

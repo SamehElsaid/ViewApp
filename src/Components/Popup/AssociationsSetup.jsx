@@ -26,7 +26,7 @@ import { axiosGet } from '../axiosCall'
 import toast from 'react-hot-toast'
 import JsonEditor from '../JsonEditor'
 
-function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
+function AssociationsSetup({ open, onClose, onSave, initialConfig, type }) {
   const { messages, locale } = useIntl()
 
   const steps = useMemo(
@@ -41,6 +41,7 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
   const [viewType, setViewType] = useState(initialConfig?.viewType || 'select') // select | search | radio
   const [getFields, setGetFields] = useState([])
   const [selectedOptions, setSelectedOptions] = useState([])
+  
 
   // step 2
   const [dataSourceType, setDataSourceType] = useState(initialConfig?.dataSourceType || 'collection') // collection | api | static
@@ -52,6 +53,7 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
   const [selectedValueSend, setSelectedValueSend] = useState([])
   const [method, setMethod] = useState(initialConfig?.method || 'GET')
   const [body, setBody] = useState(initialConfig?.body || '{}')
+  const [viewAsInput, setViewAsInput] = useState([])
 
   const staticParsed = useMemo(() => {
     try {
@@ -95,6 +97,7 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
     setValueSendInput('')
     setMethod('GET')
     setBody('{}')
+    setViewAsInput([])
   }
 
   useEffect(() => {
@@ -165,7 +168,8 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
         selectedOptions,
         selectedValueSend,
         method,
-        body
+        body,
+        viewAsInput
       }
       onSave?.(config)
       onClose?.()
@@ -229,6 +233,9 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
               {open?.field?.type === 'ManyToMany' && open.type !== 'normal' && (
                 <ToggleButton value='checkbox'>checkbox</ToggleButton>
               )}
+              {open?.field?.type === 'ManyToMany' && open.type !== 'normal' && (
+                <ToggleButton value='Table'>Table</ToggleButton>
+              )}
               {(open?.field?.type !== 'ManyToMany' || open.type === 'normal') && (
                 <ToggleButton value='radio'>radio</ToggleButton>
               )}
@@ -283,6 +290,36 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig }) {
                     )}
                   </div>
                 </FormControl>
+                {viewType !== 'Table' && type !== "from-collection" && (
+                  <FormControl component='fieldset' fullWidth>
+                    <FormLabel component='legend'>{messages.ViewAsInput}</FormLabel>
+                    <div className='!flex !flex-row !flex-wrap gap-2'>
+                      {getFields.map(field =>
+                        field.type === 'OneToOne' || field.type === 'ManyToMany' || field.type === 'ManyToMany'
+                          ? null
+                          : field.options?.isSystemField === false && (
+                              <FormControlLabel
+                                key={field.key}
+                                className='!w-fit capitalize'
+                                checked={viewAsInput.includes(field.key)}
+                                onChange={() => {
+                                  setViewAsInput(prev => {
+                                    if (prev.includes(field.key)) {
+                                      return prev.filter(item => item !== field.key)
+                                    }
+
+                                    return [...prev, field.key]
+                                  })
+                                }}
+                                value={field.key}
+                                control={<Checkbox />}
+                                label={field.key.replace('_', ' ')}
+                              />
+                            )
+                      )}
+                    </div>
+                  </FormControl>
+                )}
               </div>
             )}
             {dataSourceType === 'api' && (

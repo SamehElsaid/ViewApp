@@ -1,16 +1,12 @@
 export const steps = ['Select_Field_Type', 'Enter_Label', 'Validation', 'Setup']
 
 export const fieldTypes = [
-  'checkbox',
   'date',
   'email',
   'file',
   'number',
   'password',
-  'radio',
   'rate',
-  'select',
-  'multiple_select',
   'tel',
   'text',
   'textarea',

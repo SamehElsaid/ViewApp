@@ -74,7 +74,7 @@ export default function useHeader({ locale, buttonRef }) {
                   </button>
                 )}
 
-{data?.showSelector && (
+                {data?.showSelector && (
                   <div className='relative min-w-[200px]'>
                     <Autocomplete
                       options={(data?.options || []).map(o => ({ label: o?.[`label_${locale}`], value: o.value }))}

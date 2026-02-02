@@ -12,7 +12,7 @@ module.exports = {
     extend: {
       container: { center: true },
       colors: {
-        'main-color': '#00cfe8'
+        'main-color': '#0050b3'
       }
     }
   },

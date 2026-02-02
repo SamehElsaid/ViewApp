@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import LoadingMain from './LoadingMain'
 import useInitialization from 'src/@core/hooks/useInitialization'
 import useTriggerError from 'src/@core/hooks/useTriggerError'
+import { toast } from 'react-toastify'
+import { useSettings } from 'src/@core/hooks/useSettings'
 
 function HomeApp({ children }) {
   const router = useRouter()
@@ -13,7 +15,7 @@ function HomeApp({ children }) {
   const patch = usePathname()
   const user = useSelector(rx => rx.auth.loading)
 
-  // Hooks
+
   const { login } = useInitialization()
   const [loading, setLoading] = useState(false)
 
@@ -24,11 +26,22 @@ function HomeApp({ children }) {
   useTriggerError()
 
   useEffect(() => {
-    if (patch && '/' + patch.split('/')[1] === '/' && user !== 'loading' && user === 'no') {
-      router.push(`/${locale}/login`)
+    if (patch && '/' + patch.split('/')[1] === '/setting' && user !== 'loading' && user === 'no') {
+      router.push(`/${locale}/`)
+
+      const inter = setTimeout(() => {
+        toast.error('You are not authorized to access this page')
+      }, 0)
+
+      return () => clearTimeout(inter)
     }
   }, [locale, router, user, patch])
-  if (patch && patch === '/' && user !== 'loading' && user === 'no') {
+  if (patch && '/' + patch.split('/')[1] === '/' && user !== 'loading' && user === 'no') {
+    router.push(`/${locale}/login`)
+    
+    return <LoadingMain login={true} />
+  }
+  if (patch && '/' + patch.split('/')[1] === '/setting' && user !== 'loading' && user === 'no') {
     return <LoadingMain login={true} />
   }
 

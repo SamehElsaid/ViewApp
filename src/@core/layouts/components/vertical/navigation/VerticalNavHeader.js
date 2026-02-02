@@ -8,6 +8,8 @@ import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import control from 'src/Components/img/control-two.png'
 import controlEn from 'src/Components/img/control-two-en.png'
+import controlDark from 'src/Components/img/control-two-dark.png'
+import controlEnDark from 'src/Components/img/control-two-en-dark.png'
 
 import Icon from 'src/@core/components/icon'
 
@@ -54,6 +56,7 @@ const VerticalNavHeader = props => {
 
   // ** Hooks & Vars
   const theme = useTheme()
+  
   const { navCollapsed } = settings
   const menuCollapsedStyles = navCollapsed && !navHover ? { opacity: 0 } : { opacity: 1 }
 
@@ -72,6 +75,9 @@ const VerticalNavHeader = props => {
   const MenuUnlockedIcon = () => userMenuUnlockedIcon || <Icon icon='tabler:circle' />
   const { locale } = useIntl()
 
+  const logoSrc = theme.palette?.mode === 'dark' ? locale === 'en' ? controlEnDark.src : controlDark.src
+                                                  : locale === 'en' ? controlEn.src : control.src;
+
   return (
     <MenuHeaderWrapper className={`nav-header ${!navHover ? 'h_head' : 's_head'}`}>
       {userNavMenuBranding ? (
@@ -84,8 +90,8 @@ const VerticalNavHeader = props => {
             sx={{ ...menuCollapsedStyles, ...(navCollapsed && !navHover ? {} : { ms: 2.5, width: '100%' }) }}
           >
             <div className='flex'>
-              <img className='logoControl' src={locale === 'en' ? controlEn.src : control.src} alt='logo' style={{ height: '50px' }} />
-            </div>
+              <span className='max-h-10' dangerouslySetInnerHTML={{ __html: svg.logo }} />
+            </div> 
           </HeaderTitle>
         </LinkStyled>
       )}

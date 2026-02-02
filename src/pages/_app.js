@@ -1,7 +1,7 @@
 // ** Next Imports
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import 'monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.css';
+import 'monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.css'
 import 'react-phone-number-input/style.css'
 import 'react-datepicker/dist/react-datepicker.css'
 import 'keen-slider/keen-slider.min.css'
@@ -29,8 +29,8 @@ import HomeApp from 'src/Components/HomeApp'
 import { ToastContainer } from 'react-toastify'
 import { useCookies } from 'react-cookie'
 import 'animate.css/animate.min.css'
-
-
+import { useEffect } from 'react'
+import 'suneditor/dist/css/suneditor.min.css'
 
 const clientSideEmotionCache = createEmotionCache()
 
@@ -38,8 +38,6 @@ const message = {
   en,
   ar
 }
-
-
 
 const App = props => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props
@@ -60,6 +58,23 @@ const App = props => {
     }
   }
 
+  useEffect(() => {
+    document.querySelectorAll('li').forEach(item => {
+      if (item.textContent.trim() === 'Add blocks to page' || item.innerHTML.includes('**Add blocks to page**')) {
+        item.remove()
+      }
+    })
+
+    const parentElement = document.querySelector('ul.menu-name')
+    if (parentElement) {
+      parentElement.querySelectorAll('li').forEach(item => {
+        if (item.textContent.includes('Add blocks to page')) {
+          item.remove()
+        }
+      })
+    }
+  }, [])
+
   return (
     <Provider store={store}>
       <IntlProvider locale={locale} messages={message[locale]}>
@@ -72,14 +87,16 @@ const App = props => {
           </Head>
           <div dir={getDir(locale)} className={getDir(locale)}>
             <div className='bg-red-500'>
-              <NextProgress color='#00cfe8' />
+              <NextProgress color='#0050b3' />
             </div>
             <SettingsProvider {...(setConfig ? { pageSettings: setConfig() } : {})}>
               <SettingsConsumer>
                 {({ settings }) => {
                   return (
                     <ThemeComponent settings={{ ...settings, direction: getDir(locale) }}>
-                      <ToastContainer theme={settings.mode} className='ToastContainer' />
+                      <ToastContainer
+                        theme={settings.mode}
+                      />
                       <HomeApp>{getLayout(<Component {...pageProps} />)}</HomeApp>
                     </ThemeComponent>
                   )

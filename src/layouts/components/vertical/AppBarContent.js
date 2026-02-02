@@ -1,5 +1,5 @@
 // ** MUI Imports
-import { Typography, Step, StepLabel } from '@mui/material'
+import { Typography } from '@mui/material'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import Link from 'next/link'
@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/router'
 import { useIntl } from 'react-intl'
 import Icon from 'src/@core/components/icon'
-import ModeToggler from 'src/@core/layouts/components/shared-components/ModeToggler'
 import UserDropdown from 'src/@core/layouts/components/shared-components/UserDropdown'
 import { svg } from 'src/Components/svg'
 
@@ -32,7 +31,6 @@ const AppBarContent = props => {
       </Box>
       <div className='flex  || gap-3 w-full || items-center || justify-between'>
         <div className='flex || gap-1 || items-center'>
-          <ModeToggler settings={settings} saveSettings={saveSettings} />
           <div className='flex ~~ items-center ~~ justify-center ~~ me-3'>
             <IconButton
               color='inherit'
@@ -81,9 +79,7 @@ const AppBarContent = props => {
               textDecoration: 'none'
             }}
           >
-            {/* {messages.logo} */}
-
-            <span className='w-[60px] h-[60px]' dangerouslySetInnerHTML={{ __html: svg.logo }}></span>
+            <span className='max-h-10' dangerouslySetInnerHTML={{ __html: svg.logo }} />
           </Typography>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import useCollection from './useCollection'
 import useBackground from './useBackground'
 import useTable from './useTable'
@@ -12,19 +12,18 @@ import useButton from './useButton'
 import useIconView from './useIconView'
 import useCart from './useCart'
 import slate from '@react-page/plugins-slate'
-import spacer from '@react-page/plugins-spacer'
+import useSpacer from './useSpacer'
 import useProgressBar from './useProgressBar'
 import useOtp from './useOtp'
 import useOrder from './useOrder'
 import '@react-page/plugins-slate/lib/index.css'
-import '@react-page/plugins-spacer/lib/index.css'
 import useHeader from './useHeader'
 import useSection from './UseSection'
 import useDynamicTable from './useDynamicTable'
 import useGoogleMap from './useMap'
 import useChart from './useChart'
-
-// import useCartProgress from './useCartProgress'
+import useAggregates from './useAggregates'
+import useReport from './useReport'
 
 export default function useCellPlugins({
   advancedEdit,
@@ -50,11 +49,20 @@ export default function useCellPlugins({
     pageName
   })
   const { order } = useOrder({ advancedEdit, locale, readOnly, buttonRef })
-
-  // const { analytics } = useAnalytics({ advancedEdit, locale, readOnly, buttonRef })
   const { chart } = useChart({ advancedEdit, locale, readOnly, buttonRef })
   const { backgroundPlugin } = useBackground({ locale, buttonRef })
   const { table } = useTable({ advancedEdit, locale, buttonRef, pageId, entitiesId, collectionName, pageName })
+  
+  const { aggregates } = useAggregates({
+    advancedEdit,
+    locale,
+    buttonRef,
+    pageId,
+    entitiesId,
+    collectionName,
+    pageName
+  })
+  const { report } = useReport({ advancedEdit, locale, buttonRef, pageId, entitiesId, collectionName, pageName })
   const { ContainerPlugin } = useContainer({ locale, buttonRef })
   const { BoxControl } = useBox({ locale, buttonRef })
   const { UploadImage } = useUploadImage({ locale, buttonRef })
@@ -66,19 +74,18 @@ export default function useCellPlugins({
   const { FlexControlCell } = useFlexControl({ locale, buttonRef })
   const { ButtonCell } = useButton({ locale, buttonRef })
   const { cartCell } = useCart({ locale, readOnly, buttonRef })
-
-  // const { cartProgress } = useCartProgress({ locale, readOnly, buttonRef })
   const { IconView } = useIconView({ locale, buttonRef })
   const { SectionControl } = useSection({ locale, buttonRef })
   const { dynamicTable } = useDynamicTable({ locale, buttonRef, advancedEdit })
   const { GoogleMap } = useGoogleMap({ locale, buttonRef })
+  const { spacer } = useSpacer({ locale, buttonRef })
 
   const cellPlugins = useMemo(
     () => [
       slate(),
-      backgroundPlugin,
       ContainerPlugin,
       BoxControl,
+      backgroundPlugin,
       UploadImage,
       UploadVideo,
       spacer,
@@ -94,6 +101,8 @@ export default function useCellPlugins({
       cartCell,
       IconView,
       Header,
+      aggregates,
+      report,
       SectionControl,
       dynamicTable,
       GoogleMap
@@ -104,7 +113,9 @@ export default function useCellPlugins({
       BoxControl,
       UploadImage,
       UploadVideo,
+      spacer,
       collection,
+      aggregates,
       chart,
       order,
       table,
@@ -116,23 +127,16 @@ export default function useCellPlugins({
       cartCell,
       IconView,
       Header,
+      report,
       SectionControl,
       dynamicTable,
       GoogleMap
     ]
   )
 
-  // console.log(
-  //   cellPlugins.map(item => {
-  //     return { title: item.title }
-  //   })
-  // )
-
-  // cellPlugins: cellPlugins.sort((a, b) => a.title.toLocaleLowerCase().trim().localeCompare(b.title.toLocaleLowerCase().trim()))
-
   return {
-    cellPlugins: cellPlugins.sort((a, b) =>
-      a.title.toLocaleLowerCase().trim().localeCompare(b.title.toLocaleLowerCase().trim())
-    )
+    cellPlugins: cellPlugins
+      .filter(item => item.id !== 'ory/editor/core/content/slate')
+      .sort((a, b) => a.title.toLocaleLowerCase().localeCompare(b.title.toLocaleLowerCase()))
   }
 }

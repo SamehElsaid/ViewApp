@@ -87,7 +87,7 @@ const HorizontalLayout = props => {
   return (
     <HorizontalLayoutWrapper className='layout-wrapper'>
       <MainContentWrapper className='layout-content-wrapper' sx={{ ...(contentHeightFixed && { maxHeight: '100vh' }) }}>
-        {/* <BreadcrumbComponent /> */}
+        <BreadcrumbComponent />
         {/* Navbar (or AppBar) and Navigation Menu Wrapper */}
         <AppBar
           color='default'

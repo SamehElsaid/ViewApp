@@ -2,7 +2,7 @@ import { Avatar, Button, Card, CardContent, Chip, Typography } from '@mui/materi
 import { Box } from '@mui/system'
 import React, { useEffect, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
-import { axiosDelete, axiosGet } from 'src/Components/axiosCall'
+import { axiosDelete, axiosGet, axiosPost } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
 import TableEdit from 'src/Components/TableEdit/TableEdit'
 import Link from 'next/link'
@@ -23,9 +23,19 @@ export default function Index() {
   const [data, setData] = useState([])
   const profile = useSelector(rx => rx.auth.data)
 
+
   useEffect(() => {
+    if (profile?.sub) {
+      return
+    }
+
     setLoading(true)
-    axiosGet(`request/get-requests`, locale)
+    axiosPost(`facility-task/get`,
+      locale,
+      {
+        userId: profile?.sub
+      }
+    )
       .then(res => {
         if (res.status) {
           setData(res.data)
@@ -34,16 +44,15 @@ export default function Index() {
       .finally(() => {
         setLoading(false)
       })
-  }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh])
-
+  }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profile?.sub])
 
   useEffect(() => {
     const handleKeyPress = e => {
-     setRefresh(prev => prev + 1)
+      setRefresh(prev => prev + 1)
     }
-  
+
     window.addEventListener('keydown', handleKeyPress)
-  
+
     return () => {
       window.removeEventListener('keydown', handleKeyPress)
     }
@@ -55,7 +64,6 @@ export default function Index() {
       minWidth: 60,
       field: 'index',
       disableColumnMenu: true,
-
       headerName: '#',
       renderCell: ({ row }) => (
         <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
@@ -67,24 +75,24 @@ export default function Index() {
     {
       flex: 0.5,
       minWidth: 200,
-      field: 'id',
+      field: 'taskName',
       disableColumnMenu: true,
-      headerName: messages.RequestId,
+      headerName: messages.tasks.taskName,
       renderCell: ({ row }) => (
         <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-          {row.id}
+          {row.name}
         </Typography>
       )
     },
     {
       flex: 0.5,
       minWidth: 200,
-      field: 'caseId',
+      field: 'typeName',
       disableColumnMenu: true,
-      headerName: messages.caseId || 'Case ID',
+      headerName: messages.tasks.typeName,
       renderCell: ({ row }) => (
         <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-          {row.caseId ? row.caseId : '-'}
+          {row.typeName ? row.typeName : '-'}
         </Typography>
       )
     },
@@ -101,15 +109,25 @@ export default function Index() {
     {
       flex: 0.5,
       minWidth: 200,
-      field: 'requestType',
+      field: 'pageName',
       disableColumnMenu: true,
-      headerName: messages.requestType,
+      headerName: messages.tasks.pageName,
       renderCell: ({ row }) => (
-        <Chip
-          label={row.requestType}
-          color={row.requestType === 'Facility Registeration' ? 'success' : 'error'}
-          variant='filled'
-        />
+        <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+          {row.pageName}
+        </Typography>
+      )
+    },
+    {
+      flex: 0.5,
+      minWidth: 200,
+      field: 'collectionName',
+      disableColumnMenu: true,
+      headerName: messages.tasks.collectionName,
+      renderCell: ({ row }) => (
+        <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+          {row.collectionName}
+        </Typography>
       )
     },
     {
@@ -130,7 +148,7 @@ export default function Index() {
     },
     {
       flex: 0.5,
-      minWidth: 200,
+      minWidth: 105,
       field: 'actions',
       disableColumnMenu: true,
       headerName: messages.actions,
@@ -138,11 +156,14 @@ export default function Index() {
         <Typography variant='subtitle2' className='text-overflow' sx={{ fontWeight: 500, color: 'text.secondary' }}>
           <IconButton
             LinkComponent={Link}
-            href={`/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}` : ''}${
-              row.collectionName ? `&collection=${row.collectionName}` : ''
-            }${row.MainWfInstanceId ? `&MainWfInstanceId=${row.MainWfInstanceId}` : ''}${
-              row.caseId ? `&caseId=${row.caseId}` : ''
-            }${profile.sub ? `&sub=${profile.sub}` : ''}${profile.name ? `&name=${profile.name}` : ''}`}
+            href=
+            {
+              `/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}` : ''}${row.collectionName ? `&collection=${row.collectionName}` : ''
+              }${row.workflowInstanceId ? `&MainWfInstanceId=${row.workflowInstanceId}` : ''}${row.caseId ? `&caseId=${row.caseId}` : ''
+              }${profile?.sub ? `&sub=${profile?.sub}` : ''}${profile?.name ? `&name=${profile?.name}` : ''}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <Icon icon='mdi:eye' />
           </IconButton>
@@ -166,27 +187,17 @@ export default function Index() {
         >
           <div className='flex gap-2 justify-center items-center'>
             <Typography variant='h5' sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-              {messages.requests}
+              {messages.tasks.tasks}
             </Typography>
             <Avatar skin='light' sx={{ width: 30, height: 30 }}>
-              {data?.length}
+              {data.totalCount ?? 0}
             </Avatar>
           </div>
-          {(Array.isArray(profile?.role)
-            ? profile.role.includes('SuperAdmin') || profile.role.includes('Pharmacist')
-            : profile?.role === 'SuperAdmin' || profile?.role === 'Pharmacist') && (
-            <Button
-              variant='contained'
-              color='primary'
-              LinkComponent={Link}
-              href={`/CreatorPage?${profile.sub ? `sub=${profile.sub}` : ''}${
-                profile.name ? `&name=${profile.name}` : ''
-              }`}
-            >
-              <Icon icon='mdi:plus' className='text-2xl' />
-              Create incident report
-            </Button>
-          )}
+          <Button LinkComponent={Link} href='/CustomerVendorverificationRequest' variant='contained' color='primary' onClick={() => {
+          }}>
+            <Icon icon='mdi:plus' />
+            Customer Vendor Verification Request
+          </Button>
         </CardContent>
       </Card>
       <Box sx={{ mb: 4 }}>
@@ -194,12 +205,16 @@ export default function Index() {
           <div className='w-full'>
             <TableEdit
               InvitationsColumns={columns}
-              data={data?.map((ele, i) => {
-                const fData = { ...ele }
-                fData.index = i + paginationModel.page * paginationModel.pageSize
+              data={
+                data.tasks
+                  ? data.tasks.map((ele, i) => {
+                    const fData = { ...ele }
+                    fData.index = i + paginationModel.page * paginationModel.pageSize
 
-                return fData
-              })}
+                    return fData
+                  })
+                  : []
+              }
               getRowId={row => row.index}
               loading={loading}
               locale={locale}

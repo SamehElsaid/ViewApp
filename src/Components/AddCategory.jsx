@@ -29,7 +29,7 @@ const CustomCloseButton = styled(IconButton)(() => ({
   boxShadow: '20px',
   transform: 'translate(10px, -10px)',
   borderRadius: '10px',
-  backgroundColor: `#00cfe8!important`,
+  backgroundColor: `#0050b3!important`,
   transition: 'transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out',
   '&:hover': {
     transform: 'translate(7px, -5px)'

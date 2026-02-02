@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { IoMdResize } from 'react-icons/io';
 import { InputAdornment, MenuItem, Select, TextField } from '@mui/material';
 import { useIntl } from 'react-intl';
+import CloseNav from '../CloseNav';
 
 export default function useSection({ locale, buttonRef }) {
   const SectionControl = useMemo(() => {
@@ -62,6 +63,7 @@ function SectionControls({ data, onChange, buttonRef }) {
 
   return (
     <div style={{ padding: '16px' }}>
+      <CloseNav text={locale === 'ar' ? 'قسم' : 'Section'} buttonRef={buttonRef} />
 
       {/* Title Settings */}
       <TextField

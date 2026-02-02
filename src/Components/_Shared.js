@@ -57,7 +57,6 @@ export const getType = type => {
 }
 
 export const getTypeFromCollection = (type, kind) => {
-  
   const baseTypes = {
     SingleText: 'text',
     URL: 'url',
@@ -140,8 +139,6 @@ const styleMap = {
 }
 
 export const DefaultStyle = type => {
-
-  
   return styleMap[type] || text
 }
 
@@ -239,7 +236,8 @@ export const formatDate = (value, format) => {
   const day = String(date.getDate()).padStart(2, '0')
 
   let time = ''
-  if (format.includes('HH:mm')) {
+  const safeFormat = typeof format === 'string' ? format : 'yyyy-MM-dd'
+  if (safeFormat.includes('HH:mm')) {
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     time = `T${hours}:${minutes}`
@@ -264,3 +262,214 @@ export const replacePlaceholders = (url, windowLocation) => {
     return value ? value : ''
   })
 }
+
+export const getMaxLength = (value, maxLength) => {
+  if (maxLength) {
+    return value.slice(0, maxLength) + '...'
+  }
+  
+  return value
+}
+
+
+export const borderTemplates = [ 
+  {
+    id: 'border1',
+    name: 'حدود مزخرفة هندسية',
+    description: 'حدود بنمط هندسي متكرر',
+    preview: '🖼️',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 20px solid;
+      border-image: repeating-linear-gradient(45deg, #8b5cf6, #8b5cf6 10px, #e0e7ff 10px, #e0e7ff 20px) 20;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 20px solid;
+      border-image: repeating-linear-gradient(45deg, #8b5cf6, #8b5cf6 10px, #e0e7ff 10px, #e0e7ff 20px) 20;
+    `
+  },
+  {
+    id: 'border2',
+    name: 'حدود بسيطة مع زخارف',
+    description: 'حدود رفيعة مع عناصر زخرفية في الزوايا',
+    preview: '📐',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 2px solid #000;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 2px solid #000;
+    `
+  },
+  {
+    id: 'border3',
+    name: 'حدود كلاسيكية',
+    description: 'حدود كلاسيكية أنيقة',
+    preview: '🎨',
+    css: `
+      position: relative;
+      padding: 40px;
+      background: white;
+      border: 15px solid #2d3748;
+      box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #2d3748;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 40px;
+      background: white;
+      border: 15px solid #2d3748;
+      box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #2d3748;
+    `
+  },
+  {
+    id: 'border4',
+    name: 'حدود ملونة',
+    description: 'حدود ملونة بنمط أوراق',
+    preview: '🌿',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: #fef3c7;
+      border: 8px solid;
+      border-image: repeating-linear-gradient(90deg, #10b981 0, #10b981 20px, #f59e0b 20px, #f59e0b 40px) 8;
+      box-shadow: inset 0 0 0 2px #fbbf24;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: #fef3c7;
+      border: 8px solid;
+      border-image: repeating-linear-gradient(90deg, #10b981 0, #10b981 20px, #f59e0b 20px, #f59e0b 40px) 8;
+      box-shadow: inset 0 0 0 2px #fbbf24;
+    `
+  },
+  {
+    id: 'border5',
+    name: 'حدود بسيطة',
+    description: 'حدود بسيطة وأنيقة',
+    preview: '☀️',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: #fffbeb;
+      border: 3px solid #fbbf24;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: #fffbeb;
+      border: 3px solid #fbbf24;
+    `
+  },
+  {
+    id: 'border6',
+    name: 'حدود DNA',
+    description: 'حدود بنمط DNA helix',
+    preview: '🧬',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 10px solid #000;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 10px solid #000;
+    `
+  },
+  {
+    id: 'border7',
+    name: 'حدود بزخارف زوايا',
+    description: 'حدود بزخارف في الزوايا فقط',
+    preview: '✨',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+    `
+  },
+  {
+    id: 'border8',
+    name: 'حدود بني',
+    description: 'حدود بسيطة بلون بني',
+    preview: '📄',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 4px solid #92400e;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: white;
+      border: 4px solid #92400e;
+    `
+  },
+  {
+    id: 'border9',
+    name: 'حدود كروم مع أزهار',
+    description: 'حدود بنمط كروم مع أزهار',
+    preview: '🌸',
+    css: `
+      position: relative;
+      padding: 30px;
+      background: #f3f4f6;
+      border: 8px solid #000;
+    `,
+    borderStyle: `
+      position: relative;
+      padding: 30px;
+      background: #f3f4f6;
+      border: 8px solid #000;
+    `
+  },
+  {
+    id: 'border_custom',
+    name: 'مخصص',
+    description: 'إنشاء حدود مخصصة',
+    preview: '⚙️',
+    css: '',
+    borderStyle: ''
+  }
+]
+
+
+export const appViewOptions = [
+  {
+    name_ar: 'منشئ النماذج',
+    name_en: 'Form Builder',
+    id: 1
+  },
+  {
+    name_ar: 'عرض كمدير',
+    name_en: 'View as Admin',
+    id: 2
+  },
+  {
+    name_ar: 'عرض كمستخدم',
+    name_en: 'View as User',
+    id: 3
+  }
+]

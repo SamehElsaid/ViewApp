@@ -3,6 +3,7 @@ import { authConfig } from 'src/configs/auth'
 
 const userManager = new UserManager(authConfig.settings)
 
+
 export async function getUser() {
   const user = await userManager.getUser()
   if (user) {
@@ -32,7 +33,9 @@ export async function handleOAuthCallback(callbackUrl) {
 }
 
 export async function sendOAuthRequest() {
-  return await userManager.signinRedirect()
+  return await userManager.signinRedirect().catch(e => {
+    console.log(e)
+  })
 }
 
 // renews token using refresh token

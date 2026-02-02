@@ -159,12 +159,12 @@ const UserDropdown = props => {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={() => handleDropdownClose()}
-            sx={{ '& .MuiMenu-paper': { width: 230, mt: 4.75 } }}
+            sx={{ '& .MuiMenu-paper': { width: 360, maxWidth: '80vw', mt: 4.75 } }}
             anchorOrigin={{ vertical: 'bottom', horizontal: direction === 'ltr' ? 'right' : 'left' }}
             transformOrigin={{ vertical: 'top', horizontal: direction === 'ltr' ? 'right' : 'left' }}
           >
             <Box sx={{ py: 1.75, px: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
                 <Badge
                   overlap='circular'
                   badgeContent={<BadgeContentSpan />}
@@ -201,24 +201,29 @@ const UserDropdown = props => {
                   </Typography>
                 </Box>
               </Box>
+            </Box>
+            <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
+            <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
+              <Box component={Link} href={`/${locale}/setting/profile`} sx={styles}>
+                <Icon icon='tabler:user-check' />
+                {messages.myProfile}
               </Box>
-              
-              <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
-              <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
-                <Box component={Link} href={`/${locale}/setting/profile`} sx={styles}>
-                  <Icon icon='tabler:user-check' />
-                  {messages.myProfile}
-                </Box>
-              </MenuItemStyled>
+            </MenuItemStyled>
+            <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
+              <Box component={Link} href={`/${locale}/setting`} sx={styles}>
+                <Icon icon='tabler:settings' />
+                {messages.settings}
+              </Box>
+            </MenuItemStyled>
 
 
-              <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
-              <MenuItemStyled sx={{ p: 0 }} onClick={logout}>
-                <Box sx={styles}>
-                  <Icon icon='tabler:logout' />
-                  {messages.signOut}
-                </Box>
-              </MenuItemStyled>
+            <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
+            <MenuItemStyled sx={{ p: 0 }} onClick={logout}>
+              <Box sx={styles}>
+                <Icon icon='tabler:logout' />
+                {messages.signOut}
+              </Box>
+            </MenuItemStyled>
           </Menu>
         </Fragment>
       ) : (

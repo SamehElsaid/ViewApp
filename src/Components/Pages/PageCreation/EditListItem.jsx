@@ -3,6 +3,7 @@ import { Drawer, IconButton, MenuItem, TextField, Typography } from '@mui/materi
 import { Box } from '@mui/system'
 import React from 'react'
 import { styled } from '@mui/material/styles'
+import { useIntl } from 'react-intl'
 
 const Header = styled(Box)(() => ({
   display: 'flex',
@@ -16,6 +17,8 @@ const Header = styled(Box)(() => ({
   top: 0
 }))
 function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
+
+  const { messages } = useIntl()
 
   return (
     <Drawer

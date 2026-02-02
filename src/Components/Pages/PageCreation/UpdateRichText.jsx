@@ -143,15 +143,15 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
             )}
           </>
         )}
-        {renderTextField('Color', 'titleColor', 'color')}
-        {type === 'progressBar' && <>{renderTextField('Progress Color', 'backgroundColor', 'color')}</>}
-        {renderTextField('Font Size', 'fontSize', 'number', {
+        {renderTextField( messages.dialogs.color, 'titleColor', 'color')}
+        {type === 'progressBar' && <>{renderTextField(messages.dialogs.progressColor, 'backgroundColor', 'color')}</>}
+        {renderTextField(messages.dialogs.fontSize, 'fontSize', 'number', {
           InputProps: {
             endAdornment: <InputAdornment position='end'>px</InputAdornment>
           }
         })}
         {renderSelect(
-          'Font Weight',
+          messages.dialogs.fontWeight,
           'fontWeight',
           Array.from({ length: 9 }, (_, i) => ({
             value: `${(i + 1) * 100}`,
@@ -159,16 +159,16 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
           }))
         )}
         {renderSelect(messages.dialogs.textAlign, 'titleTextAlign', [
-          { value: 'start', label: 'Start' },
-          { value: 'center', label: 'Center' },
-          { value: 'end', label: 'End' }
+          { value: 'start', label: messages.dialogs.start },
+          { value: 'center', label: messages.dialogs.center },
+          { value: 'end', label: messages.dialogs.end }
         ])}
-        {renderSelect('Font Family', 'fontFamily', [
-          { value: 'Arial', label: 'Arial' },
-          { value: 'Tahoma', label: 'Tahoma' },
+        {renderSelect(messages.dialogs.fontFamily, 'fontFamily', [
+          { value: 'Arial', label: messages.dialogs.arial },
+          { value: 'Tahoma', label: messages.dialogs.tahoma },
           { value: 'Verdana', label: 'Verdana' },
-          { value: 'Times New Roman', label: 'Times New Roman' },
-          { value: 'Courier New', label: 'Courier New' }
+          { value: 'Times New Roman', label: messages.dialogs.timesNewRoman },
+          { value: 'Courier New', label: messages.dialogs.courierNew }
         ])}
         {renderTextField(messages.dialogs.marginBottom, 'marginBottom', 'number')}
       </div>

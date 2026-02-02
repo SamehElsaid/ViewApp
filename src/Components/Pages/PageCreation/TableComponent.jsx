@@ -13,224 +13,591 @@ import {
   Typography
 } from '@mui/material'
 import { useIntl } from 'react-intl'
+import { useMemo, useCallback, memo, useState, useRef, useEffect } from 'react'
 import ViewValueInTable from './ViewValueInTable'
 import GetTimeinTable from 'src/Components/GetTimeinTable'
 import ViewInputInTable from '../ViewInputinTable'
 import IconifyIcon from 'src/Components/icon'
+import { IoMdSettings } from 'react-icons/io'
+import InputControlDesign from './InputControlDesign'
+import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
+import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
+
+// Constants
+const BORDER_COLOR = 'rgba(224, 224, 224, 1)'
+const ACTIONS_COLUMN_WIDTH = { maxWidth: '150px', width: '150px' }
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 15]
+const FILE_NAME_MAX_LENGTH = 30
+const UPLOADS_PATH = '/Uploads/'
+
+/**
+ * Renders a cell value for non-form-table views
+ */
+const CellValueRenderer = memo(({ parentKey, column, locale }) => {
+  const cellValue = column?.[parentKey?.key]
+  const hasValue = cellValue && Object.keys(cellValue).length !== 0
+
+  // Handle Associations field category
+  if (parentKey?.fieldCategory === 'Associations') {
+    return <ViewValueInTable data={parentKey} value={cellValue ?? ''} />
+  }
+
+  // Handle Date type
+  if (parentKey?.type === 'Date') {
+    return hasValue ? <GetTimeinTable data={cellValue} /> : '-'
+  }
+
+  // Handle empty or null values
+  if (!cellValue || !hasValue) {
+    const displayValue = typeof cellValue === 'string' || typeof cellValue === 'number' ? cellValue : '-'
+
+    return <>{displayValue}</>
+  }
+
+  // Handle file uploads
+  if (typeof cellValue === 'string' && cellValue.includes(UPLOADS_PATH)) {
+    const fileName = cellValue.replace(UPLOADS_PATH, '')
+    const fileExtension = fileName.split('.').pop()
+    const displayName = fileName.slice(0, FILE_NAME_MAX_LENGTH) + '.' + fileExtension
+    const downloadUrl = `${process.env.API_URL}/file/download/${fileName}`
+
+    return (
+      <a href={downloadUrl} target='_blank' rel='noreferrer' aria-label={`Download ${displayName}`}>
+        {displayName}
+      </a>
+    )
+  }
+
+  // Default: display the value as-is
+  return <>{cellValue}</>
+})
+
+CellValueRenderer.displayName = 'CellValueRenderer'
+
+/**
+ * Renders action buttons for table rows
+ */
+const ActionButtons = memo(
+  ({ isFormTable, column, editAction, deleteAction, messages, onEdit, onDelete, onFormTableDelete }) => {
+    if (isFormTable) {
+      return (
+        <TableCell className='flex justify-center items-center' sx={{ borderBlockEnd: `1px solid ${BORDER_COLOR}` }}>
+          <Tooltip title={messages.delete}>
+            <IconButton size='small' onClick={onFormTableDelete} aria-label={messages.delete}>
+              <IconifyIcon icon='tabler:trash' />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
+      )
+    }
+
+    if (!editAction && !deleteAction) {
+      return null
+    }
+
+    return (
+      <TableCell sx={ACTIONS_COLUMN_WIDTH} className='flex justify-center items-center'>
+        {editAction && (
+          <Tooltip title={messages.edit}>
+            <IconButton size='small' onClick={onEdit} aria-label={messages.edit}>
+              <IconifyIcon icon='tabler:edit' />
+            </IconButton>
+          </Tooltip>
+        )}
+        {deleteAction && (
+          <Tooltip title={messages.delete}>
+            <IconButton size='small' onClick={onDelete} aria-label={messages.delete}>
+              <IconifyIcon icon='tabler:trash' />
+            </IconButton>
+          </Tooltip>
+        )}
+      </TableCell>
+    )
+  }
+)
+
+ActionButtons.displayName = 'ActionButtons'
+
+/**
+ * Renders table header cells
+ */
+const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, messages, setOpen, readOnly, data }) => (
+  <TableRow
+    sx={{
+      '&:not(:last-child) td, &:not(:last-child) th': {
+        borderBottom: `1px solid ${BORDER_COLOR}`
+      }
+    }}
+  >
+    {filterWithSelect.map(column => {
+      // const columnRole =
+      return (
+        <TableCell
+          className='uppercase'
+          key={column.id}
+          sx={{
+            borderInlineEnd: `1px solid ${BORDER_COLOR}`,
+            '&:last-child': { borderInlineEnd: 0 }
+          }}
+        >
+          {locale === 'ar' ? column.nameAr : column.nameEn}
+          {!readOnly && (
+            <div className='absolute inset-0 z-20 flex || justify-end border-main-color border-dashed border rounded-md'>
+              <button
+                type='button'
+                title={locale !== 'ar' ? 'Setting' : 'التحكم'}
+                onMouseDown={e => {
+                  e.stopPropagation()
+                }}
+                onClick={e => {
+                  e.stopPropagation()
+                  setOpen(column)
+                }}
+                className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
+              >
+                <IoMdSettings />
+              </button>
+            </div>
+          )}
+        </TableCell>
+      )
+    })}
+    {showActionsColumn && (
+      <TableCell className='uppercase' sx={ACTIONS_COLUMN_WIDTH}>
+        {messages.actions}
+      </TableCell>
+    )}
+  </TableRow>
+))
+
+TableHeader.displayName = 'TableHeader'
+
+/**
+ * Renders a single table row
+ */
+const TableRowComponent = memo(
+  ({
+    allData,
+    column,
+    filterWithSelect,
+    data,
+    readOnly,
+    disabled,
+    setGetFields,
+    onChange,
+    setTriggerData,
+    getDesign,
+    triggerData,
+    errorAllRef,
+    setChangedValue,
+    editAction,
+    deleteAction,
+    messages,
+    onEdit,
+    onDelete,
+    reloadHight,
+    formTable,
+    setOpen,
+    columnId
+  }) => {
+    const isFormTable = data.kind === 'form-table'
+    console.log(column, 'column.id')
+
+    const handleFormTableDelete = useCallback(() => {
+      if (reloadHight) {
+        reloadHight(prev => prev + 1)
+      }
+      console.log(column.Id, 'column.Id')
+      setGetFields(prev => prev.filter(ele => ele.Id !== column.Id))
+      console.log(data.newRows, 'data.newRows')
+
+      onChange({
+        ...data,
+        newRows: data.newRows ? data.newRows.filter(ele => ele.Id !== column.Id) : []
+      })
+    }, [column.Id, setGetFields, reloadHight, onChange, data])
+    const findData = data.newRows?.find(ele => ele.Id === column.Id)
+    console.log(findData, 'findData');
+
+    const dataRef = useRef(findData ?? {})
+
+
+
+
+
+    console.log(dataRef);
+
+    return (
+      <TableRow key={column.id}>
+        {filterWithSelect.map(parentKey => (
+          <TableCell key={parentKey.id} sx={{ borderInlineEnd: `1px solid ${BORDER_COLOR}` }}>
+            <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+              {isFormTable ? (
+                <ViewInputInTable
+                  ele={parentKey}
+                  columnId={columnId}
+                  row={column}
+                  readOnly={readOnly}
+                  disabled={disabled}
+                  data={data}
+                  dataRef={{ ...dataRef, ...allData }}
+                  setGetFields={setGetFields}
+                  onChange={onChange}
+                  setTriggerData={setTriggerData}
+                  getDesign={getDesign}
+                  triggerData={triggerData}
+                  errorAllRef={errorAllRef}
+                  notFound={Object.keys(column?.[parentKey?.key] || {}).length !== 0}
+                  setChangedValue={setChangedValue}
+                  formTable={formTable}
+                  setOpen={setOpen}
+                />
+              ) : (
+                <CellValueRenderer parentKey={parentKey} column={column} />
+              )}
+            </Typography>
+          </TableCell>
+        ))}
+        <ActionButtons
+          isFormTable={isFormTable}
+          column={column}
+          editAction={editAction}
+          deleteAction={deleteAction}
+          messages={messages}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onFormTableDelete={handleFormTableDelete}
+        />
+      </TableRow>
+    )
+  }
+)
+
+TableRowComponent.displayName = 'TableRowComponent'
 
 function TableComponent({
-  filterWithSelect,
-  columns,
+  filterWithSelect = [],
+  columns = [],
   paginationModel,
   setPaginationModel,
-  totalCount,
-  loadingEntity,
-  loadingHeader,
-  readOnly,
-  disabled,
+  totalCount = 0,
+  loadingEntity = false,
+  loadingHeader = false,
+  readOnly = false,
+  disabled = false,
   onChange,
   setTriggerData,
   getDesign,
   triggerData,
   errorAllRef,
-  data,
+  data = {},
   setGetFields,
-  editAction,
-  deleteAction,
+  editAction = false,
+  deleteAction = false,
   setEditOpen,
   setDeleteOpen,
-  setChangedValue
+  setChangedValue,
+  sortedLoop,
+  allData,
+  reloadHight,
+  type,
+  formTable
 }) {
   const { locale, messages } = useIntl()
+  const [open, setOpen] = useState(false)
+  const [associationsOpen, setAssociationsOpen] = useState(false)
+  const [associationsConfig, setAssociationsConfig] = useState(data?.associationsConfig ?? [])
+  const [selectedOptions, setSelectedOptions] = useState(data?.selectedOptions ?? [])
+
+  const handleChange = (event, fieldCategory, skipCheck, field) => {
+    // const
+    const { value, checked } = event.target
+    const isChecked = skipCheck || checked
+
+    setSelectedOptions(prevSelected =>
+      isChecked ? [...prevSelected, value] : prevSelected.filter(item => item !== value)
+    )
+
+    const oldAdditionalFields = data?.additional_fields ?? []
+    const filteredAdditionalFields = oldAdditionalFields.filter(inp => inp.key !== field?.id)
+
+    // Tabs assignment logic removed from here; use the inline dropdowns instead
+    const addMoreElementLocal = [...(data?.addMoreElement ?? [])]
+
+    //     additional_fields: filteredAdditionalFields,
+    //     addMoreElement: addMoreElementLocal);
+
+    if (skipCheck) {
+      onChange({
+        ...data,
+        associationsConfig: skipCheck,
+        additional_fields: filteredAdditionalFields,
+        addMoreElement: addMoreElementLocal
+      })
+    } else {
+      onChange({
+        ...data,
+        additional_fields: filteredAdditionalFields,
+        addMoreElement: addMoreElementLocal
+      })
+    }
+  }
+
+  const defaultDesign =
+    open?.type === 'new_element'
+      ? DefaultStyle(open?.key)
+      : open?.kind
+        ? DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText', open?.kind))
+        : open?.options?.uiSchema?.xComponentProps?.cssClass ??
+        DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText'))
+  let additionalField = null
+  const additionalFieldDesign = data?.additional_fields?.find(ele => ele.key === open?.id)?.design
+  if (additionalFieldDesign) {
+    if (additionalFieldDesign.length === 0) {
+      additionalField = null
+    } else {
+      additionalField = additionalFieldDesign
+    }
+  }
+  const design = additionalField ?? defaultDesign ?? ``
+
+  const roles = data?.additional_fields?.find(ele => ele.key === open?.id)?.roles ?? {
+    onMount: { type: '', value: '' },
+    trigger: {
+      selectedField: null,
+      triggerKey: null,
+      typeOfValidation: null,
+      isEqual: 'equal',
+      currentField: 'id'
+    },
+    placeholder: {
+      placeholder_ar: '',
+      placeholder_en: ''
+    },
+    hover: {
+      hover_ar: '',
+      hover_en: ''
+    },
+    hint: {
+      hint_ar: '',
+      hint_en: ''
+    },
+    event: {},
+    afterDateType: '',
+    afterDateValue: '',
+    beforeDateType: '',
+    beforeDateValue: '',
+    regex: {
+      regex: '',
+      message_ar: '',
+      message_en: ''
+    },
+    size: '',
+    api_url: '',
+    apiKeyData: ''
+  }
+
+  const showActionsColumn = useMemo(
+    () => data.kind === 'form-table' || editAction || deleteAction,
+    [data.kind, editAction, deleteAction]
+  )
+
+  const colSpan = useMemo(
+    () => filterWithSelect.length + (showActionsColumn ? 1 : 0),
+    [filterWithSelect.length, showActionsColumn]
+  )
+
+  // Memoize callbacks
+  const handlePageChange = useCallback(
+    (event, value) => {
+      setPaginationModel(prev => ({ ...prev, page: value }))
+    },
+    [setPaginationModel]
+  )
+
+  const handleRowsPerPageChange = useCallback(
+    event => {
+      setPaginationModel(prev => ({ ...prev, pageSize: Number(event.target.value) }))
+    },
+    [setPaginationModel]
+  )
+
+  const handleEdit = useCallback(
+    column => {
+      setEditOpen?.(column)
+    },
+    [setEditOpen]
+  )
+
+  const handleDelete = useCallback(
+    column => {
+      setDeleteOpen?.(column)
+    },
+    [setDeleteOpen]
+  )
+
+  if (loadingHeader) {
+    return (
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <div className='flex justify-center items-center p-4' role='status' aria-label='Loading table headers'>
+          <CircularProgress />
+        </div>
+      </Paper>
+    )
+  }
+
+  console.log(
+    sortedLoop
+      ? [
+        ...sortedLoop.map(ele => {
+          return {
+            ...ele,
+            key: `${ele.collectionId}.${ele.key}`
+          }
+        }),
+        ...filterWithSelect
+      ]
+      : filterWithSelect
+  )
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      {loadingHeader ? (
-        <div className='flex justify-center items-center p-4'>
-          <CircularProgress />
-        </div>
-      ) : (
-        <>
-          <TableContainer>
-            <Table
-              stickyHeader
-              sx={{
-                border: '1px solid rgba(224, 224, 224, 1)',
-       
-              }}
-            >
-              <TableHead>
-                <TableRow
-                  sx={{
-                    '&:not(:last-child) td, &:not(:last-child) th': {
-                      borderBottom: '1px solid rgba(224, 224, 224, 1)' 
-                    }
-                  }}
-                >
-                  {filterWithSelect.map(column => (
-                    <TableCell
-                      className='uppercase'
-                      key={column.id}
-                      sx={{
-                        borderInlineEnd: '1px solid rgba(224, 224, 224, 1)',
-                        '&:last-child': { borderInlineEnd: 0 } 
-                      }}
-                    >
-                      {locale === 'ar' ? column.nameAr : column.nameEn}
-                    </TableCell>
-                  ))}
-                  {(data.kind === 'form-table' || editAction || deleteAction) && (
-                    <TableCell className='uppercase' sx={{ maxWidth: '150px', width: '150px' }}>
-                      {messages.actions}
-                    </TableCell>
-                  )}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingEntity ? (
-                  <TableRow>
-                    <TableCell colSpan={filterWithSelect.length + 1} className='flex justify-center items-center'>
-                      <div className='flex justify-center items-center p-4 rounded-md'>
-                        <CircularProgress />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  columns.map(column => (
-                    <TableRow key={column.id}>
-                      {filterWithSelect.map(parentKey => (
-                        <TableCell key={parentKey.id} sx={{ borderInlineEnd: '1px solid rgba(224, 224, 224, 1)' }}>
-                          <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-                            {data.kind === 'form-table' ? (
-                              <ViewInputInTable
-                                ele={parentKey}
-                                row={column}
-                                readOnly={readOnly}
-                                disabled={disabled}
-                                data={data}
-                                setGetFields={setGetFields}
-                                onChange={onChange}
-                                setTriggerData={setTriggerData}
-                                getDesign={getDesign}
-                                triggerData={triggerData}
-                                errorAllRef={errorAllRef}
-                                notFound={Object.keys(column?.[parentKey?.key]).length !== 0}
-                                setChangedValue={setChangedValue}
-                              />
-                            ) : (
-                              <>
-                                {parentKey?.fieldCategory === 'Associations' ? (
-                                  <ViewValueInTable data={parentKey} value={column[parentKey.key] ?? ''} />
-                                ) : parentKey?.type === 'Date' ? (
-                                  <>
-                                    {Object.keys(column?.[parentKey?.key]).length !== 0 ? (
-                                      <GetTimeinTable data={column[parentKey.key]} />
-                                    ) : (
-                                      '-'
-                                    )}
-                                  </>
-                                ) : (
-                                  <>
-                                    {Object.keys(column?.[parentKey?.key]).length !== 0 ? (
-                                      column?.[parentKey?.key].includes('/Uploads/') ? (
-                                        <a
-                                          href={
-                                            process.env.API_URL +
-                                            '/file/download/' +
-                                            column?.[parentKey?.key].replaceAll('/Uploads/', '')
-                                          }
-                                          target='_blank'
-                                          rel='noreferrer'
-                                        >
-                                          {column?.[parentKey?.key].split('/Uploads/')[1].slice(0, 30) +
-                                            '.' +
-                                            column?.[parentKey?.key].split('/Uploads/')[1].split('.').pop()}
-                                        </a>
-                                      ) : (
-                                        column?.[parentKey?.key]
-                                      )
-                                    ) : (
-                                      <>{column?.[parentKey?.key] ?? '-'}</>
-                                    )}
-                                  </>
-                                )}
-                              </>
-                            )}
-                          </Typography>
-                        </TableCell>
-                      ))}
-                      {data.kind === 'form-table' ? (
-                        <TableCell className='flex justify-center items-center' sx={{ borderBlockEnd: '1px solid rgba(224, 224, 224, 1)' }}>
-                          <Tooltip title={messages.delete}>
-                            <IconButton
-                              size='small'
-                              onClick={e => {
-                                setGetFields(prev => prev.filter(ele => ele.id !== column.id))
-                              }}
-                            >
-                              <IconifyIcon icon='tabler:trash' />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      ) : editAction || deleteAction ? (
-                        <>
-                          <TableCell
-                            sx={{ maxWidth: '150px', width: '150px' }}
-                            className='flex justify-center items-center'
-                          >
-                            {editAction && (
-                              <Tooltip title={messages.edit}>
-                                <IconButton
-                                  size='small'
-                                  onClick={e => {
-                                    setEditOpen(column)
-                                  }}
-                                >
-                                  <IconifyIcon icon='tabler:edit' />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                            {deleteAction && (
-                              <Tooltip title={messages.delete}>
-                                <IconButton
-                                  size='small'
-                                  onClick={e => {
-                                    setDeleteOpen(column)
-                                  }}
-                                >
-                                  <IconifyIcon icon='tabler:trash' />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                          </TableCell>
-                        </>
-                      ) : (
-                        <></>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+      <InputControlDesign
+        open={open}
+        handleClose={() => setOpen(false)}
+        design={design}
+        setAssociationsOpen={setAssociationsOpen}
+        locale={locale}
+        roles={roles}
+        data={data}
+        type={type}
+        onChange={onChange}
+        fields={
+          sortedLoop
+            ? [
+              ...sortedLoop.map(ele => {
+                return {
+                  ...ele,
+                  key: `${ele.collectionId}.${ele.key}`
+                }
+              }),
+              ...filterWithSelect
+            ]
+            : filterWithSelect
+        }
+      />
+      <TableContainer>
+        <Table
+          stickyHeader
+          sx={{
+            border: `1px solid ${BORDER_COLOR}`
+          }}
+          aria-label={data.kind === 'form-table' ? 'Form table' : 'Data table'}
+        >
+          <TableHead>
+            <TableHeader
+              setOpen={setOpen}
+              filterWithSelect={filterWithSelect}
+              locale={locale}
+              showActionsColumn={showActionsColumn}
+              messages={messages}
+              readOnly={readOnly}
+              data={data}
+            />
+          </TableHead>
+          <TableBody>
+            {loadingEntity ? (
+              <TableRow>
+                <TableCell colSpan={colSpan} className='flex justify-center items-center'>
+                  <div
+                    className='flex justify-center items-center p-4 rounded-md'
+                    role='status'
+                    aria-label='Loading table data'
+                  >
+                    <CircularProgress />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : columns.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={colSpan} className='text-center p-4'>
+                  <Typography variant='body2' color='text.secondary'>
+                    {messages.noData || 'No data available'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              columns.map(column => (
+                <TableRowComponent
+                  key={column.id || column.Id}
+                  columnId={column.id || column.Id}
+                  allData={allData}
+                  formTable={formTable}
+                  column={column}
+                  filterWithSelect={filterWithSelect}
+                  data={data}
+                  readOnly={readOnly}
+                  disabled={disabled}
+                  setGetFields={setGetFields}
+                  onChange={onChange}
+                  setTriggerData={setTriggerData}
+                  getDesign={getDesign}
+                  triggerData={triggerData}
+                  errorAllRef={errorAllRef}
+                  setChangedValue={setChangedValue}
+                  editAction={editAction}
+                  deleteAction={deleteAction}
+                  messages={messages}
+                  onEdit={() => handleEdit(column)}
+                  onDelete={() => handleDelete(column)}
+                  reloadHight={reloadHight}
+                  type={type}
+                  setOpen={setOpen}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-          <TablePagination
-            component='div'
-            count={totalCount}
-            page={paginationModel.page}
-            onPageChange={(event, value) => {
-              setPaginationModel({ ...paginationModel, page: value })
-            }}
-            rowsPerPage={paginationModel.pageSize}
-            onRowsPerPageChange={event => {
-              setPaginationModel({ ...paginationModel, pageSize: event.target.value })
-            }}
-            rowsPerPageOptions={[5, 10, 15]}
-          />
-        </>
-      )}
+      <TablePagination
+        component='div'
+        count={totalCount}
+        page={paginationModel.page}
+        onPageChange={handlePageChange}
+        rowsPerPage={paginationModel.pageSize}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+        labelRowsPerPage={messages.rowsPerPage || 'Rows per page:'}
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}–${to} ${messages.of || 'of'} ${count !== -1 ? count : `${messages.moreThan || 'more than'} ${to}`}`
+        }
+      />
+
+      <AssociationsSetup
+        open={associationsOpen}
+        onClose={() => {
+          setAssociationsOpen(false)
+        }}
+        initialConfig={associationsConfig}
+        onSave={config => {
+          let newConfig = data?.associationsConfig ?? []
+
+          const found = newConfig.find(item => item.key === config.key)
+          if (found) {
+            newConfig = newConfig.map(item => (item.key === config.key ? config : item))
+          } else {
+            newConfig = [...newConfig, config]
+          }
+
+          setSelectedOptions(prevSelected => [...prevSelected, config.key])
+
+          handleChange({ target: { value: config.key } }, '', newConfig)
+        }}
+        type={type}
+      />
     </Paper>
   )
 }
 
-export default TableComponent
+export default memo(TableComponent)

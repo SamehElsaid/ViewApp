@@ -477,15 +477,53 @@ const DatePickerWrapper = styled(Box)(({ theme }) => {
         }
     },
     '& .react-datepicker__close-icon': {
-      paddingRight: theme?.spacing(4),
-      ...(theme?.direction === 'rtl' ? { right: 0, left: 'auto' } : {}),
+      paddingRight: theme?.spacing(2),
+      paddingLeft: theme?.spacing(1),
+      zIndex: 30,
+      position: 'absolute',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '24px',
+      height: '24px',
+      borderRadius: '50%',
+      transition: 'all 0.2s ease',
+      ...(theme?.direction === 'rtl' 
+        ? { left: theme?.spacing(1), right: 'auto' } 
+        : { right: theme?.spacing(1), left: 'auto' }),
+      '&:hover': {
+        backgroundColor: theme?.palette?.mode === 'dark' 
+          ? 'rgba(255, 255, 255, 0.1)' 
+          : 'rgba(0, 0, 0, 0.05)',
+        transform: 'translateY(-50%) scale(1.1)'
+      },
+      '&:active': {
+        transform: 'translateY(-50%) scale(0.95)'
+      },
       '&:after': {
-        width: 'unset',
-        height: 'unset',
-        fontSize: '1.5rem',
-        color: theme?.palette?.text?.primary,
-        backgroundColor: 'transparent !important'
+        width: '12px',
+        height: '12px',
+        fontSize: '1.2rem',
+        lineHeight: '1',
+        color: theme?.palette?.mode === 'dark' 
+          ? 'rgba(255, 255, 255, 0.7)' 
+          : 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'transparent !important',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'color 0.2s ease'
+      },
+      '&:hover:after': {
+        color: theme?.palette?.error?.main || '#f44336'
       }
+    },
+    '& .react-datepicker__input-container': {
+      position: 'relative'
     }
   }
 })

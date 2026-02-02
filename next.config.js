@@ -9,13 +9,16 @@ module.exports = withTM({
     defaultLocale: 'en',
     localeDetection: true
   },
+  trailingSlash: true,
   env: {
-    API_URL: 'https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api',
-    IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
-  
+    // API_URL: 'https://localhost:7101/api',
     // IDENTITY_URL: 'https://localhost:7000/',
+
+     API_URL: 'https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api',
+     IDENTITY_URL: 'https://identityserver-afbzgwf7eva5gdhe.uaenorth-01.azurewebsites.net/',
     DEV_MODE: false,
-    DOMAIN: 'https://view-app-omega.vercel.app/'
+    DOMAIN: 'https://form-bulider-seven.vercel.app/',
+    APP_TYPE: "View as User"
   },
   images: {
     domains: []

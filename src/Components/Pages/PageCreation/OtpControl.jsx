@@ -56,8 +56,10 @@ export default function OtpControl({ data, onChange, locale, type, buttonRef }) 
     <div>
       <CloseNav text={messages.dialogs.counterTimer} buttonRef={buttonRef} />
       <div className='p-4 mt-4 rounded border border-dashed border-main-color'>
-        {renderTextField(obj ? messages.dialogs.titleAr : messages.dialogs.titleEn, 'content_ar', 'text')}
-        {renderTextField(obj ? messages.dialogs.keyInAr : messages.dialogs.keyInEn, 'content_en', 'text')}
+        {renderTextField(messages.dialogs.titleAr, 'title_ar', 'text')}
+        {renderTextField(messages.dialogs.titleEn, 'title_en', 'text')}
+        {renderTextField(messages.dialogs.keyInAr, 'key_ar', 'text')}
+        {renderTextField(messages.dialogs.keyInEn, 'key_en', 'text')}
         {renderTextField(messages.dialogs.numberOfOtp, 'numberOfOtp', 'number', {
           helperText: messages.dialogs.maximumIs20
         })}

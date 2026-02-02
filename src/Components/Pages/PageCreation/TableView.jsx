@@ -7,14 +7,28 @@ import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-ho
 import { useIntl } from 'react-intl'
 import { LoadingButton } from '@mui/lab'
 import OpenEditDialog from './OpenEditDialog'
-import { DefaultStyle } from 'src/Components/_Shared'
-import InputControlDesign from './InputControlDesign'
+import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
 import { removeerrorInAllRowData } from 'src/store/apps/errorInAllRow/errorInAllRow'
 import { useDispatch } from 'react-redux'
 import TableComponent from './TableComponent'
-import { useSelector } from 'react-redux'
+import { IoMdSettings } from 'react-icons/io'
+import TableColumnControl from './tableColumnControl'
 
-function TableView({ data, locale, onChange, readOnly, disabled }) {
+function TableView({
+  data,
+  locale,
+  onChange,
+  readOnly,
+  disabled,
+  sortedLoop,
+  allData,
+  reloadRef,
+  reloadHight,
+  type,
+  formTable,
+  FilterData,
+  filterWithAPIValue
+}) {
   const [getFields, setGetFields] = useState([])
   const [changedValue, setChangedValue] = useState([])
   const [loading, setLoading] = useState(true)
@@ -23,13 +37,14 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
   const [editOpen, setEditOpen] = useState(false)
   const { messages } = useIntl()
   const errorAllRef = useRef([])
-
-  const user = useSelector(rx => rx.auth)
-
+  const showBtnCheckbox = data.showBtn ?? true
+  const [newDataInsert, setNewDataInsert] = useState([])
   const [open, setOpen] = useState(false)
+  const [columnControl, setColumnControl] = useState(false)
 
   const handleClosePop = () => {
     setOpen(false)
+    setColumnControl(false)
   }
 
   const [paginationModel, setPaginationModel] = useState({
@@ -40,6 +55,10 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
 
   useEffect(() => {
     setLoading(true)
+    const getOldRows = data.newRows || []
+    const getFilterData = FilterData?.find(ele => ele.facilityType == filterWithAPIValue)
+    console.log(getFilterData)
+
     if (data.collectionId) {
       axiosGet(
         `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${
@@ -65,17 +84,49 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
             if (paginationModel.page === 0) {
               newEntities = [...newChangedValue, ...newEntities]
             }
+            console.log(getFilterData, 'getFilterData')
 
-            setGetFields(newEntities)
+            setGetFields([...getOldRows, ...newEntities, ...newDataInsert])
             setTotalCount(res.totalCount)
+          } else {
+            setGetFields([...getOldRows, ...newDataInsert])
           }
         })
         .finally(() => setLoading(false))
     } else {
-      setGetFields([])
+      setGetFields([...getOldRows, ...newDataInsert])
       setLoading(false)
     }
-  }, [locale, data.collectionId, paginationModel])
+  }, [locale, data.collectionId, paginationModel, newDataInsert.length])
+
+  useEffect(() => {
+    if (loading || !filterWithAPIValue) return
+
+    const findFilterData = FilterData.find(ele => ele?.[filterWithAPIValue?.value] == filterWithAPIValue?.changedValue)
+    const firstArray = Object.values(findFilterData || {}).find(value => Array.isArray(value))
+    const newDataInsert = []
+    firstArray?.forEach(insert => {
+      const newData = { Id: 'front' + new Date().getTime() }
+
+      filterWithSelect.forEach(ele => {
+        newData[ele.key] =
+          ele.fieldCategory === 'Associations'
+            ? insert?.Id ?? []
+            : ele.type === 'Date'
+            ? new Date()
+            : ele.type === 'DateTime'
+            ? new Date()
+            : ''
+      })
+
+      newDataInsert.push(newData)
+    })
+    console.log(newDataInsert)
+
+    setNewDataInsert(newDataInsert)
+  }, [filterWithAPIValue?.changedValue, loading])
+
+  console.log(data)
 
   const [loadingHeader, setLoadingHeader] = useState(true)
   useEffect(() => {
@@ -84,7 +135,29 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
       axiosGet(`collection-fields/get?CollectionId=${data.collectionId}`, locale)
         .then(res => {
           if (res.status) {
-            setCollectionFields(res.data)
+            const associationsConfig = data.associationsConfig || []
+
+            const filterData = res.data.map(field => {
+              const filterWith = type !== 'from-collection' ? field?.key : field?.id
+              const find = associationsConfig.find(item => item?.key === filterWith)
+              const filedData = { ...field }
+              if (find) {
+                filedData.kind = find.viewType
+                filedData.descriptionEn = JSON.stringify(find.selectedOptions)
+                filedData.getDataForm = find.dataSourceType
+                filedData.externalApi = find.externalApi
+                filedData.staticData = find.staticData
+                filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
+                filedData.apiHeaders = find.apiHeaders
+                filedData.body = find.body
+                filedData.method = find.method
+                filedData.viewAsInput = find.viewAsInput
+              }
+
+              return filedData
+            })
+
+            setCollectionFields(filterData)
           }
         })
         .finally(() => setLoadingHeader(false))
@@ -92,15 +165,26 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
       setCollectionFields([])
       setLoadingHeader(false)
     }
-  }, [locale, data.collectionId])
+  }, [locale, data.collectionId, data?.associationsConfig])
 
   const [filterWithSelect, setFilterWithSelect] = useState([])
 
   const getDesign = useCallback(
     (key, field) => {
-      const defaultDesign =
-        field?.type === 'new_element' ? DefaultStyle(field?.key) : field?.options?.uiSchema?.xComponentProps?.cssClass
-
+      let defaultDesign = null
+      if (field?.type === 'new_element') {
+        defaultDesign = DefaultStyle(field?.key)
+      } else {
+        if (field?.kind) {
+          defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.kind || field.descriptionAr))
+        } else {
+          if (field?.options?.uiSchema?.xComponentProps?.cssClass) {
+            defaultDesign = field?.options?.uiSchema?.xComponentProps?.cssClass
+          } else {
+            defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.kind || field.descriptionAr))
+          }
+        }
+      }
       let additionalField = null
       const additionalFieldDesign = data?.additional_fields?.find(ele => ele.key === key)?.design
       if (additionalFieldDesign) {
@@ -120,6 +204,10 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
   const [triggerData, setTriggerData] = useState(0)
 
   useEffect(() => {
+    setTriggerData(reloadRef)
+  }, [reloadRef])
+
+  useEffect(() => {
     if (collectionFields.length === 0) return
     let filteredFields = collectionFields.filter(ele => data.selected.includes(ele.key))
     if (filteredFields.length !== data.sortWithId?.length) {
@@ -127,13 +215,73 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
     } else {
       filteredFields = data.sortWithId.map(ele => filteredFields.find(e => e?.id === ele))
     }
-    setFilterWithSelect(filteredFields)
-  }, [collectionFields.length, data?.selected?.length, data.sortWithId, data.edit, data.delete])
+
+    const getMoreData = data.additional_fields
+
+    const cleanedCurrent = allData?.current
+      ? Object.fromEntries(
+          Object.entries(allData.current).map(([key, value]) => {
+            const newKey = key.includes('.') ? key.split('.').pop() : key
+
+            return [newKey, value]
+          })
+        )
+      : {}
+
+    const lastData = []
+    filteredFields.forEach(ele => {
+      const findData = getMoreData?.find(e => e.key === ele.id)
+      if (findData) {
+        const rolesFindData = findData?.roles?.triggerColumn
+        if (rolesFindData) {
+          const rolesData = cleanedCurrent?.[rolesFindData?.selectedField] === rolesFindData?.mainValue
+          if (!rolesData) {
+            lastData.push(ele)
+
+            return
+          }
+
+          if (rolesFindData.isEqual === 'equal') {
+            if (rolesData) {
+              lastData.filter(el => el.id !== ele.id)
+            }
+          } else {
+            if (!rolesData) {
+              lastData.filter(el => el.id !== ele.id)
+            }
+          }
+        } else {
+          lastData.push(ele)
+        }
+      } else {
+        lastData.push(ele)
+      }
+    })
+
+    setFilterWithSelect(!readOnly ? filteredFields : lastData)
+  }, [collectionFields.length, data?.selected?.length, data.sortWithId, reloadRef])
 
   const SortableButton = SortableElement(({ value }) => (
-    <div className='flex gap-2 items-center p-2 text-white rounded-md cursor-pointer select-none text-nowrap bg-main-color'>
-      {locale === 'ar' ? value.nameAr.toUpperCase() : value.nameEn.toUpperCase()}
-    </div>
+    <>
+      <div className='flex gap-2 items-center p-2 text-white rounded-md cursor-pointer select-none text-nowrap bg-main-color'>
+        {locale === 'ar' ? value.nameAr.toUpperCase() : value.nameEn.toUpperCase()}
+      </div>
+      <button
+        type='button'
+        title={locale !== 'ar' ? 'Setting' : 'التحكم'}
+        onMouseDown={e => {
+          e.stopPropagation()
+        }}
+        onClick={e => {
+          e.stopPropagation()
+          setColumnControl(value)
+          setOpen(value)
+        }}
+        className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
+      >
+        <IoMdSettings />
+      </button>
+    </>
   ))
 
   const SortableList = SortableContainer(({ items }) => {
@@ -214,15 +362,15 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
 
   return (
     <div>
-      <InputControlDesign
-        open={open}
+      <TableColumnControl
+        open={columnControl && open}
         handleClose={handleClosePop}
         design={design}
         locale={locale}
         roles={roles}
         data={data}
         onChange={onChange}
-        fields={getFields.filter(filed => data?.selected?.includes(filed?.key))}
+        fields={sortedLoop}
       />
       <OpenEditDialog
         data={setGetFields}
@@ -278,7 +426,7 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
       <>
         {!readOnly && <SortableList items={filterWithSelect} onSortEnd={onSortEnd} axis='xy' />}
         <div className='flex justify-end px-5 mb-3'>
-          {data.kind === 'form-table' && paginationModel.page === 0 && (
+          {data.kind === 'form-table' && showBtnCheckbox && paginationModel.page === 0 && (
             <Button
               variant='contained'
               color='success'
@@ -295,6 +443,13 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
                       : ''
                 })
                 setGetFields([newData, ...getFields])
+                onChange({
+                  ...data,
+                  newRows: data.newRows ? [...data.newRows, newData] : [newData]
+                })
+                if (reloadHight) {
+                  reloadHight(prev => prev + 1)
+                }
               }}
             >
               {messages.add}
@@ -308,6 +463,7 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
           }}
         >
           <TableComponent
+            allData={allData}
             filterWithSelect={filterWithSelect}
             columns={getFields}
             paginationModel={paginationModel}
@@ -329,20 +485,27 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
             setEditOpen={setEditOpen}
             setDeleteOpen={setDeleteOpen}
             setChangedValue={setChangedValue}
+            sortedLoop={sortedLoop}
+            reloadHight={reloadHight}
+            type={type}
+            formTable={formTable}
           />
-          <div className='flex justify-end px-5 mt-3'>
-            {data.kind === 'form-table' && paginationModel.page === 0 && (
+          {data.kind === 'form-table' && type !== 'from-collection' && paginationModel.page === 0 && (
+            <div className='flex justify-end px-5 mt-3'>
               <Button
                 variant='contained'
                 color='success'
                 onClick={() => {
-
-                  axiosPost(`generic-entities/${data.collectionName}`, locale,  changedValue.map(ele => {
-                    return {
-                      ...ele,
-                      Id: ele.Id.includes('front') ? undefined : ele.Id 
-                    }
-                  })).then(res => {
+                  axiosPost(
+                    `generic-entities/${data.collectionName}`,
+                    locale,
+                    changedValue.map(ele => {
+                      return {
+                        ...ele,
+                        Id: ele.Id.includes('front') ? undefined : ele.Id
+                      }
+                    })
+                  ).then(res => {
                     if (res.status) {
                       toast.success(messages.savedSuccessfully)
                     }
@@ -351,8 +514,8 @@ function TableView({ data, locale, onChange, readOnly, disabled }) {
               >
                 {messages.save}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </>
     </div>

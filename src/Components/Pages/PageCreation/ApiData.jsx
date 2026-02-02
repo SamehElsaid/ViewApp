@@ -15,7 +15,6 @@ import Cookies from 'js-cookie'
 import { useState, useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { useDispatch } from 'react-redux'
-import { toast } from 'react-toastify'
 import { replacePlaceholders } from 'src/Components/_Shared'
 import { decryptData } from 'src/Components/encryption'
 import JsonEditor from 'src/Components/JsonEditor'
@@ -57,7 +56,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
     const authToken = Cookies.get('sub')
     const apiHeaders = {}
     if (authToken) {
-      apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
+      apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
     }
     
     if (linksToFetch.length > 0) {

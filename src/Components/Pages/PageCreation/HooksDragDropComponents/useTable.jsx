@@ -12,13 +12,13 @@ export default function useTable({ advancedEdit, locale, readOnly, buttonRef }) 
     return {
       Renderer: ({ data, onChange }) => {
         return (
-          
           <TableView
             readOnly={!advancedEdit}
             selectCollection={data.selectCollection}
             onChange={onChange}
             disabled={!readOnly}
             data={data}
+            formTable='table'
           />
         )
       },
@@ -29,7 +29,7 @@ export default function useTable({ advancedEdit, locale, readOnly, buttonRef }) 
       controls: {
         type: 'custom',
         Component: ({ data, onChange }) => (
-          <Select title={messages.dialogs.table} type='table' onChange={onChange} data={data} buttonRef={buttonRef} />
+          <Select tableType="table" title={messages.dialogs.table} onChange={onChange} data={data} buttonRef={buttonRef} />
         )
       },
       icon: <FaTableCells className='text-2xl' />

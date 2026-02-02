@@ -11,7 +11,7 @@ import {
 import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import { toast } from 'react-toastify'
-import { axiosPatch, UrlTranAr } from './axiosCall'
+import { axiosPatch, UrlTranAr, UrlTranEn } from './axiosCall'
 import { Icon } from '@iconify/react'
 import { LoadingButton } from '@mui/lab'
 

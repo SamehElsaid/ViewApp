@@ -59,14 +59,14 @@ const DefaultPalette = (mode, skin) => {
     },
     info: {
       light: '#1FD5EB',
-      main: '#00CFE8',
+      main: '#0050b3',
       dark: '#00B6CC',
       contrastText: whiteColor
     },
     success: {
       light: '#42CE80',
-      main: '#00cfe8',
-      dark: '#06a7b9',
+      main: '#0050b3',
+      dark: '#043a7c',
       contrastText: whiteColor
     },
     grey: {

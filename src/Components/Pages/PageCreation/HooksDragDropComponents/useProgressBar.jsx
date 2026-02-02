@@ -30,7 +30,7 @@ export default function useProgressBar({ locale, buttonRef }) {
           >
             <div
               style={{
-                backgroundColor: data.backgroundColor ?? '#00cfe8',
+                backgroundColor: data.backgroundColor ?? '#0050b3',
                 width:
                   (data?.api_url ? getData(data?.items, data?.progressWidth, '50') : data.progressWidth ?? 50) + '%'
               }}
@@ -38,7 +38,7 @@ export default function useProgressBar({ locale, buttonRef }) {
             ></div>
             <div
               style={{
-                backgroundColor: data.backgroundColor ?? '#00cfe8'
+                backgroundColor: data.backgroundColor ?? '#0050b3'
               }}
               className='absolute start-0 h-full w-[100%]  opacity-30'
             ></div>

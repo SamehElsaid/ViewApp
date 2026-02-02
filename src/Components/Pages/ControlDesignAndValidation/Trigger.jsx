@@ -32,7 +32,8 @@ function Trigger({
   setParentKey,
   design,
   roles,
-  parentKey
+  parentKey,
+  type
 }) {
   const steps = [messages.Input_Field, messages.Type_Of_Validation]
   const [activeStep, setActiveStep] = useState(0)
@@ -68,20 +69,29 @@ function Trigger({
       isEqual,
       currentField,
       mainValue,
-      parentKey
+      parentKey,
+      ...(open.rowId && { rowId: open.rowId })
+    }
+
+    if (open.rowId) {
+      sendData.rowId = open.rowId
     }
 
     const additional_fields = data.additional_fields ?? []
     const findMyInput = additional_fields.find(inp => inp.key === open.id)
+    const triggerProperty = type === 'column' ? 'triggerColumn' : open.rowId ? 'triggerRow' : 'trigger'
+    console.log(triggerProperty, 'triggerProperty')
     if (findMyInput) {
-      findMyInput.roles.trigger = sendData
+      findMyInput.roles = findMyInput.roles ?? {}
+      findMyInput.roles[triggerProperty] = sendData
+      console.log(findMyInput, 'findMyInput')
     } else {
       const myEdit = {
         key: open.id,
         design: objectToCss(Css).replaceAll('NaN', ''),
         roles: {
           ...roles,
-          trigger: sendData
+          [triggerProperty]: sendData
         }
       }
       additional_fields.push(myEdit)
@@ -103,6 +113,8 @@ function Trigger({
     setIsEqual('equal')
     setMainValue('')
   }
+
+  console.log(fields)
 
   return (
     <Dialog open={openTrigger} onClose={resetForm} fullWidth>
@@ -139,8 +151,11 @@ function Trigger({
                 >
                   {fields
                     ?.filter(fil => fil.id !== open.id)
+                    .filter(fil => fil.kind !== 'Table')
+                    .filter(fil => fil.key !== 'button')
                     ?.map(field => (
                       <MenuItem key={field.key} value={field.key}>
+                        {console.log(field, 'ok')}
                         {field?.[`name${locale === 'ar' ? 'Ar' : 'En'}`]}
                       </MenuItem>
                     ))}
@@ -159,17 +174,39 @@ function Trigger({
                     setTypeOfValidation(e.target.value)
                   }}
                 >
-                  <MenuItem value={'filter'}>{messages.filter}</MenuItem>
-                  <MenuItem value={'enable'} disabled={open.type === 'new_element'}>
+                  <MenuItem value={'filter'} className={`${type === 'column' ? '!hidden' : ' '}`}>
+                    {messages.filter}
+                  </MenuItem>
+                  <MenuItem value={'filterDataFromAPI'} className={`${type === 'column' ? '!hidden' : ' '}`}>
+                    {messages.filterDataFromAPI}
+                  </MenuItem>
+                  <MenuItem value={'disable'} className={`${type === 'column' ? '!hidden' : ' '}`}>
+                    {messages.Disable}
+                  </MenuItem>
+                  <MenuItem
+                    value={'enable'}
+                    disabled={open.type === 'new_element'}
+                    className={`${type === 'column' ? '!hidden' : ' '}`}
+                  >
                     {messages.enable}
                   </MenuItem>
-                  <MenuItem value={'empty'} disabled={open.type === 'new_element'}>
+                  <MenuItem value={'required'} className={`${type === 'column' ? '!hidden' : ' '}`}>
+                    {messages.Required}
+                  </MenuItem>
+                  <MenuItem
+                    value={'empty'}
+                    disabled={open.type === 'new_element'}
+                    className={`${type === 'column' ? '!hidden' : ' '}`}
+                  >
                     {messages.empty}
                   </MenuItem>
-                  <MenuItem value={'optional'} disabled={open.type === 'new_element'}>
+                  <MenuItem value={'optional'} className={`${type === 'column' ? '!hidden' : ' '}`}>
                     {messages.optional}
                   </MenuItem>
-                  <MenuItem value={'hidden'}>{messages.hidden}</MenuItem>
+                  <MenuItem value={'hidden'} disabled={open?.key === 'button' && roles?.onMount?.type === 'hide'}>
+                    {messages.hidden}
+                  </MenuItem>
+                  <MenuItem value={'visible'}>{messages.visible}</MenuItem>
                 </Select>
                 <UnmountClosed isOpened={Boolean(typeOfValidation === 'filter')}>
                   <div className='flex mt-2 rounded-md border border-main-color'>

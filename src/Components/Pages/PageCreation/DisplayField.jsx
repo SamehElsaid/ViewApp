@@ -15,11 +15,15 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import { decryptData } from 'src/Components/encryption'
 import { useSelector } from 'react-redux'
+import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 
 export default function DisplayField({
+  onChangeData,
+  advancedEdit,
   from,
   input,
   dirtyProps,
+  dataRefWithCollectionId,
   data,
   handleSubmit,
   reload,
@@ -40,7 +44,9 @@ export default function DisplayField({
   setRedirect,
   isDisabled,
   hiddenLabel,
-  loadingBtn
+  loadingBtn,
+  disabled,
+  allFields = []
 }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
@@ -55,9 +61,12 @@ export default function DisplayField({
   const [fileName, setFile] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [regex, setRegex] = useState(roles?.regex?.regex)
-  const [isDisable, setIsDisable] = useState(null)
+  const [isDisable, setIsDisable] = useState(disabled ? 'disabled' : null)
   const getApiData = useSelector(rx => rx.api.data)
   const [lastValue, setLastValue] = useState(null)
+  const [refreshHeight, setRefreshHeight] = useState(0)
+
+  console.log(regex, 'input')
 
   useEffect(() => {
     if (isDisabled) {
@@ -85,6 +94,78 @@ export default function DisplayField({
     }
   }, [input])
 
+  const FilterData = [] || [
+    {
+      facilityType: '3d548052-ebf3-4c33-b8b0-489f07f97f43',
+      EmptypesId: [
+        {
+          Id: '53fc1e93-5ffa-48e0-a7f0-5843c63c2b9b',
+          IsDeleted: false,
+          CreatedAt: '2026-01-12T12:00:57.67',
+          CreatedBy: 'ca3568ce-156c-4175-9909-bd79cbd793a8',
+          UpdatedAt: '2026-01-12T12:00:57.67',
+          UpdatedBy: null,
+          TypeName: 'مدير'
+        },
+        {
+          Id: '270c0962-0616-4481-96e7-9a28143dd69c',
+          IsDeleted: false,
+          CreatedAt: '2026-01-12T12:01:00.783',
+          CreatedBy: 'ca3568ce-156c-4175-9909-bd79cbd793a8',
+          UpdatedAt: '2026-01-12T12:01:00.783',
+          UpdatedBy: null,
+          TypeName: 'موظف'
+        },
+        {
+          Id: '1b30000d-ef11-401a-b303-1a9197761bec',
+          IsDeleted: false,
+          CreatedAt: '2026-01-12T12:01:07.217',
+          CreatedBy: 'ca3568ce-156c-4175-9909-bd79cbd793a8',
+          UpdatedAt: '2026-01-12T12:01:07.217',
+          UpdatedBy: null,
+          TypeName: 'اداري'
+        }
+      ]
+    },
+    {
+      facilityType: '225ea3e7-ffd1-4ff9-bb1e-a4013faac02a',
+      EmptypesId: [
+        {
+          Id: '53fc1e93-5ffa-48e0-a7f0-5843c63c2b9b',
+          IsDeleted: false,
+          CreatedAt: '2026-01-12T12:00:57.67',
+          CreatedBy: 'ca3568ce-156c-4175-9909-bd79cbd793a8',
+          UpdatedAt: '2026-01-12T12:00:57.67',
+          UpdatedBy: null,
+          TypeName: 'مدير'
+        },
+        {
+          Id: '270c0962-0616-4481-96e7-9a28143dd69c',
+          IsDeleted: false,
+          CreatedAt: '2026-01-12T12:01:00.783',
+          CreatedBy: 'ca3568ce-156c-4175-9909-bd79cbd793a8',
+          UpdatedAt: '2026-01-12T12:01:00.783',
+          UpdatedBy: null,
+          TypeName: 'موظف'
+        }
+      ]
+    },
+    {
+      facilityType: 'df31c39a-93ce-44f2-a36c-df4bb9274f86',
+      EmptypesId: [
+        {
+          Id: '53fc1e93-5ffa-48e0-a7f0-5843c63c2b9b',
+          IsDeleted: false,
+          CreatedAt: '2026-01-12T12:00:57.67',
+          CreatedBy: 'ca3568ce-156c-4175-9909-bd79cbd793a8',
+          UpdatedAt: '2026-01-12T12:00:57.67',
+          UpdatedBy: null,
+          TypeName: 'مدير'
+        }
+      ]
+    }
+  ]
+
   useEffect(() => {
     if (roles?.trigger?.typeOfValidation == 'filter' && !loading) {
       if (dataRef?.current?.[roles?.trigger?.selectedField] != undefined) {
@@ -101,6 +182,19 @@ export default function DisplayField({
             }
           })
         )
+      }
+    }
+    if (roles?.trigger?.typeOfValidation == 'filterDataFromAPI' && !loading) {
+      if (dataRef?.current?.[roles?.trigger?.selectedField] != undefined) {
+        if (input?.kind == 'search' || input?.kind == 'checkbox') {
+          setValue([])
+        }
+
+        const findFilterData = FilterData.find(
+          ele => ele?.[roles?.trigger?.mainValue] == dataRef.current?.[roles?.trigger?.selectedField]
+        )
+
+        setSelectedOptions(findFilterData?.[input?.key] || [])
       }
     }
 
@@ -356,13 +450,13 @@ export default function DisplayField({
       }
     }
     if (roles?.trigger?.typeOfValidation == 'optional' && roles?.trigger?.mainValue && !loading) {
-      const setOptional = (shouldBeOptional) => {
+      const setOptional = shouldBeOptional => {
         if (shouldBeOptional) {
           if (validations?.Required) {
             setValidations(prev => {
               const newPrev = { ...prev }
               delete newPrev.Required
-              
+
               return newPrev
             })
           }
@@ -373,7 +467,7 @@ export default function DisplayField({
         }
       }
 
-      const compare = (left, right, equalMode) => equalMode ? left == right : left != right
+      const compare = (left, right, equalMode) => (equalMode ? left == right : left != right)
 
       const handleLocal = () => {
         const equalMode = roles?.trigger.isEqual == 'equal'
@@ -438,7 +532,7 @@ export default function DisplayField({
 
     // ! Start Required Control (mirror of optional)
     if (roles?.trigger?.typeOfValidation == 'required' && roles?.trigger?.mainValue && !loading) {
-      const setReq = (shouldBeRequired) => {
+      const setReq = shouldBeRequired => {
         if (shouldBeRequired) {
           if (!validations?.Required) setValidations(prev => ({ ...prev, Required: true }))
         } else {
@@ -446,14 +540,14 @@ export default function DisplayField({
             setValidations(prev => {
               const newPrev = { ...prev }
               delete newPrev.Required
-           
+
               return newPrev
             })
           }
         }
       }
 
-      const compare = (left, right, equalMode) => equalMode ? left == right : left != right
+      const compare = (left, right, equalMode) => (equalMode ? left == right : left != right)
 
       const handleLocal = () => {
         const left = dataRef?.current?.[roles?.trigger?.selectedField]
@@ -466,7 +560,9 @@ export default function DisplayField({
       if (input.fieldCategory == 'Basic') {
         if (roles?.trigger?.parentKey) {
           if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(`generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`).then(res => {
+            axiosGet(
+              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
+            ).then(res => {
               if (res.status) {
                 const ent = res.entities?.[0] ?? false
                 if (ent) {
@@ -483,7 +579,9 @@ export default function DisplayField({
       } else {
         if (roles?.trigger?.parentKey) {
           if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(`generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`).then(res => {
+            axiosGet(
+              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
+            ).then(res => {
               if (res.status) {
                 const ent = res.entities?.[0] ?? false
                 if (ent) {
@@ -502,7 +600,7 @@ export default function DisplayField({
 
     if (roles?.trigger?.typeOfValidation == 'required' && !roles?.trigger?.mainValue && !loading) {
       const left = dataRef?.current?.[roles?.trigger?.selectedField]
-      const hasValue = (Array.isArray(left) ? left.length != 0 : left !== undefined && left !== null && left !== '')
+      const hasValue = Array.isArray(left) ? left.length != 0 : left !== undefined && left !== null && left !== ''
       if (hasValue) {
         if (!validations?.Required) setValidations(prev => ({ ...prev, Required: true }))
       } else {
@@ -510,18 +608,17 @@ export default function DisplayField({
           setValidations(prev => {
             const newPrev = { ...prev }
             delete newPrev.Required
-            
+
             return newPrev
           })
         }
       }
     }
 
-    //  End Required Control
-
     //  End enable Control
 
     // ! Start Empty Control
+
     if (roles?.trigger?.typeOfValidation == 'empty' && roles?.trigger?.mainValue && !loading) {
       if (input.fieldCategory == 'Basic') {
         if (roles?.trigger?.parentKey) {
@@ -1019,9 +1116,10 @@ export default function DisplayField({
 
   useEffect(() => {
     if (findValue || findValue == '') {
-      setValue(findValue)
       if (input?.type == 'Date') {
         setValue(new Date(findValue))
+      } else {
+        setValue(findValue)
       }
     } else {
       if (input?.kind == 'search' || input?.kind == 'checkbox') {
@@ -1046,6 +1144,7 @@ export default function DisplayField({
       setShowPassword(false)
     }
   }, [reload, input])
+
   useEffect(() => {
     if (!loading) {
       setTimeout(() => {
@@ -1146,6 +1245,7 @@ export default function DisplayField({
     }
 
     if (dirty) {
+      console.log(e?.target?.value, 'e?.target?.value');
       if (validations.Required && e?.target?.value?.length == 0 && isTypeNew) {
         return setError(messages.required)
       }
@@ -1155,12 +1255,16 @@ export default function DisplayField({
         const regexMatch = cleanedRegex.match(/^\/(.*)\/([gimuy]*)$/)
         if (!regexMatch) {
           console.error('Invalid regex format:', cleanedRegex)
+          console.log(regex, 'regex');
 
           return
         }
         const [, pattern, flags] = regexMatch
         const regExp = new RegExp(pattern, flags)
+        console.log(regExp.test(e?.target?.value), 'regExp');
         if (!regExp.test(e?.target?.value)) {
+          console.log("sdad");
+          
           return setError(locale == 'ar' ? roles?.regex?.message_ar : roles?.regex?.message_en)
         }
       }
@@ -1266,12 +1370,29 @@ export default function DisplayField({
           const parsed = JSON.parse(input?.descriptionEn)
           const lable = parsed && typeof parsed === 'object' ? parsed : { format: 'yyyy-MM-dd', showTime: 'false' }
 
-          dataRef.current[input.type == 'new_element' ? input.id : input.key] = value ?? formatDate(value, lable?.format)
+          dataRef.current[input.type == 'new_element' ? input.id : input.key] =
+            value ?? formatDate(value, lable?.format)
+
+          if (dataRefWithCollectionId) {
+            dataRefWithCollectionId.current[
+              input.type == 'new_element' ? input.id : input.collectionId + '.' + input.key
+            ] = value ?? formatDate(value, lable?.format)
+          }
         } catch (error) {
           dataRef.current[input.type == 'new_element' ? input.id : input.key] = ''
+          if (dataRefWithCollectionId) {
+            dataRefWithCollectionId.current[
+              input.type == 'new_element' ? input.id : input.collectionId + '.' + input.key
+            ] = ''
+          }
         }
       } else {
         dataRef.current[input.type == 'new_element' ? input.id : input.key] = value
+        if (dataRefWithCollectionId) {
+          dataRefWithCollectionId.current[
+            input.type == 'new_element' ? input.id : input.collectionId + '.' + input.key
+          ] = value
+        }
       }
       if (setTriggerData) {
         setTriggerData(prev => prev + 1)
@@ -1283,7 +1404,7 @@ export default function DisplayField({
         [input.type == 'new_element' ? input.id : input.key]: errorWithoutDirty.includes(true) ? errorMessages : false
       }
     }
-  }, [refError, input, value, dataRef, validations, setTriggerData])
+  }, [refError, input, value, validations, setTriggerData])
 
   useEffect(() => {
     if (!input?.getDataForm) {
@@ -1313,8 +1434,6 @@ export default function DisplayField({
   }, [input])
 
   const [queryParams, setQueryParams] = useState(null)
-
-  // console.log(, 'input?.getDataForm');
 
   useEffect(() => {
     const handleChange = () => {
@@ -1365,8 +1484,6 @@ export default function DisplayField({
       const body = replaceVars(input?.body ?? '')
       const method = input?.method ?? 'GET'
 
-      console.log(body, method)
-
       let sendBody = {}
 
       try {
@@ -1376,7 +1493,7 @@ export default function DisplayField({
       }
 
       if (authToken) {
-        apiHeaders.Authorization = `Bearer ${decryptData(authToken).token.trim()}`
+        apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
       }
 
       setLoading(true)
@@ -1422,7 +1539,7 @@ export default function DisplayField({
         }
       }
     }, 100)
-  }, [isDisable, readOnly, layout?.length, loading, triggerData])
+  }, [isDisable, readOnly, layout?.length, loading, triggerData, refreshHeight])
 
   const mainRef = useRef()
 
@@ -1516,7 +1633,7 @@ export default function DisplayField({
         const assignedIndex = Array.isArray(tabsElement.data)
           ? tabsElement.data.findIndex(t => {
               const fieldId = input.type === 'new_element' ? input.id : input.key
-              
+
               return Array.isArray(t.fields) && t.fields.includes(fieldId)
             })
           : -1
@@ -1532,13 +1649,28 @@ export default function DisplayField({
     return false
   })()
 
+  const requiredMessage =
+    errorView === 'This field is required'
+      ? roles?.required?.requiredMessageEn || roles?.required?.requiredMessageAr || ''
+      : ''
+
+  console.log(roles?.trigger?.filterWithAPIValue)
+
   return (
     <div
       className={`reset ${isDisable == 'hidden' && !readOnly ? 'hidden' : ''} relative group w-full`}
-      id={input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))}
+      id={
+        input.type == 'new_element'
+          ? `s${input.id}`
+          : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))
+      }
       style={{ display: shouldHideForTab ? 'none' : undefined }}
     >
-      <style>{`#${input.type == 'new_element' ? `s${input.id}` : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))} {
+      <style>{`#${
+        input.type == 'new_element'
+          ? `s${input.id}`
+          : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))
+      } {
         ${input.kind == 'search' ? '' : design}
       }`}</style>
       {hoverText && (
@@ -1550,7 +1682,10 @@ export default function DisplayField({
       <div ref={mainRef} id='parent-input'>
         <div className='flex gap-2 justify-between items-center mb-2'>
           <div className='flex gap-2 items-center'>
-            {input.type != 'File' && label} <span className='text-xs text-red-500'>{validations.Required && '*'}</span>
+            {input.type != 'File' && label}{' '}
+            {input.key !== 'button' && input.key !== 'check_box' && validations.Required && (
+              <span className='text-xs text-red-500'>*</span>
+            )}
           </div>
           {hintText && (
             <button
@@ -1586,7 +1721,7 @@ export default function DisplayField({
                   }
                 }
               } catch (_) {}
-              
+
               return 'flex'
             })()
           }}
@@ -1598,8 +1733,10 @@ export default function DisplayField({
               </div>
             </div>
           )}
+
           {input.type == 'new_element' ? (
             <NewElement
+              allFields={allFields}
               typeOfSubmit={data?.type_of_sumbit}
               handleSubmit={handleSubmit}
               loadingBtn={loadingBtn}
@@ -1620,6 +1757,7 @@ export default function DisplayField({
             />
           ) : (
             <ViewInput
+              data={data}
               input={input}
               xComponentProps={xComponentProps}
               readOnly={readOnly}
@@ -1628,6 +1766,11 @@ export default function DisplayField({
               isOpen={isOpen}
               setIsOpen={setIsOpen}
               onChange={onChange}
+              dataRef={dataRefWithCollectionId}
+              triggerData={triggerData}
+              sortedLoop={allFields}
+              onChangeData={onChangeData}
+              advancedEdit={advancedEdit}
               from={from}
               setValue={setValue}
               roles={roles}
@@ -1645,23 +1788,38 @@ export default function DisplayField({
               error={error}
               setShowPassword={setShowPassword}
               showPassword={showPassword}
+              setTriggerData={setTriggerData}
+              FilterData={FilterData}
+              isFilterWithAPI={roles?.trigger?.typeOfValidation == 'filterDataFromAPI'}
+              filterWithAPIValue={{
+                value: roles?.trigger?.mainValue,
+                changedValue: dataRef.current?.[roles?.trigger?.selectedField]
+              }}
             />
           )}
         </div>
+        {input?.viewAsInput && (
+          <ViewAsInputTrigger
+            setRefreshHeight={setRefreshHeight}
+            collectionInput={input?.options?.source}
+            viewAsInput={input?.viewAsInput}
+            value={value}
+          />
+        )}
       </div>
       <div
-        class={`${
+        className={`${
           errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
-        } w-fit text-[#fb866e]   text-2xl end-[2px] bg-white z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}
+        } w-fit text-[#fb866e]   text-2xl end-[2px]  z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}
       >
         <IoMdInformationCircleOutline />
       </div>
       <div
-        class={`${
+        className={`${
           errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
         } !text-sm bg-[#fb866e] text-white  z-10 w-fit end-[0] mt-1 px-2 absolute top-[100%] rounded-md transition-all duration-300`}
       >
-        {errorView || error}
+        {requiredMessage || errorView || error}
       </div>
     </div>
   )

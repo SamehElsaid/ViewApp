@@ -7,7 +7,10 @@ import ar from 'date-fns/locale/ar-EG'
 import en from 'date-fns/locale/en-US'
 import { Autocomplete, Button, Dialog, IconButton, InputAdornment, Rating, TextField } from '@mui/material'
 import { Icon } from '@iconify/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { IoMdArrowDropdown } from 'react-icons/io'
+import TableView from '../PageCreation/TableView'
+import { axiosGet } from 'src/Components/axiosCall'
 
 function convertMomentToDateFnsFormat(format) {
   if (!format || typeof format !== 'string') return 'yyyy-MM-dd'
@@ -22,14 +25,21 @@ function convertMomentToDateFnsFormat(format) {
 }
 
 const ViewInput = ({
+  dataRef,
+  advancedEdit,
+  sortedLoop,
+  FilterData,
+  isFilterWithAPI,
+  filterWithAPIValue,
   input,
+  data,
   value,
   onChangeFile,
   from,
   readOnly,
   roles,
   onChange,
-  setValue,
+  onChangeData,
   locale,
   handleDelete,
   errorView,
@@ -38,15 +48,15 @@ const ViewInput = ({
   showPassword,
   setShowPassword,
   selectedOptions,
+  setTriggerData,
   isDisable,
   placeholder,
   onBlur,
   isRedirect,
-  setRedirect
+  setRedirect,
+  triggerData
 }) => {
   const [isOpen, setIsOpen] = useState(false)
-
-  
 
   const handleKeyDown = event => {
     if (input.type != 'Phone') return
@@ -60,49 +70,73 @@ const ViewInput = ({
     event.preventDefault()
   }
 
+  const [collectionData, setCollectionData] = useState({ data: null, loading: true })
+  const [tableData, setTableData] = useState(null)
+
+  useEffect(() => {
+    if (input?.kind == 'Table') {
+      axiosGet(`/collections/get-by-key?key=${input?.options?.source}`)
+        .then(res => {
+          const selected = JSON.parse(input?.descriptionEn) || []
+          setCollectionData(prev => ({ ...prev, data: res.data }))
+          const findDataFromAllData = data[input.key]
+
+          setTableData({
+            ...findDataFromAllData,
+            collectionId: res.data.id,
+            collectionName: res.data.key,
+
+            delete: true,
+            edit: true,
+            kind: 'form-table',
+            selected: selected
+          })
+        })
+        .finally(() => {
+          setCollectionData(prev => ({ ...prev, loading: false }))
+        })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input])
+
   if (input?.kind == 'select') {
     const label = JSON.parse(input?.descriptionEn) || []
     const valueSend = JSON.parse(input?.selectedValueSend) || []
 
-    const options = (selectedOptions || []).map(option => {
-      const optionValue = valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id
-      const optionLabel = (label || []).map(ele => option[ele]).join('-')
-      
-      return { label: optionLabel, value: optionValue }
-    })
-
-    const selected = options.find(o => String(o.value) == String(value)) || null
-
     return (
-      <div id='custom-select' className='flex items-center gap-2 w-full'>
-        <Autocomplete
-          options={options}
-          getOptionLabel={o => o?.label || ''}
-          value={selected}
-          onChange={(event, newValue) => {
-            onChange({ target: { value: newValue?.value || '' } })
+      <div id='custom-select'>
+        <select
+          value={value}
+          onChange={e => onChange(e)}
+          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
+          onBlur={e => {
+            if (isRedirect) {
+              const findOption = selectedOptions.find(option => option.Id == e.target.value)
+              setRedirect(findOption.redirect)
+            }
+            if (onBlur) {
+              const evaluatedFn = eval('(' + onBlur + ')')
+
+              evaluatedFn(e)
+            }
           }}
-          disabled={isDisable == 'disabled' || options.length == 0}
-          isOptionEqualToValue={(opt, val) => String(opt.value) == String(val.value)}
-          clearOnEscape
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder={placeholder ? placeholder : '---select---'}
-              fullWidth
-            />
-          )}
-        />
+        >
+          <option selected value={''}>
+            {placeholder ? placeholder : locale == 'ar' ? 'اختر ' : 'Select'}
+          </option>
+          {selectedOptions.map((option, index) => (
+            <option key={index} value={valueSend.length > 0 ? option[valueSend[0]] || option.id : option?.Id}>
+              {label?.map(ele => option[ele]).join('-')}
+            </option>
+          ))}
+        </select>
       </div>
     )
   }
 
-    
-
   if (input.kind == 'radio') {
     const label = JSON.parse(input?.descriptionEn)
     const valueSend = JSON.parse(input?.selectedValueSend) || []
-
 
     return (
       <div className=''>
@@ -160,6 +194,7 @@ const ViewInput = ({
         disabled={isDisable == 'disabled'}
         filterSelectedOptions
         id='autocomplete-multiple-outlined'
+        popupIcon={<IoMdArrowDropdown size={25} color='#3498ff' />}
         getOptionLabel={option => option[label[0]] || ''}
         renderInput={params => <TextField {...params} style={{ width: '100%' }} placeholder={placeholder} />}
       />
@@ -324,7 +359,8 @@ const ViewInput = ({
 
   if (input.type == 'File') {
     return from != 'table' ? (
-      <div className='px-4 w-full'>
+      <div className='px-4 w-full relative'>
+        {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>}
         <div id='file-upload-container'>
           <label htmlFor={input.key} id='file-upload-label'>
             <div id='label-color'>{locale == 'ar' ? input.nameAr : input.nameEn}</div>
@@ -412,7 +448,7 @@ const ViewInput = ({
         </div>
       </div>
     ) : (
-      <div className='flex gap-2 items-center'>
+      <div className='flex gap-2 items-center relative'>
         <a
           href={process.env.API_URL + '/file/download/' + value.replaceAll('/Uploads/', '')}
           target='_blank'
@@ -476,6 +512,41 @@ const ViewInput = ({
     } else if (roles?.afterDateType == 'date') {
       maxDate = new Date(roles?.afterDateValue)
     }
+    const timeFormat = roles?.timeFormat == '12hrs' ? 'h:mm aa' : 'HH:mm'
+
+    const datePicker = inline => {
+      return (
+        <DatePicker
+          selected={value}
+          onChange={date => {
+            onChange(date)
+          }}
+          dateFormat={timeFormat}
+          showTimeSelect
+          showTimeSelectOnly
+          locale={locale == 'ar' ? ar : en}
+          onBlur={e => {
+            if (onBlur) {
+              const evaluatedFn = eval('(' + onBlur + ')')
+
+              evaluatedFn(e)
+            }
+          }}
+          customInput={
+            <ExampleCustomInput
+              disabled={isDisable == 'disabled'}
+              value={value?.toString()}
+              type='time'
+              className='example-custom-input'
+            />
+          }
+          disabled={isDisable == 'disabled'}
+          minDate={minDate}
+          maxDate={maxDate}
+          inline={inline}
+        />
+      )
+    }
 
     return !readOnly ? (
       <>
@@ -488,110 +559,32 @@ const ViewInput = ({
             }}
             className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
           ></div>
-          <DatePickerWrapper className='w-full'>
-            <DatePicker
-              selected={value}
-              onChange={date => {
-                onChange(date)
-              }}
-              dateFormat='h:mm aa'
-              showTimeSelect
-              showTimeSelectOnly
-              locale={locale == 'ar' ? ar : en}
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
-
-                  evaluatedFn(e)
-                }
-              }}
-              customInput={
-                <ExampleCustomInput
-                  disabled={isDisable == 'disabled'}
-                  value={value?.toString()}
-                  type='time'
-                  className='example-custom-input'
-                />
-              }
-              disabled={isDisable == 'disabled'}
-              minDate={minDate}
-              maxDate={maxDate}
-            />
-          </DatePickerWrapper>
+          <DatePickerWrapper className='w-full'>{datePicker()}</DatePickerWrapper>
         </div>
         <Dialog
           open={isOpen}
           onClose={() => setIsOpen(false)}
           aria-labelledby='alert-dialog-title'
           aria-describedby='alert-dialog-description'
+          className='bg-transparent-popup'
         >
           {' '}
-          <div className='absolute top-0 end-2 py-2'>
+          <div className='absolute top-0 end-0 py-0 z-10'>
             <IconButton size='small' color='error' onClick={() => setIsOpen(false)} className=''>
               <Icon icon='tabler:x' fontSize='1.25rem' />
             </IconButton>
           </div>
-          <DatePickerWrapper className='w-full'>
-            <DatePicker
-              selected={value}
-              onChange={date => {
-                onChange(date)
-                setIsOpen(false)
-              }}
-              dateFormat='h:mm aa'
-              showTimeSelect
-              inline
-              showTimeSelectOnly
-              locale={locale == 'ar' ? ar : en}
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
-
-                  evaluatedFn(e)
-                }
-              }}
-              customInput={
-                <ExampleCustomInput
-                  disabled={isDisable == 'disabled'}
-                  value={value?.toString()}
-                  type='time'
-                  className='example-custom-input'
-                />
-              }
-              disabled={isDisable == 'disabled'}
-              minDate={minDate}
-              maxDate={maxDate}
-            />
+          <DatePickerWrapper className='w-full mx-auto flex justify-center items-center '>
+            {datePicker(true)}
           </DatePickerWrapper>
         </Dialog>
       </>
     ) : (
-      <DatePicker
-        selected={value}
-        open={false}
-        locale={locale == 'ar' ? ar : en}
-        popperPlacement='bottom-start'
-        onChange={date => {
-          onChange(date)
-          setIsOpen(false)
-        }}
-        timeInputLabel='Time:'
-        dateFormat='h:mm aa'
-        onBlur={e => {
-          if (onBlur) {
-            const evaluatedFn = eval('(' + onBlur + ')')
-
-            evaluatedFn(e)
-          }
-        }}
-        customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
-        disabled={isDisable == 'disabled'}
-      />
+      datePicker()
     )
   }
 
   if (input.type == 'Date') {
-
     const raw = JSON.parse(input?.descriptionEn ?? '{}')
 
     const format = convertMomentToDateFnsFormat(raw.format)
@@ -617,6 +610,36 @@ const ViewInput = ({
       maxDate = new Date(roles?.afterDateValue)
     }
 
+    const datePicker = inline => {
+      return (
+        <DatePicker
+          selected={value}
+          onChange={date => {
+            onChange(date)
+          }}
+          timeInputLabel={label.showTime == 'true' ? (locale == 'ar' ? 'الوقت:' : 'Time:') : ''}
+          dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
+          showMonthDropdown
+          locale={locale == 'ar' ? ar : en}
+          showYearDropdown
+          onBlur={e => {
+            if (onBlur) {
+              const evaluatedFn = eval('(' + onBlur + ')')
+
+              evaluatedFn(e)
+            }
+          }}
+          showTimeSelect={label.showTime == 'true'}
+          customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
+          disabled={isDisable == 'disabled'}
+          minDate={minDate}
+          maxDate={maxDate}
+          popperPlacement='bottom-start'
+          inline={inline}
+        />
+      )
+    }
+
     return !readOnly ? (
       <>
         <div className='relative w-full'>
@@ -628,101 +651,66 @@ const ViewInput = ({
             }}
             className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
           ></div>
-          <DatePickerWrapper className='w-full'>
-            <DatePicker
-              selected={value}
-              onChange={date => {
-                onChange(date)
-              }}
-              timeInputLabel={label.showTime == 'true' ? (locale == 'ar' ? 'الوقت:' : 'Time:') : ''}
-              dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
-              showMonthDropdown
-              locale={locale == 'ar' ? ar : en}
-              showYearDropdown
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
-
-                  evaluatedFn(e)
-                }
-              }}
-              showTimeSelect={label.showTime == 'true'}
-              customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
-              disabled={isDisable == 'disabled'}
-              minDate={minDate}
-              maxDate={maxDate}
-              popperPlacement='bottom-start'
-            />
-          </DatePickerWrapper>
+          <DatePickerWrapper className='w-full'>{datePicker()}</DatePickerWrapper>
           <Dialog
             open={isOpen}
             onClose={() => {
-              if (!disabled) {
+              if (isDisable !== 'disabled') {
                 setIsOpen(false)
               }
             }}
             aria-labelledby='alert-dialog-title'
             aria-describedby='alert-dialog-description'
+            className='bg-transparent-popup'
           >
             {' '}
-            <div className='absolute top-0 end-2 py-2'>
+            <div className='absolute top-0 end-2 py-2 z-10'>
               <IconButton size='small' color='error' onClick={() => setIsOpen(false)} className=''>
                 <Icon icon='tabler:x' fontSize='1.25rem' />
               </IconButton>
             </div>
-            <DatePickerWrapper className='w-full mx-auto flex justify-center items-center py-10'>
-              <DatePicker
-                selected={value}
-                onChange={date => {
-                  onChange(date)
-                  setIsOpen(false)
-                }}
-                timeInputLabel={label.showTime == 'true' ? (locale == 'ar' ? 'الوقت:' : 'Time:') : ''}
-                dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
-                showMonthDropdown
-                locale={locale == 'ar' ? ar : en}
-                showYearDropdown
-                inline
-                onBlur={e => {
-                  if (onBlur) {
-                    const evaluatedFn = eval('(' + onBlur + ')')
-
-                    evaluatedFn(e)
-                  }
-                }}
-                showTimeSelect={label.showTime == 'true'}
-                customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
-                disabled={isDisable == 'disabled'}
-                minDate={minDate}
-                maxDate={maxDate}
-                popperPlacement='bottom-start'
-              />
+            <DatePickerWrapper className='w-full mx-auto flex  justify-center items-center '>
+              {datePicker(true)}
             </DatePickerWrapper>
           </Dialog>
         </div>
       </>
     ) : (
-      <DatePicker
-        selected={value}
-        open={false}
-        locale={locale == 'ar' ? ar : en}
-        popperPlacement='bottom-start'
-        onChange={date => onChange(date)}
-        timeInputLabel='Time:'
-        dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
-        showMonthDropdown
-        onBlur={e => {
-          if (onBlur) {
-            const evaluatedFn = eval('(' + onBlur + ')')
+      datePicker()
+    )
+  }
 
-            evaluatedFn(e)
-          }
-        }}
-        showYearDropdown
-        showTimeInput={label.showTime == 'true'}
-        customInput={<ExampleCustomInput disabled={isDisable == 'disabled'} className='example-custom-input' />}
-        disabled={isDisable == 'disabled'}
-      />
+  if (input.kind == 'Table') {
+    if (collectionData.loading) {
+      return <></>
+    }
+
+    const onChangeTable = e => {
+      setTableData(e)
+      onChangeData({
+        ...data,
+        [input.key]: e
+      })
+    }
+
+    return (
+      <div className='w-full '>
+        <TableView
+          input={input}
+          data={tableData}
+          reloadHight={setTriggerData}
+          locale={locale}
+          onChange={onChangeTable}
+          readOnly={advancedEdit}
+          sortedLoop={sortedLoop}
+          allData={dataRef}
+          reloadRef={triggerData}
+          type='from-collection'
+          FilterData={FilterData}
+          isFilterWithAPI={isFilterWithAPI}
+          filterWithAPIValue={filterWithAPIValue}
+        />
+      </div>
     )
   }
 }

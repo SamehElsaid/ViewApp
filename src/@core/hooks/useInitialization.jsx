@@ -8,7 +8,7 @@ import { useIntl } from 'react-intl'
 import { SET_ACTIVE_LOADING } from 'src/store/apps/LoadingMainSlice/LoadingMainSlice'
 import { REMOVE_USER, SET_ACTIVE_USER } from 'src/store/apps/authSlice/authSlice'
 import { getUser } from 'src/services/AuthService'
-import { useRouter } from 'next/router'
+import axios from 'axios'
 
 function useInitialization() {
   const theme = useTheme()
@@ -17,7 +17,7 @@ function useInitialization() {
   const dispatch = useDispatch()
   const [login, setLogin] = useState(true)
   const { locale } = useIntl()
-  const router = useRouter()
+
   useEffect(() => {
     const userFind = async () => {
       const user = await getUser()
@@ -28,8 +28,12 @@ function useInitialization() {
 
         return
       }
-
-      dispatch(SET_ACTIVE_USER(user.profile))
+      let roleId = null
+      const response = await axios.get(`${process.env.IDENTITY_URL}api/Role/GetRoleId/${user.profile.role}`, { headers: { Authorization: `Bearer ${user.access_token}` } })
+      if (response?.data?.success) {
+        roleId = response?.data?.result
+      }
+      dispatch(SET_ACTIVE_USER({ ...user.profile, roleId }))
       setTimeout(() => {
         dispatch(SET_ACTIVE_LOADING())
         setLogin(false)
@@ -37,7 +41,6 @@ function useInitialization() {
     }
     userFind()
   }, [])
-
   useEffect(() => {
     document.body.classList.toggle('rtl', locale === 'ar')
   }, [])
@@ -64,7 +67,10 @@ function useInitialization() {
   }, [cookies.mode])
 
   useEffect(() => {
-    // localStorage.clear('settings')
+    // localStorage.removeItem('settings')
+    // removeCookie('sub', { path: '/' })
+    // dispatch(REMOVE_USER())
+    // setLogin(false)
   }, [])
 
   return { login }

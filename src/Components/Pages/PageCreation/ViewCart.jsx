@@ -6,7 +6,7 @@ import CardCard from './CardCard'
 import { useSelector } from 'react-redux'
 import download from 'src/Components/img/download.png'
 import CardAppleWatch from 'src/Components/analytics/CardAppleWatch'
-import { getData } from 'src/Components/_Shared'
+import { getData, getMaxLength } from 'src/Components/_Shared'
 import EcommerceStatistics from 'src/Components/analytics/EcommerceStatistics'
 
 export default function ViewCart({ data, locale, onChange, readOnly }) {
@@ -59,7 +59,7 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
               <EcommerceStatistics
                 data={{
                   title: getData(item, data?.[`title_${locale}`], 'title'),
-                  value: getData(item, data?.value, "125k"),
+                  value: getData(item, data?.value, '125k'),
                   color: getData(item, data?.color, 'primary'),
                   icon: getData(item, data?.icon, 'tabler:chart-pie-2')
                 }}
@@ -126,9 +126,9 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
                     marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
                     textAlign: data.titleTextAlign ?? 'start'
                   }}
-                  className='text-lg || font-semibold || mt-2 || flex-1 overLapP'
+                  className='text-lg || font-semibold || mt-2 || flex-1 overLapP truncate-text'
                 >
-                  {data?.[`title_${locale}`] ?? 'Product Name'}
+                  {getMaxLength(data?.[`title_${locale}`] ?? 'Product Name', data.maxLength)}
                 </h2>
                 <p
                   style={{
@@ -142,9 +142,9 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
                     textAlign: data.descriptionTextAlign ?? 'start',
                     display: (data.descriptionDisplay ?? 'block') === 'block' ? 'block' : 'none'
                   }}
-                  className='text-sm || text-gray-500 || mt-1 || overLapP'
+                  className='text-sm || text-gray-500 || mt-1 || overLapP truncate-text'
                 >
-                  {data?.[`description_${locale}`] ?? 'Product Description'}
+                  {getMaxLength(data?.[`description_${locale}`] ?? 'Product Description', data.descriptionMaxLength)}
                 </p>
                 <p
                   style={{

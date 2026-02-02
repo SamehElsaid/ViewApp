@@ -1,11 +1,13 @@
 import dynamic from 'next/dynamic'
-import BlankLayout from 'src/@core/layouts/BlankLayout'
 import * as cookie from 'cookie'
 import { decryptData } from 'src/Components/encryption'
 import axios from 'axios'
 import https from 'https'
 import { useSelector } from 'react-redux'
 import LoadingMain from 'src/Components/LoadingMain'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import { appViewOptions } from 'src/Components/_Shared'
 
 let ReactPageEditor = dynamic(
   () =>
@@ -17,32 +19,38 @@ let ReactPageEditor = dynamic(
   }
 )
 
-const Mypage = ({ pageName, initialData, initialDataApi, pageId, entitiesId, collectionName }) => {
+const Mypage = ({ pageName, initialData, initialDataApi, pageId, entitiesId, collectionName, pageRoles }) => {
   const loading = useSelector(rx => rx.LoadingPages.loading)
+  const user = useSelector(rx => rx.auth.data)
+  const [loadingPage, setLoadingPage] = useState(true)
+  const router = useRouter()
+  console.log(user,)
+
+
+  useEffect(() => {
+    if (user) {
+      if (!pageRoles.includes(user?.roleId)) {
+        router.push('/404')
+      } else {
+        setLoadingPage(false)
+      }
+    }
+  }, [pageRoles, user, router])
 
 
   return (
     <div className=''>
-      <div className={`bg-white min-h-[100dvh] ${loading ? 'overflow-y-hidden' : ''}`}>
-        {loading && <LoadingMain login={true} />}
-        {pageName === 'paid' ? (
-          <>
-            <img
-              src='https://lowcodetest-ayeuaucehyerfves.uaenorth-01.azurewebsites.net/api/file/download/35b3bdbe-1498-4d82-b832-771a00e54994_PAYMENT-SUCCESS.png'
-              className='w-full'
-              alt=''
-            />
-          </>
-        ) : (
-          <ReactPageEditor
-            pageName={pageName}
-            initialData={initialData}
-            initialDataApi={initialDataApi}
-            pageId={pageId}
-            entitiesId={entitiesId}
-            collectionName={collectionName}
-          />
-        )}
+      <div className={`bg-white min-h-[100dvh] ${(loading || loadingPage) ? 'overflow-y-hidden' : ''}`}>
+        {(loading || loadingPage) && <LoadingMain login={true} />}
+        <ReactPageEditor
+          pageName={pageName}
+          initialData={initialData}
+          initialDataApi={initialDataApi}
+          pageId={pageId}
+          entitiesId={entitiesId}
+          collectionName={collectionName}
+          type='all-pages'
+        />
       </div>
     </div>
   )
@@ -74,6 +82,15 @@ export async function getServerSideProps(context) {
     const initialData = data?.editorValue ?? null
     const initialDataApi = data?.apiData ?? null
     const pageId = response?.data?.id ?? null
+    const pageRoles = response?.data?.pageRoles ?? []
+    const pageTypeId = response?.data?.pageTypeId ?? 1
+    const findPageType = appViewOptions.find(option => option.id === pageTypeId)
+
+    if(findPageType.name_en !== process.env.APP_TYPE){
+      return {
+        notFound: true
+      }
+    }
 
     return {
       props: {
@@ -83,7 +100,8 @@ export async function getServerSideProps(context) {
         pageId,
         entitiesId,
         collectionName,
-        pageName
+        pageName,
+        pageRoles
       }
     }
   } catch (error) {

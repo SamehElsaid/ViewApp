@@ -28,7 +28,7 @@ import IconifyIcon from 'src/Components/icon'
 import { MdDeleteOutline } from 'react-icons/md'
 import JsEditorOnSubmit from 'src/Components/FormCreation/PageCreation/jsEditorOnSubmit'
 
-function Select({ onChange, data, type, buttonRef, title }) {
+function Select({ onChange, data, buttonRef, title, tableType }) {
   const { locale, messages } = useIntl()
   const [collection, setCollection] = useState('')
   const [optionsCollection, setOptionsCollection] = useState([])
@@ -36,6 +36,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
   const [selectedOptions, setSelectedOptions] = useState([])
   const [getFields, setGetFields] = useState([])
   const [SelectedRelatedCollectionsFields, setSelectedRelatedCollectionsFields] = useState([])
+  const [type, setType] = useState()
 
   useEffect(() => {
     setLoadingCollection(true)
@@ -122,14 +123,14 @@ function Select({ onChange, data, type, buttonRef, title }) {
     const { value, checked } = event.target
     const isChecked = skipCheck || checked
 
-    if (fieldCategory === 'Associations' && isChecked) {
+    if (fieldCategory === 'Associations' && type !== 'table' && isChecked) {
       setAssociationsOpen({ key: event.target.value, source: field?.options?.source, field })
 
       return
     }
 
     // if(filed)
-    if (field?.type === 'SingleText' && isChecked) {
+    if (field?.type === 'SingleText' && isChecked && type !== 'table') {
       setSingleTextChoice({ value, field, fieldCategory })
 
       return
@@ -143,20 +144,23 @@ function Select({ onChange, data, type, buttonRef, title }) {
     const oldAdditionalFields = data?.additional_fields ?? []
     const filteredAdditionalFields = oldAdditionalFields.filter(inp => inp.key !== field?.id)
 
+    // Tabs assignment logic removed from here; use the inline dropdowns instead
+    const addMoreElementLocal = [...(data?.addMoreElement ?? [])]
+
     if (skipCheck) {
       onChange({
         ...data,
         selected,
         associationsConfig: skipCheck,
         additional_fields: filteredAdditionalFields,
-        type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit
+        addMoreElement: addMoreElementLocal
       })
     } else {
       onChange({
         ...data,
         selected,
         additional_fields: filteredAdditionalFields,
-        type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit
+        addMoreElement: addMoreElementLocal
       })
     }
   }
@@ -189,12 +193,6 @@ function Select({ onChange, data, type, buttonRef, title }) {
   }, [addMoreData.length])
 
   const [relatedCollections, setRelatedCollections] = useState([])
-
-  // useEffect(() => {
-  //   if (collection?.id) {
-
-  //   }
-  // }, [locale, collection?.id])
 
   const [relatedCollectionsFields, setRelatedCollectionsFields] = useState([])
 
@@ -262,7 +260,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
         <DialogActions>
           <Button
             onClick={() => {
-              const value = singleTextChoice.value
+              const value = singleTextChoice?.value || ''
 
               // proceed normally as checked
               const newSelected = selectedOptions.includes(value) ? selectedOptions : [...selectedOptions, value]
@@ -273,8 +271,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
               onChange({
                 ...data,
                 selected: newSelected,
-                associationsConfig: filteredAssociationsConfig,
-                type_of_sumbit: data.type_of_sumbit === 'collection' ? '' : data.type_of_sumbit
+                associationsConfig: filteredAssociationsConfig
               })
               setSingleTextChoice(null)
             }}
@@ -303,10 +300,10 @@ function Select({ onChange, data, type, buttonRef, title }) {
         <div className='mb-4'></div>
         <Autocomplete
           options={loadingCollection ? [] : optionsCollection}
-          getOptionLabel={option => (locale === 'ar' ? option.nameAr : option.nameEn) || ''}
+          getOptionLabel={option => option?.key || ''}
           loading={loadingCollection}
           onInputChange={handleInputChange}
-          value={collection}
+          value={collection || ''}
           onChange={(e, value) => {
             setCollection(value)
             setRelatedCollections([])
@@ -337,13 +334,6 @@ function Select({ onChange, data, type, buttonRef, title }) {
               }}
             />
           )}
-          renderOption={(props, option) =>
-            option.nameEn !== collection?.nameEn ? (
-              <Box sx={{ direction: locale === 'ar' ? 'rtl' : '' }} component='li' {...props}>
-                {locale === 'ar' ? option.nameAr : option.nameEn}
-              </Box>
-            ) : null
-          }
         />
 
         <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(collection?.nameEn)}>
@@ -356,29 +346,110 @@ function Select({ onChange, data, type, buttonRef, title }) {
                   value.validationData.forEach(item => {
                     dataValidations[item.ruleType] = item.parameters
                   })
+                  if (!value?.options?.isSystemField) {
+                    return (
+                      <FormControlLabel
+                        key={value.key}
+                        className='!w-fit capitalize'
+                        control={
+                          <>
+                            <Checkbox
+                              value={value.key}
+                              checked={selectedOptions.includes(value.key)}
+                              onChange={e => {
+                                handleChange(e, value.fieldCategory, false, value)
+                              }}
+                            />
+                            {(() => {
+                              const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
+                              if (!tabsElement) return null
+                              const tabs = Array.isArray(tabsElement.data) ? tabsElement.data : []
 
-                  return (
-                    <FormControlLabel
-                      key={value.key}
-                      className='!w-fit capitalize'
-                      control={
-                        <>
-                          <Checkbox
-                            value={value.key}
-                            checked={selectedOptions.includes(value.key)}
-                            onChange={e => {
-                              handleChange(e, value.fieldCategory, false, value)
-                            }}
-                          />
-                        </>
-                      }
-                      label={
-                        <>
-                          {value.key} {dataValidations?.Required ? <span className='text-red-500'>*</span> : ''}
-                        </>
-                      }
-                    />
-                  )
+                              const currentIndex = Math.max(
+                                -1,
+                                tabs.findIndex(t => Array.isArray(t.fields) && t.fields.includes(value.key))
+                              )
+
+                              return (
+                                <span className='!ml-2 !flex !items-center !gap-1'>
+                                  <select
+                                    className='px-1 py-0.5 border rounded text-xs bg-white'
+                                    value={currentIndex}
+                                    onChange={e => {
+                                      const idx = parseInt(e.target.value, 10)
+                                      const addMore = [...(data.addMoreElement || [])]
+                                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
+                                      if (tabsIdx === -1) return
+                                      const nextTabsEl = { ...addMore[tabsIdx] }
+                                      const nextData = [...(nextTabsEl.data || [])]
+                                      for (let i = 0; i < nextData.length; i++) {
+                                        const t = { ...(nextData[i] || {}) }
+                                        const arr = Array.isArray(t.fields) ? t.fields : []
+                                        if (arr.includes(value.key)) {
+                                          t.fields = arr.filter(id => id !== value.key)
+                                          nextData[i] = t
+                                        }
+                                      }
+                                      if (!Number.isNaN(idx) && idx > -1 && idx < nextData.length) {
+                                        const t = { ...(nextData[idx] || {}) }
+                                        const arr = Array.isArray(t.fields) ? t.fields : []
+                                        if (!arr.includes(value.key)) {
+                                          t.fields = [...arr, value.key]
+                                          nextData[idx] = t
+                                        }
+                                      }
+                                      nextTabsEl.data = nextData
+                                      addMore[tabsIdx] = nextTabsEl
+                                      onChange({ ...data, addMoreElement: addMore })
+                                    }}
+                                  >
+                                    <option value={-1}>{messages?.None || 'None'}</option>
+                                    {tabs.map((t, ti) => (
+                                      <option key={ti} value={ti}>
+                                        {t?.[locale === 'ar' ? 'name_ar' : 'name_en'] || `Tab ${ti + 1}`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type='button'
+                                    className='px-2 py-0.5 border rounded text-xs'
+                                    onClick={() => {
+                                      const addMore = [...(data.addMoreElement || [])]
+                                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
+                                      if (tabsIdx === -1) return
+                                      const nextTabsEl = { ...addMore[tabsIdx] }
+                                      const count = (nextTabsEl.data || []).length + 1
+                                      nextTabsEl.data = [
+                                        {
+                                          name_ar: `تبويب ${count}`,
+                                          name_en: `Tab ${count}`,
+                                          link: '',
+                                          active: false,
+                                          fields: []
+                                        },
+                                        ...(nextTabsEl.data || [])
+                                      ]
+                                      addMore[tabsIdx] = nextTabsEl
+                                      onChange({ ...data, addMoreElement: addMore })
+                                    }}
+                                  >
+                                    {messages?.Add_Tab || 'Add Tab'}
+                                  </button>
+                                </span>
+                              )
+                            })()}
+                          </>
+                        }
+                        label={
+                          <>
+                            {value.key} {dataValidations?.Required ? <span className='text-red-500'>*</span> : ''}
+                          </>
+                        }
+                      />
+                    )
+                  } else {
+                    return null
+                  }
                 })}
               </div>
             </FormControl>
@@ -409,7 +480,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
               <TextField
                 select
                 fullWidth
-                value={null}
+                value={''}
                 label={messages.dialogs.addSuBForm}
                 id='select-helper'
                 variant='filled'
@@ -472,68 +543,157 @@ function Select({ onChange, data, type, buttonRef, title }) {
                               const fieldSelected = SelectedRelatedCollectionsFields?.find(
                                 s => s.collection.key === item.collection.key
                               )
+                              if (value?.options?.isSystemField === false) {
+                                if (value.fieldCategory !== 'Associations') {
+                                  return (
+                                    <FormControlLabel
+                                      key={value.key}
+                                      className='!w-fit capitalize'
+                                      control={
+                                        <>
+                                          <Checkbox
+                                            value={value.key}
+                                            checked={fieldSelected?.selected?.includes(value.key)}
+                                            onChange={e => {
+                                              setSelectedRelatedCollectionsFields(prev => {
+                                                const fieldSelected = prev.find(
+                                                  itemS => itemS.collection.key === item.collection.key
+                                                )
 
-                              return (
-                                <FormControlLabel
-                                  key={value.key}
-                                  className='!w-fit capitalize'
-                                  control={
-                                    <>
-                                      <Checkbox
-                                        value={value.key}
-                                        checked={fieldSelected?.selected?.includes(value.key)}
-                                        onChange={e => {
-                                          setSelectedRelatedCollectionsFields(prev => {
-                                            const fieldSelected = prev.find(
-                                              itemS => itemS.collection.key === item.collection.key
-                                            )
+                                                // ✅ لو الـ collection موجودة
+                                                if (fieldSelected) {
+                                                  const isAlreadySelected = fieldSelected.selected.includes(value.key)
 
-                                            // ✅ لو الـ collection موجودة
-                                            if (fieldSelected) {
-                                              const isAlreadySelected = fieldSelected.selected.includes(value.key)
+                                                  // تحديث الـ selected داخل الـ collection المحددة
+                                                  const updated = prev.map(itemS => {
+                                                    if (itemS.collection.key === item.collection.key) {
+                                                      return {
+                                                        ...itemS,
+                                                        selected: isAlreadySelected
+                                                          ? itemS.selected.filter(k => k !== value.key) // شيل القيمة لو موجودة
+                                                          : [...itemS.selected, value.key] // ضيف القيمة لو مش موجودة
+                                                      }
+                                                    }
 
-                                              // تحديث الـ selected داخل الـ collection المحددة
-                                              const updated = prev.map(itemS => {
-                                                if (itemS.collection.key === item.collection.key) {
-                                                  return {
-                                                    ...itemS,
-                                                    selected: isAlreadySelected
-                                                      ? itemS.selected.filter(k => k !== value.key) // شيل القيمة لو موجودة
-                                                      : [...itemS.selected, value.key] // ضيف القيمة لو مش موجودة
-                                                  }
+                                                    return itemS
+                                                  })
+
+                                                  onChange({ ...data, SelectedRelatedCollectionsFields: updated })
+
+                                                  return updated
                                                 }
 
-                                                return itemS
+                                                // ✅ لو الـ collection مش موجودة، أضفها جديدة
+                                                onChange({
+                                                  ...data,
+                                                  SelectedRelatedCollectionsFields: [
+                                                    ...prev,
+                                                    { collection: item.collection, selected: [value.key] }
+                                                  ]
+                                                })
+
+                                                return [...prev, { collection: item.collection, selected: [value.key] }]
                                               })
+                                            }}
+                                          />
+                                          {(() => {
+                                            const tabsElement = (data.addMoreElement || []).find(
+                                              ele => ele.key === 'tabs'
+                                            )
+                                            if (!tabsElement) return null
+                                            const tabs = Array.isArray(tabsElement.data) ? tabsElement.data : []
 
-                                              onChange({ ...data, SelectedRelatedCollectionsFields: updated })
+                                            const currentIndex = Math.max(
+                                              -1,
+                                              tabs.findIndex(
+                                                t => Array.isArray(t.fields) && t.fields.includes(value.key)
+                                              )
+                                            )
 
-                                              return updated
-                                            }
-
-                                            // ✅ لو الـ collection مش موجودة، أضفها جديدة
-                                            onChange({
-                                              ...data,
-                                              SelectedRelatedCollectionsFields: [
-                                                ...prev,
-                                                { collection: item.collection, selected: [value.key] }
-                                              ]
-                                            })
-
-                                            return [...prev, { collection: item.collection, selected: [value.key] }]
-                                          })
-                                        }}
-                                      />
-                                    </>
-                                  }
-                                  label={
-                                    <>
-                                      {value.key}{' '}
-                                      {dataValidations?.Required ? <span className='text-red-500'>*</span> : ''}
-                                    </>
-                                  }
-                                />
-                              )
+                                            return (
+                                              <span className='!ml-2 !flex !items-center !gap-1'>
+                                                <select
+                                                  className='px-1 py-0.5 border rounded text-xs bg-white'
+                                                  value={currentIndex}
+                                                  onChange={e => {
+                                                    const idx = parseInt(e.target.value, 10)
+                                                    const addMore = [...(data.addMoreElement || [])]
+                                                    const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
+                                                    if (tabsIdx === -1) return
+                                                    const nextTabsEl = { ...addMore[tabsIdx] }
+                                                    const nextData = [...(nextTabsEl.data || [])]
+                                                    for (let i = 0; i < nextData.length; i++) {
+                                                      const t = { ...(nextData[i] || {}) }
+                                                      const arr = Array.isArray(t.fields) ? t.fields : []
+                                                      if (arr.includes(value.key)) {
+                                                        t.fields = arr.filter(id => id !== value.key)
+                                                        nextData[i] = t
+                                                      }
+                                                    }
+                                                    if (!Number.isNaN(idx) && idx > -1 && idx < nextData.length) {
+                                                      const t = { ...(nextData[idx] || {}) }
+                                                      const arr = Array.isArray(t.fields) ? t.fields : []
+                                                      if (!arr.includes(value.key)) {
+                                                        t.fields = [...arr, value.key]
+                                                        nextData[idx] = t
+                                                      }
+                                                    }
+                                                    nextTabsEl.data = nextData
+                                                    addMore[tabsIdx] = nextTabsEl
+                                                    onChange({ ...data, addMoreElement: addMore })
+                                                  }}
+                                                >
+                                                  <option value={-1}>{messages?.None || 'None'}</option>
+                                                  {tabs.map((t, ti) => (
+                                                    <option key={ti} value={ti}>
+                                                      {t?.[locale === 'ar' ? 'name_ar' : 'name_en'] || `Tab ${ti + 1}`}
+                                                    </option>
+                                                  ))}
+                                                </select>
+                                                <button
+                                                  type='button'
+                                                  className='px-2 py-0.5 border rounded text-xs'
+                                                  onClick={() => {
+                                                    const addMore = [...(data.addMoreElement || [])]
+                                                    const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
+                                                    if (tabsIdx === -1) return
+                                                    const nextTabsEl = { ...addMore[tabsIdx] }
+                                                    const count = (nextTabsEl.data || []).length + 1
+                                                    nextTabsEl.data = [
+                                                      ...(nextTabsEl.data || []),
+                                                      {
+                                                        name_ar: `تبويب ${count}`,
+                                                        name_en: `Tab ${count}`,
+                                                        link: '',
+                                                        active: false,
+                                                        fields: []
+                                                      }
+                                                    ]
+                                                    addMore[tabsIdx] = nextTabsEl
+                                                    onChange({ ...data, addMoreElement: addMore })
+                                                  }}
+                                                >
+                                                  {messages?.Add_Tab || 'Add Tab'}
+                                                </button>
+                                              </span>
+                                            )
+                                          })()}
+                                        </>
+                                      }
+                                      label={
+                                        <>
+                                          {value.key}{' '}
+                                          {dataValidations?.Required ? <span className='text-red-500'>*</span> : ''}
+                                        </>
+                                      }
+                                    />
+                                  )
+                                } else {
+                                  return null
+                                }
+                              } else {
+                                return null
+                              }
                             })}
                           </div>
                         </FormControl>
@@ -546,12 +706,12 @@ function Select({ onChange, data, type, buttonRef, title }) {
           )}
 
           <div className='mt-4'></div>
-          {!type ? (
+          {!tableType ? (
             <>
               <TextField
                 select
                 fullWidth
-                value={data.type_of_sumbit || ''}
+                value={data.type_of_sumbit || 'collection'}
                 onChange={e => {
                   onChange({ ...data, type_of_sumbit: e.target.value })
                 }}
@@ -560,6 +720,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
               >
                 <MenuItem value={'collection'}>{messages.dialogs.thisDataModel}</MenuItem>
                 <MenuItem value={'api'}>{messages.dialogs.otherApi}</MenuItem>
+                <MenuItem value={'read-only'}>{messages.dialogs.readOnly || 'Read Only'}</MenuItem>
               </TextField>
               <Collapse
                 transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
@@ -661,13 +822,15 @@ function Select({ onChange, data, type, buttonRef, title }) {
                                       name_ar: 'التبويب الاول',
                                       name_en: 'Tab 1',
                                       link: '',
-                                      active: true
+                                      active: true,
+                                      fields: []
                                     },
                                     {
                                       name_ar: 'التبويب الثاني',
                                       name_en: 'Tab 2',
                                       link: '',
-                                      active: false
+                                      active: false,
+                                      fields: []
                                     }
                                   ],
                                   id: 's' + new Date().getTime()
@@ -763,6 +926,20 @@ function Select({ onChange, data, type, buttonRef, title }) {
                 <MenuItem value={'view-data'}>{messages.dialogs.viewData}</MenuItem>
                 <MenuItem value={'form-table'}>{messages.dialogs.submitData}</MenuItem>
               </TextField>
+
+              <FormControlLabel
+                key='show-btn-checkbox'
+                className='!w-fit capitalize'
+                control={
+                  <Checkbox
+                    value={data.showBtn ?? true}
+                    onChange={e => {
+                      onChange({ ...data, showBtn: e.target.checked })
+                    }}
+                  />
+                }
+                label={messages.dialogs.showBtn}
+              />
               <Collapse
                 transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
                 isOpen={Boolean(data.kind === 'form-table')}
@@ -875,13 +1052,15 @@ function Select({ onChange, data, type, buttonRef, title }) {
                                         name_ar: 'التبويب الاول',
                                         name_en: 'Tab 1',
                                         link: 'https://www.google.com',
-                                        active: true
+                                        active: true,
+                                        fields: []
                                       },
                                       {
                                         name_ar: 'التبويب الثاني',
                                         name_en: 'Tab 2',
                                         link: 'https://www.google.com',
-                                        active: false
+                                        active: false,
+                                        fields: []
                                       }
                                     ],
                                     id: 's' + new Date().getTime()
@@ -946,10 +1125,9 @@ function Select({ onChange, data, type, buttonRef, title }) {
                   </Collapse>
                 </div>
               </Collapse>
-
               <h2 className='text-lg font-bold'>{messages.dialogs.actions}</h2>
               <FormControlLabel
-                key={data.edit}
+                key='edit-data-checkbox'
                 className='!w-fit capitalize'
                 control={
                   <Checkbox
@@ -963,7 +1141,7 @@ function Select({ onChange, data, type, buttonRef, title }) {
                 label={messages.dialogs.editData}
               />
               <FormControlLabel
-                key={data.delete}
+                key='delete-data-checkbox'
                 className='!w-fit capitalize'
                 control={
                   <Checkbox

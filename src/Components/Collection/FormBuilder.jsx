@@ -210,6 +210,10 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       validationData.push({ RuleType: 'ColumnDataType', Parameters: { expectedType: 'System.Int64' } })
     }
 
+    if (isFileStep && fileExtensions.length === 0) {
+      return toast.error(messages.dialogs.fileTypesRequired)
+    }
+
     const sendData = {
       collectionId: open.id,
       key: key.trim(),

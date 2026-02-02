@@ -10,7 +10,7 @@ import { useIntl } from 'react-intl'
 
 const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
   const [fileNames, setFileNames] = useState([])
-  const [startDate, setStartDate] = useState(new Date())
+  const [startDate, setStartDate] = useState(null)
   const { messages } = useIntl()
 
   const ExampleCustomInput = forwardRef(({ value, onClick }, ref) => (
@@ -72,24 +72,24 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
       </div>
     ) : type === 'select' ? (
       <div id='custom-select' className='flex items-center gap-2 w-full'>
-      <select defaultValue='' className='flex-1'>
-        <option value='' disabled>---select---</option>
-        <option value='apple'>Apple</option>
-        <option value='cherry'>Cherry</option>
-        <option value='strawberry'>Strawberry</option>
-      </select>
-      <button
-        type='button'
-        className='px-2 py-1 text-xs border rounded'
-        onClick={e => {
-          const sel = e.currentTarget.previousElementSibling
-          if (sel && sel.tagName === 'SELECT') {
-            sel.value = ''
-          }
-        }}
-      >
-        {messages?.Clear || 'Clear'}
-      </button>
+        <select defaultValue='' className='flex-1'>
+          <option value='' disabled>---select---</option>
+          <option value='apple'>Apple</option>
+          <option value='cherry'>Cherry</option>
+          <option value='strawberry'>Strawberry</option>
+        </select>
+        <button
+          type='button'
+          className='px-2 py-1 text-xs border rounded'
+          onClick={e => {
+            const sel = e.currentTarget.previousElementSibling
+            if (sel && sel.tagName === 'SELECT') {
+              sel.value = ''
+            }
+          }}
+        >
+          {messages?.Clear || 'Clear'}
+        </button>
       </div>
     ) : type === 'date' ? (
       <div style={{ width: '100%' }} className='mainParent-date'>
@@ -102,7 +102,8 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
               dateFormat={`${data.format ? data.format : 'MM/dd/yyyy'}`}
               showMonthDropdown
               showYearDropdown
-              showTimeInput={data.showTime === 'true'}
+              showTimeInput={data?.showTime === 'true'}
+              isClearable
               customInput={<ExampleCustomInput className='example-custom-input' />}
             />
           </DatePickerWrapper>
@@ -114,7 +115,8 @@ const CssEditorView = ({ data, locale, defaultValue, type, readOnly }) => {
             dateFormat={`${data.format ? data.format : 'MM/dd/yyyy'}`}
             showMonthDropdown
             showYearDropdown
-            showTimeInput={data.showTime === 'true'}
+            showTimeInput={data?.showTime === 'true'}
+            isClearable
             customInput={<ExampleCustomInput className='example-custom-input' />}
           />
         )}

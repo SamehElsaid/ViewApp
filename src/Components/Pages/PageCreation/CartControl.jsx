@@ -281,14 +281,14 @@ function CartControl({ data, onChange, type, buttonRef }) {
             {renderTextField(obj ? messages.card.title_en_key : messages.card.title_en, 'title_en', 'text')}
             {(data.cart_type === 'product' || !data.cart_type) && (
               <>
-                {renderTextField('Color', 'titleColor', 'color')}
-                {renderTextField('Font Size', 'fontSize', 'number', {
+                {renderTextField(messages.dialogs.color, 'titleColor', 'color')}
+                {renderTextField(messages.dialogs.fontSize, 'fontSize', 'number', {
                   InputProps: {
                     endAdornment: <InputAdornment position='end'>px</InputAdornment>
                   }
                 })}
                 {renderSelect(
-                  'Font Weight',
+                  messages.dialogs.fontWeight,
                   'fontWeight',
                   Array.from({ length: 9 }, (_, i) => ({
                     value: `${(i + 1) * 100}`,
@@ -296,9 +296,9 @@ function CartControl({ data, onChange, type, buttonRef }) {
                   }))
                 )}
                 {renderSelect(messages.card.titleTextAlign, 'titleTextAlign', [
-                  { value: 'start', label: 'Start' },
-                  { value: 'center', label: 'Center' },
-                  { value: 'end', label: 'End' }
+                  { value: 'start', label: messages.dialogs.start },
+                  { value: 'center', label: messages.dialogs.center },
+                  { value: 'end', label: messages.dialogs.end }
                 ])}
                 {renderSelect(messages.card.fontFamily, 'fontFamily', [
                   { value: 'Arial', label: 'Arial' },
@@ -308,6 +308,7 @@ function CartControl({ data, onChange, type, buttonRef }) {
                   { value: 'Courier New', label: 'Courier New' }
                 ])}
                 {renderTextField(messages.card.marginBottom, 'marginBottom', 'number')}
+                {renderTextField(messages.card.maxLength, 'maxLength', 'number')}
               </>
             )}
           </div>
@@ -493,6 +494,7 @@ function CartControl({ data, onChange, type, buttonRef }) {
                   { value: 'block', label: 'Show' },
                   { value: 'none', label: 'Hide' }
                 ])}
+                {renderTextField(messages.card.maxLength, 'descriptionMaxLength', 'number')}
               </div>
               <div className='p-4 mt-4 rounded border border-dashed border-main-color'>
                 <h2 className='mb-4 text-2xl text-main-color'>{messages.card.price}</h2>

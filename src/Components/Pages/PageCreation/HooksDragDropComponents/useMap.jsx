@@ -29,6 +29,7 @@ import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/ap
 import { toast } from 'react-toastify';
 import IconifyIcon from 'src/Components/icon';
 import { HexColorPicker } from 'react-colorful';
+import CloseNav from '../CloseNav';
 
 // Default center (Riyadh coordinates)
 const defaultCenter = {
@@ -376,7 +377,7 @@ const MapRenderer = ({ data, onChange, locale }) => {
   );
 };
 
-const MapControlPanel = ({ data, onChange, locale }) => {
+const MapControlPanel = ({ data, onChange, locale, buttonRef }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showMarkerForm, setShowMarkerForm] = useState(false);
@@ -441,6 +442,7 @@ const MapControlPanel = ({ data, onChange, locale }) => {
 
   return (
     <Box sx={{ p: 2 }}>
+      <CloseNav text={locale === 'ar' ? 'خريطة جوجل' : 'Google Map'} buttonRef={buttonRef} />
       <Typography variant="h6" gutterBottom>
         {locale === 'ar' ? 'إعدادات الخريطة' : 'Map Settings'}
       </Typography>

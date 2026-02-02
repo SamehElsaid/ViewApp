@@ -79,18 +79,23 @@ export const text_content = `
 
 export const tabs = `
 .btn-tabs {
-  background: transparent;
-  border: 1px solid #009fff;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
   padding: 10px;
-  color: #555;
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
-
 }
 .btn-tabs.active {
   background: #009fff;
   color: #fff;
-}`
+}
+.btn-tabs:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}
+`
 
 export const multiple_select = `
 #parent-input{
@@ -284,8 +289,59 @@ export const select = `
       font-size: 14px;
     }
 
+    /* Hide arrow for disabled custom select */
+    #custom-select:has(select:disabled)::after {
+      content: none;
+    }
+
     #custom-select select:focus {
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    /* Remove native blue arrow for disabled/readOnly/aria-disabled selects */
+    select:disabled,
+    select[aria-disabled='true'],
+    select[readonly],
+    .MuiInputBase-root.Mui-disabled select {
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      background-image: none !important;
+      background-position: right 0.5rem center !important;
+      background-repeat: no-repeat !important;
+    }
+    /* Hide IE/Edge arrow */
+    select:disabled::-ms-expand {
+      display: none;
+    }
+    /* Disabled custom select appearance */
+    #custom-select select:disabled {
+      background-color: #f3f4f6;
+      color: #9ca3af;
+      border-color: #e5e7eb;
+      -webkit-text-fill-color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    /* MUI Select: hide arrow when disabled */
+    .MuiFormControl-root .Mui-disabled + .MuiSelect-icon,
+    .MuiInputBase-root.Mui-disabled .MuiSelect-icon,
+    .MuiInputBase-root.Mui-disabled .MuiNativeSelect-icon,
+    .MuiNativeSelect-icon.Mui-disabled {
+      display: none !important;
+    }
+    .MuiInputBase-root.Mui-disabled .MuiOutlinedInput-notchedOutline {
+      border-color: #e5e7eb !important;
+    }
+    .MuiInputBase-root.Mui-disabled {
+      background-color: #f3f4f6 !important;
+      cursor: not-allowed;
+    }
+    .MuiInputBase-root.Mui-disabled .MuiSelect-select {
+      color: #9ca3af !important;
+      -webkit-text-fill-color: #9ca3af;
+    }
+    .MuiFormLabel-root.Mui-disabled {
+      color: #9ca3af !important;
     }
 `
 
