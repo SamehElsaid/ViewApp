@@ -13,8 +13,8 @@ export default function ViewValueInTable({ data, value }) {
   //         const lable = JSON.parse(data?.descriptionEn) ?? []
 
   //         const Values = lable.map(ele => {
-  //           if (res.entities?.[0]) {
-  //             return res.entities?.[0]?.[ele]
+  //           if (res?.data?.entities?.[0]) {
+  //             return res?.data?.entities?.[0]?.[ele]
   //           }
 
   //           return ''

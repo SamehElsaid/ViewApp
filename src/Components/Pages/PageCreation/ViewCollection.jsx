@@ -54,6 +54,7 @@ function SortableGridItem({
 
   const layoutItem = layout.find(l => l.i === filed.id)
   const currentWidth = layoutItem?.w || gridColumnSpan || 12
+  const currentHeight = layoutItem?.h || (filed.type === 'LongText' ? 1.2 : 1)
 
   const handleWidthChange = delta => {
     const newWidth = Math.max(1, Math.min(12, currentWidth + delta))
@@ -68,11 +69,25 @@ function SortableGridItem({
     onChange({ ...data, layout: updatedLayout })
   }
 
+  const handleHeightChange = delta => {
+    const newHeight = Math.max(0.5, Math.min(10, currentHeight + delta))
+
+    const updatedLayout = layout.map(item =>
+      item.i === filed.id
+        ? { ...item, h: newHeight }
+        : item
+    )
+
+    setLayout(updatedLayout)
+    onChange({ ...data, layout: updatedLayout })
+  }
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     gridColumn: `span ${currentWidth}`,
+    minHeight: `${currentHeight * 100}px`,
     position: 'relative'
   }
 
@@ -84,7 +99,7 @@ function SortableGridItem({
       {...attributes}
     >
       {!readOnly && !stopSort && (
-        <div className='absolute inset-0 z-20 flex justify-end items-start gap-1 border-main-color border-dashed border rounded-md p-1'>
+        <div className='absolute inset-0 z-20 flex flex-wrap justify-end items-start gap-1 border-main-color border-dashed border rounded-md p-1'>
           {/* Width Controls */}
           <div className='flex flex-col items-center bg-white rounded border border-main-color shadow-sm'>
             <div className='text-xs text-gray-600 px-1 border-b border-gray-200 w-full text-center'>
@@ -93,7 +108,7 @@ function SortableGridItem({
             <div className='flex items-center'>
               <button
                 type='button'
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   handleWidthChange(-1)
                 }}
@@ -107,12 +122,46 @@ function SortableGridItem({
               </span>
               <button
                 type='button'
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   handleWidthChange(1)
                 }}
                 className='w-6 h-6 flex items-center justify-center hover:bg-main-color hover:text-white text-xs font-bold'
                 title={locale !== 'ar' ? 'Increase Width' : 'زيادة العرض'}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Height Controls */}
+          <div className='flex flex-col items-center bg-white rounded border border-main-color shadow-sm'>
+            <div className='text-xs text-gray-600 px-1 border-b border-gray-200 w-full text-center'>
+              {locale !== 'ar' ? 'Height' : 'الارتفاع'}
+            </div>
+            <div className='flex items-center'>
+              <button
+                type='button'
+                onClick={e => {
+                  e.stopPropagation()
+                  handleHeightChange(-0.1)
+                }}
+                className='w-6 h-6 flex items-center justify-center hover:bg-main-color hover:text-white text-xs font-bold'
+                title={locale !== 'ar' ? 'Decrease Height' : 'تقليل الارتفاع'}
+              >
+                -
+              </button>
+              <span className='px-2 text-xs min-w-[40px] text-center border-x border-gray-200'>
+                {currentHeight.toFixed(1)}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.stopPropagation()
+                  handleHeightChange(0.1)
+                }}
+                className='w-6 h-6 flex items-center justify-center hover:bg-main-color hover:text-white text-xs font-bold'
+                title={locale !== 'ar' ? 'Increase Height' : 'زيادة الارتفاع'}
               >
                 +
               </button>
@@ -365,7 +414,7 @@ export default function ViewCollection({
     if (entitiesId !== null && collectionName !== null) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
-          setEntitiesData(res.entities?.[0])
+          setEntitiesData(res?.data?.entities?.[0])
         }
       })
     }
@@ -1000,16 +1049,12 @@ export default function ViewCollection({
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={sortedLoop.map(item => item.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={sortedLoop.map(item => item.id)} strategy={verticalListSortingStrategy}>
               <div
                 className='layout'
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(12, 1fr)',
-                  gridAutoRows: '100px',
                   gap: '10px',
                   width: '100%'
                 }}

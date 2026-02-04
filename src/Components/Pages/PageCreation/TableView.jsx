@@ -68,7 +68,7 @@ function TableView({
       )
         .then(res => {
           if (res.status) {
-            let newEntities = [...res.entities]
+            let newEntities = [...res?.data?.entities]
             const newChangedValue = changedValue.filter(ele => ele.Id?.includes('front'))
             if (changedValue.length !== 0) {
               newEntities = newEntities.map(ele => {

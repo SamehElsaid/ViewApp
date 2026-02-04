@@ -87,9 +87,9 @@ export default function useUploadImage({ locale, buttonRef }) {
 
         return (
           <>
-            {data.image && (
+            {data.image ? (
               <img
-                src={data.image.replace('/Uploads/', process.env.API_URL + '/file/download/')}
+                src={process.env.API_URL + "/file/download/" + data.image}
                 alt='image'
                 style={{
                   display: displayStyle,
@@ -99,7 +99,9 @@ export default function useUploadImage({ locale, buttonRef }) {
                   margin: data.textAlign === 'right' ? '0 0 0 auto' : data.textAlign === 'left' ? '0 auto 0 0' : 'auto'
                 }}
               />
-            )}
+            ) :
+              <p>No image</p>
+            }
           </>
         )
       },

@@ -32,8 +32,8 @@ function ViewAsInputTrigger({ collectionInput, viewAsInput, setRefreshHeight, va
       axiosGet(`/generic-entities/${collectionInput}/${value}`, locale).then(res => {
         if (res.status) {
           // setValue(res.data)
-          console.log(res.entities?.[0], 'res.data')
-          setEntitiesData(res.entities?.[0])
+          console.log(res?.data?.entities?.[0], 'res.data')
+          setEntitiesData(res?.data?.entities?.[0])
         }
       })
     }

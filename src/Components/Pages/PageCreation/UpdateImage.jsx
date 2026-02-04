@@ -75,9 +75,10 @@ export default function UpdateImage({ data, onChange, locale, type, buttonRef })
       .then(res => {
         if (res.status) {
           if (type === 'video') {
-            onChange({ ...data, video: res.filePath.data })
+
+            onChange({ ...data, video: res.filePath })
           } else {
-            onChange({ ...data, image: res.filePath.data })
+            onChange({ ...data, image: res.filePath })
           }
         }
       })

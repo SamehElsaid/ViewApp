@@ -25,7 +25,7 @@ function TableControl({ data, onChange }) {
       )
         .then(res => {
           if (res.status) {
-            setGetFields(res.entities)
+            setGetFields(res?.data?.entities)
           }
         })
         .finally(() => setLoading(false))

@@ -210,7 +210,7 @@ export default function DisplayField({
                 `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
               ).then(res => {
                 if (res.status) {
-                  const data = res.entities?.[0] ?? false
+                  const data = res?.data?.entities?.[0] ?? false
                   if (data) {
                     if (roles?.trigger.isEqual == 'equal') {
                       if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
@@ -251,7 +251,7 @@ export default function DisplayField({
                 `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
               ).then(res => {
                 if (res.status) {
-                  const data = res.entities?.[0] ?? false
+                  const data = res?.data?.entities?.[0] ?? false
                   if (data) {
                     if (roles?.trigger.isEqual == 'equal') {
                       if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
@@ -311,7 +311,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
@@ -376,7 +376,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
@@ -483,7 +483,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const ent = res.entities?.[0] ?? false
+                const ent = res?.data?.entities?.[0] ?? false
                 if (ent) {
                   const equalMode = roles?.trigger.isEqual == 'equal'
                   const optionalNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
@@ -502,7 +502,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const ent = res.entities?.[0] ?? false
+                const ent = res?.data?.entities?.[0] ?? false
                 if (ent) {
                   const equalMode = roles?.trigger.isEqual == 'equal'
                   const optionalNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
@@ -564,7 +564,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const ent = res.entities?.[0] ?? false
+                const ent = res?.data?.entities?.[0] ?? false
                 if (ent) {
                   const equalMode = roles?.trigger.isEqual == 'equal'
                   const requiredNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
@@ -583,7 +583,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const ent = res.entities?.[0] ?? false
+                const ent = res?.data?.entities?.[0] ?? false
                 if (ent) {
                   const equalMode = roles?.trigger.isEqual == 'equal'
                   const requiredNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
@@ -627,7 +627,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
@@ -702,7 +702,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
@@ -795,7 +795,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
@@ -840,7 +840,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
@@ -901,7 +901,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal ') {
                     if (data?.[roles?.trigger?.triggerKey].toLowerCase() == roles?.trigger?.mainValue.toLowerCase()) {
@@ -942,7 +942,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey].toLowerCase() == roles?.trigger?.mainValue.toLowerCase()) {
@@ -1003,7 +1003,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
@@ -1044,7 +1044,7 @@ export default function DisplayField({
               `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
             ).then(res => {
               if (res.status) {
-                const data = res.entities?.[0] ?? false
+                const data = res?.data?.entities?.[0] ?? false
                 if (data) {
                   if (roles?.trigger.isEqual == 'equal') {
                     if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
@@ -1418,8 +1418,8 @@ export default function DisplayField({
       axiosGet(`generic-entities/${input?.options?.source}`)
         .then(res => {
           if (res.status) {
-            setSelectedOptions(res.entities)
-            setOldSelectedOptions(res.entities)
+            setSelectedOptions(res?.data?.entities)
+            setOldSelectedOptions(res?.data?.entities)
           }
         })
         .finally(() => {
