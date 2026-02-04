@@ -486,7 +486,12 @@ export default function ViewCollection({
         ? data.submitApi
         : `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
 
+    console.log(handleSubmitEvent, 'handleSubmitEvent')
+    if (handleSubmitEvent) {
+      handleSubmitEvent()
+    } 
     if (entitiesId && collectionName) {
+
       if (data.onSubmit) {
         const evaluatedFn = eval('(' + data.onSubmit + ')')
         if (handleSubmitEvent) {
