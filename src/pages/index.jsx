@@ -44,7 +44,7 @@ export default function Index() {
       .finally(() => {
         setLoading(false)
       })
-  }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profile?.sub])
+  }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profile])
 
   useEffect(() => {
     const handleKeyPress = e => {
