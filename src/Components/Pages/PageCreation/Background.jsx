@@ -48,7 +48,7 @@ export default function Background({ data, onChange, buttonRef }) {
       )
         .then(res => {
           if (res.status) {
-            onChange({ ...data, backgroundImage: res.filePath.data })
+            onChange({ ...data, backgroundImage: res.filePath })
             toast.success(messages.dialogs.uploadSuccess || 'Uploaded successfully')
           } else {
             toast.error(messages.dialogs.uploadError || 'Upload failed')

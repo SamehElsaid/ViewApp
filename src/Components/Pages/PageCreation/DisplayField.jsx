@@ -1583,7 +1583,7 @@ export default function DisplayField({
           .then(res => {
             if (res.status) {
               setFile(file.name)
-              setValue(res.filePath.data)
+              setValue(res.filePath)
             }
           })
           .finally(() => {

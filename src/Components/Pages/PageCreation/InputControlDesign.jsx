@@ -2208,7 +2208,7 @@ export default function InputControlDesign({
                                                   const additional_fields = data.additional_fields ?? []
                                                   const findMyInput = additional_fields.find(inp => inp.key === open.id)
                                                   if (findMyInput) {
-                                                    findMyInput.roles.onMount.file = res.filePath.data
+                                                    findMyInput.roles.onMount.file = res.filePath
                                                   } else {
                                                     const myEdit = {
                                                       key: open.id,
@@ -2217,7 +2217,7 @@ export default function InputControlDesign({
                                                         ...roles,
                                                         onMount: {
                                                           ...roles.onMount,
-                                                          file: res.filePath.data
+                                                          file: res.filePath
                                                         }
                                                       }
                                                     }
@@ -2297,7 +2297,7 @@ export default function InputControlDesign({
                                                 const additional_fields = data.additional_fields ?? []
                                                 const findMyInput = additional_fields.find(inp => inp.key === open.id)
                                                 if (findMyInput) {
-                                                  findMyInput.roles.onMount.file = res.filePath.data
+                                                  findMyInput.roles.onMount.file = res.filePath
                                                 } else {
                                                   const myEdit = {
                                                     key: open.id,
@@ -2306,7 +2306,7 @@ export default function InputControlDesign({
                                                       ...roles,
                                                       onMount: {
                                                         ...roles.onMount,
-                                                        file: res.filePath.data
+                                                        file: res.filePath
                                                       }
                                                     }
                                                   }
