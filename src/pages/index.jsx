@@ -17,19 +17,21 @@ export default function Index() {
   const [search, setSearch] = useState('')
   const [startSearch, setStartSearch] = useState('')
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const inputRef = useRef(null)
   const [refresh, setRefresh] = useState(0)
   const [data, setData] = useState([])
   const profile = useSelector(rx => rx.auth.data)
 
 
+
+
   useEffect(() => {
     if (profile?.sub) {
       return
     }
+    console.log(profile)
 
-    setLoading(true)
     axiosPost(`facility-task/get`,
       locale,
       {
