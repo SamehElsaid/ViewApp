@@ -28,10 +28,7 @@ export default function Index() {
 
   console.log(profile)
   useEffect(() => {
-    if (profile?.sub) {
-      return
-    }
-    console.log(profile)
+
 
     axiosPost(`facility-task/get`,
       locale,
@@ -51,7 +48,9 @@ export default function Index() {
 
   useEffect(() => {
     const handleKeyPress = e => {
-      setRefresh(prev => prev + 1)
+      if (e.key === 'u' || e.key === 'U') {
+        setRefresh(prev => prev + 1)
+      }
     }
 
     window.addEventListener('keydown', handleKeyPress)
@@ -74,7 +73,18 @@ export default function Index() {
         </Typography>
       )
     },
-
+    {
+      flex: 0.5,
+      minWidth: 200,
+      field: 'id',
+      disableColumnMenu: true,
+      headerName: "ID",
+      renderCell: ({ row }) => (
+        <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+          {row.id ? row.id : '-'}
+        </Typography>
+      )
+    },
     {
       flex: 0.5,
       minWidth: 200,
@@ -90,12 +100,12 @@ export default function Index() {
     {
       flex: 0.5,
       minWidth: 200,
-      field: 'typeName',
+      field: 'caseId',
       disableColumnMenu: true,
-      headerName: messages.tasks.typeName,
+      headerName: "case Id",
       renderCell: ({ row }) => (
         <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-          {row.typeName ? row.typeName : '-'}
+          {row.caseId ? row.caseId : '-'}
         </Typography>
       )
     },
@@ -109,30 +119,7 @@ export default function Index() {
         <Chip label={row.status} color={row.status === 'Completed' ? 'success' : 'error'} variant='outlined' />
       )
     },
-    {
-      flex: 0.5,
-      minWidth: 200,
-      field: 'pageName',
-      disableColumnMenu: true,
-      headerName: messages.tasks.pageName,
-      renderCell: ({ row }) => (
-        <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-          {row.pageName}
-        </Typography>
-      )
-    },
-    {
-      flex: 0.5,
-      minWidth: 200,
-      field: 'collectionName',
-      disableColumnMenu: true,
-      headerName: messages.tasks.collectionName,
-      renderCell: ({ row }) => (
-        <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-          {row.collectionName}
-        </Typography>
-      )
-    },
+
     {
       flex: 0.05,
       minWidth: 150,
@@ -165,8 +152,7 @@ export default function Index() {
               }${row.workflowInstanceId ? `&MainWfInstanceId=${row.workflowInstanceId}` : ''}${row.caseId ? `&caseId=${row.caseId}` : ''
               }${profile?.sub ? `&sub=${profile?.sub}` : ''}${profile?.name ? `&name=${profile?.name}` : ''}`
             }
-            target="_blank"
-            rel="noopener noreferrer"
+
           >
             <Icon icon='mdi:eye' />
           </IconButton>
