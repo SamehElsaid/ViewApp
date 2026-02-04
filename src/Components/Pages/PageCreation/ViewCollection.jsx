@@ -487,16 +487,16 @@ export default function ViewCollection({
         : `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
 
     if (entitiesId && collectionName) {
-      if (data.onSubmit) {
-        if (handleSubmitEvent) {
-          handleSubmitEvent()
-        }
-        const evaluatedFn = eval('(' + data.onSubmit + ')')
-        if (handleSubmitEvent) {
-        } else {
-          evaluatedFn()
-        }
-      }
+      // if (data.onSubmit) {
+      //   if (handleSubmitEvent) {
+      //     handleSubmitEvent()
+      //   }
+      //   const evaluatedFn = eval('(' + data.onSubmit + ')')
+      //   if (handleSubmitEvent) {
+      //   } else {
+      //     evaluatedFn()
+      //   }
+      // }
       axiosPut(
         `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
         locale,
