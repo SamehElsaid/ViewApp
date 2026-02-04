@@ -196,11 +196,20 @@ export default function Index() {
               {data.totalCount ?? 0}
             </Avatar>
           </div>
-          <Button LinkComponent={Link} href='/CustomerVendorverificationRequest' variant='contained' color='primary' onClick={() => {
-          }}>
-            <Icon icon='mdi:plus' />
-            Customer Vendor Verification Request
-          </Button>
+          <div className="flex gap-2">
+            <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=customer' variant='contained' color='primary' onClick={() => {
+            }}>
+              <Icon icon='mdi:plus' />
+              Customer  Verification Request
+            </Button>
+            <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=vendor' variant='contained' color='primary' onClick={() => {
+            }}>
+              <Icon icon='mdi:plus' />
+              Vendor Verification Request
+            </Button>
+
+          </div>
+
         </CardContent>
       </Card>
       <Box sx={{ mb: 4 }}>
