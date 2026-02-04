@@ -329,11 +329,13 @@ function NewElement({
         console.log(err)
       }
     }
+
     if (roles?.type === 'submit') {
       handleSubmit(e, handleSubmitEvent)
     } else {
       handleSubmitEvent()
     }
+
   }
 
   function isValidURL(str) {
@@ -581,7 +583,7 @@ function NewElement({
     }
 
 
-    
+
 
 
     return (
@@ -597,16 +599,18 @@ function NewElement({
           disabled={isDisable === 'disable'}
           onClick={e => {
             handleClick(e)
-            const loadingToast = toast.loading('Generating PDF...')
-            setTimeout(() => {
-              try {
-                toPDF()
-              } finally {
-                toast.dismiss(loadingToast)
-              }
-            }, 500)
+            if (roles?.type === 'print') {
+              const loadingToast = toast.loading('Generating PDF...')
+              setTimeout(() => {
+                try {
+                  toPDF()
+                } finally {
+                  toast.dismiss(loadingToast)
+                }
+              }, 500)
+            }
           }}
-          type='button'
+          type={'button'}
           className={`btn ${isDisable === 'hide' ? (readOnly ? '' : 'hidden') : ''} block `}
         >
           {input[`name_${locale}`]}
