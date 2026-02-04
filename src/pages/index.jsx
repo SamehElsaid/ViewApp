@@ -26,6 +26,7 @@ export default function Index() {
 
 
 
+  console.log(profile)
   useEffect(() => {
     if (profile?.sub) {
       return
