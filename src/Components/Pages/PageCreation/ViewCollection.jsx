@@ -487,7 +487,14 @@ export default function ViewCollection({
         : `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
 
     if (entitiesId && collectionName) {
-
+      if (data.onSubmit) {
+        const evaluatedFn = eval('(' + data.onSubmit + ')')
+        if (handleSubmitEvent) {
+          handleSubmitEvent()
+        } else {
+          evaluatedFn()
+        }
+      }
       axiosPut(
         `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
         locale,
@@ -497,22 +504,7 @@ export default function ViewCollection({
           if (res.status) {
             setReload(prev => prev + 1)
             toast.success(messages.dialogs.dataSentSuccessfully)
-            if (res.status) {
-              setReload(prev => prev + 1)
-              toast.success(messages.dialogs.dataSentSuccessfully)
-              if (data.onSubmit) {
-                const evaluatedFn = eval('(' + data.onSubmit + ')')
-                if (handleSubmitEvent) {
-                  handleSubmitEvent()
-                } else {
-                  evaluatedFn()
-                }
-              }
-
-              if (data?.redirect) {
-                push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
-              }
-            }
+           
             if (data?.redirect) {
               push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
             }
