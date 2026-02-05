@@ -21,12 +21,21 @@ export default function Index() {
   const inputRef = useRef(null)
   const [refresh, setRefresh] = useState(0)
   const [data, setData] = useState([])
-  const profile = useSelector(rx => rx.auth.data)
+  const { data: profile, loading: profileLoading } = useSelector(rx => rx.auth)
 
 
 
 
   console.log(profile)
+
+  useEffect(() => {
+    axiosGet(`get-user-collection-data/Entityaccount`).then(res => {
+      if (res.status) {
+        // setUserCollectionData(res.data)
+        console.log(res.data)
+      }
+    })
+  }, [])
   useEffect(() => {
 
 
@@ -44,7 +53,7 @@ export default function Index() {
       .finally(() => {
         setLoading(false)
       })
-  }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profile])
+  }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profileLoading])
 
   useEffect(() => {
     const handleKeyPress = e => {
