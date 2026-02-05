@@ -23,17 +23,30 @@ export default function Index() {
   const [data, setData] = useState([])
   const { data: profile, loading: profileLoading } = useSelector(rx => rx.auth)
 
+  const [includeCustomerAndVendor, setIncludeCustomerAndVendor] = useState({
+    includeCustomer: false,
+    includeVendor: false,
+    loading: true
+  })
 
 
 
-  console.log(profile)
 
   useEffect(() => {
+
     axiosGet(`generic-entities/get-user-collection-data/Entityaccount`).then(res => {
       if (res.status) {
-        // setUserCollectionData(res.data)
-        console.log(res.data)
+        const findCustomer = res.data.find(ele => ele.EntityType === "customer")
+        const findVendor = res.data.find(ele => ele.EntityType === "vendor")
+        if (findCustomer) {
+          setIncludeCustomerAndVendor(prev => ({ ...prev, includeCustomer: true }))
+        }
+        if (findVendor) {
+          setIncludeCustomerAndVendor(prev => ({ ...prev, includeVendor: true }))
+        }
       }
+    }).finally(() => {
+      setIncludeCustomerAndVendor(prev => ({ ...prev, loading: false }))
     })
   }, [])
   useEffect(() => {
@@ -53,6 +66,7 @@ export default function Index() {
       .finally(() => {
         setLoading(false)
       })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profileLoading])
 
   useEffect(() => {
@@ -191,19 +205,25 @@ export default function Index() {
               {data.totalCount ?? 0}
             </Avatar>
           </div>
-          <div className="flex gap-2">
-            <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=customer' variant='contained' color='primary' onClick={() => {
-            }}>
-              <Icon icon='mdi:plus' />
-              Customer  Verification Request
-            </Button>
-            <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=vendor' variant='contained' color='primary' onClick={() => {
-            }}>
-              <Icon icon='mdi:plus' />
-              Vendor Verification Request
-            </Button>
+          {!includeCustomerAndVendor.loading && (
+            <div className="flex gap-2">
+              {!includeCustomerAndVendor.includeCustomer && (
+                <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=customer' variant='contained' color='primary' onClick={() => {
+                }}>
+                  <Icon icon='mdi:plus' />
+                  Customer  Verification Request
+                </Button>
+              )}
+              {!includeCustomerAndVendor.includeVendor && (
+                <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=vendor' variant='contained' color='primary' onClick={() => {
+                }}>
+                  <Icon icon='mdi:plus' />
+                  Vendor Verification Request
+                </Button>
+              )}
+            </div>
+          )}
 
-          </div>
 
         </CardContent>
       </Card>
