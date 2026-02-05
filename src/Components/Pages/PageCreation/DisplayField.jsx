@@ -61,7 +61,7 @@ export default function DisplayField({
   const [fileName, setFile] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [regex, setRegex] = useState(roles?.regex?.regex)
-  const [isDisable, setIsDisable] = useState(disabled ? 'disabled' : null)
+  const [isDisable, setIsDisable] = useState(disabled ? 'disabled' : roles?.onMount?.type == 'hide' ? 'hidden' : null)
   const getApiData = useSelector(rx => rx.api.data)
   const [lastValue, setLastValue] = useState(null)
   const [refreshHeight, setRefreshHeight] = useState(0)
@@ -1147,6 +1147,9 @@ export default function DisplayField({
   }, [reload, input])
 
 
+  const [loadingValue, setLoadingValue] = useState(false)
+
+
 
   useEffect(() => {
     if (!loading) {
@@ -1671,8 +1674,8 @@ export default function DisplayField({
       style={{ display: shouldHideForTab ? 'none' : undefined }}
     >
       <style>{`#${input.type == 'new_element'
-          ? `s${input.id}`
-          : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))
+        ? `s${input.id}`
+        : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))
         } {
         ${input.kind == 'search' ? '' : design}
       }`}</style>
