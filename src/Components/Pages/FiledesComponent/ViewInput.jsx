@@ -390,6 +390,7 @@ const ViewInput = ({
                   : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
               </p>
 
+
               {value && (
                 <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
                   <div className='flex gap-3 items-center file-name-item'>
@@ -399,7 +400,7 @@ const ViewInput = ({
                     </span>
                     <div className='flex gap-2 items-center'>
                       <a
-                        href={process.env.API_URL + '/file/download/' + value.replaceAll('/Uploads/', '')}
+                        href={process.env.API_URL + "/file/download/"  + value}
                         target='_blank'
                         rel='noreferrer'
                         className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
@@ -407,7 +408,7 @@ const ViewInput = ({
                         <Icon icon='tabler:eye' fontSize='1.25rem' />
                       </a>
                       <a
-                        href={process.env.API_URL + '/file/download/' + value.replaceAll('/Uploads/', '')}
+                        href={process.env.API_URL + "/file/download/"  + value}
                         download
                         target='_blank'
                         className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
@@ -450,12 +451,12 @@ const ViewInput = ({
     ) : (
       <div className='flex gap-2 items-center relative'>
         <a
-          href={process.env.API_URL + '/file/download/' + value.replaceAll('/Uploads/', '')}
+          href={process.env.API_URL + "/file/download/"  + value}
           target='_blank'
           rel='noreferrer'
         >
-          {value?.split('/Uploads/')?.[1]?.slice(0, 30) ? (
-            value.split('/Uploads/')[1].slice(0, 30) + '.' + value.split('/Uploads/')[1].split('.').pop()
+          {value?.slice(0, 30) ? (
+            value.slice(0, 30) + '.' + value.split('.').pop()
           ) : (
             <></>
           )}
