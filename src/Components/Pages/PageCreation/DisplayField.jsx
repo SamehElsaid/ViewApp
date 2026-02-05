@@ -165,6 +165,7 @@ export default function DisplayField({
       ]
     }
   ]
+  const [reloadValue, setReloadValue] = useState(0)
 
   useEffect(() => {
     if (roles?.trigger?.typeOfValidation == 'filter' && !loading) {
@@ -1089,7 +1090,7 @@ export default function DisplayField({
     }
 
     // End Visible Control for Hidden Fields
-  }, [roles, loading, triggerData])
+  }, [roles, loading, triggerData, reloadValue])
 
   useEffect(() => {
     if (!roles?.event?.onUnmount) {
@@ -1145,6 +1146,8 @@ export default function DisplayField({
     }
   }, [reload, input])
 
+
+
   useEffect(() => {
     if (!loading) {
       setTimeout(() => {
@@ -1191,6 +1194,7 @@ export default function DisplayField({
             setValue(newValue)
           }
         }
+        setReloadValue(prev => prev + 1)
       }, 0)
     }
   }, [roles?.onMount?.type, roles?.onMount?.value, loading])
@@ -1207,7 +1211,7 @@ export default function DisplayField({
 
         evaluatedFn(e)
       }
-    } catch {}
+    } catch { }
 
     setDirty(true)
     let isTypeNew = true
@@ -1264,7 +1268,7 @@ export default function DisplayField({
         console.log(regExp.test(e?.target?.value), 'regExp');
         if (!regExp.test(e?.target?.value)) {
           console.log("sdad");
-          
+
           return setError(locale == 'ar' ? roles?.regex?.message_ar : roles?.regex?.message_en)
         }
       }
@@ -1407,7 +1411,7 @@ export default function DisplayField({
   }, [refError, input, value, validations, setTriggerData])
 
   useEffect(() => {
-    if (!input?.getDataForm) {
+    if (!input?.getDataForm || !input?.options?.source) {
       setSelectedOptions([])
       setOldSelectedOptions([])
       setLoading(false)
@@ -1428,8 +1432,8 @@ export default function DisplayField({
     }
 
     if (input?.getDataForm === 'static') {
-      setSelectedOptions(input?.staticData)
-      setOldSelectedOptions(input?.staticData)
+      // setSelectedOptions(input?.staticData || [])
+      // setOldSelectedOptions(input?.staticData || [])
     }
   }, [input])
 
@@ -1556,7 +1560,7 @@ export default function DisplayField({
       try {
         const evaluatedFn = eval('(' + roles.event.onChange + ')')
         evaluatedFn(e)
-      } catch {}
+      } catch { }
     }
     if (!file) {
       toast.error(locale == 'ar' ? 'لم يتم اختيار الملف' : 'No file selected')
@@ -1632,10 +1636,10 @@ export default function DisplayField({
       if (tabsElement && input.type !== 'new_element') {
         const assignedIndex = Array.isArray(tabsElement.data)
           ? tabsElement.data.findIndex(t => {
-              const fieldId = input.type === 'new_element' ? input.id : input.key
+            const fieldId = input.type === 'new_element' ? input.id : input.key
 
-              return Array.isArray(t.fields) && t.fields.includes(fieldId)
-            })
+            return Array.isArray(t.fields) && t.fields.includes(fieldId)
+          })
           : -1
         if (assignedIndex > -1) {
           const activeIndex = Number(dataRef?.current?.[tabsElement.id])
@@ -1644,7 +1648,7 @@ export default function DisplayField({
           }
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     return false
   })()
@@ -1666,11 +1670,10 @@ export default function DisplayField({
       }
       style={{ display: shouldHideForTab ? 'none' : undefined }}
     >
-      <style>{`#${
-        input.type == 'new_element'
+      <style>{`#${input.type == 'new_element'
           ? `s${input.id}`
           : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))
-      } {
+        } {
         ${input.kind == 'search' ? '' : design}
       }`}</style>
       {hoverText && (
@@ -1708,10 +1711,10 @@ export default function DisplayField({
                 if (tabsElement && input.type !== 'new_element') {
                   const assignedIndex = Array.isArray(tabsElement.data)
                     ? tabsElement.data.findIndex(t => {
-                        const fieldId = input.type === 'new_element' ? input.id : input.key
+                      const fieldId = input.type === 'new_element' ? input.id : input.key
 
-                        return Array.isArray(t.fields) && t.fields.includes(fieldId)
-                      })
+                      return Array.isArray(t.fields) && t.fields.includes(fieldId)
+                    })
                     : -1
                   if (assignedIndex > -1) {
                     const activeIndex = Number(dataRef?.current?.[tabsElement.id])
@@ -1720,7 +1723,7 @@ export default function DisplayField({
                     }
                   }
                 }
-              } catch (_) {}
+              } catch (_) { }
 
               return 'flex'
             })()
@@ -1808,16 +1811,14 @@ export default function DisplayField({
         )}
       </div>
       <div
-        className={`${
-          errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
-        } w-fit text-[#fb866e]   text-2xl end-[2px]  z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}
+        className={`${errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
+          } w-fit text-[#fb866e]   text-2xl end-[2px]  z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}
       >
         <IoMdInformationCircleOutline />
       </div>
       <div
-        className={`${
-          errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
-        } !text-sm bg-[#fb866e] text-white  z-10 w-fit end-[0] mt-1 px-2 absolute top-[100%] rounded-md transition-all duration-300`}
+        className={`${errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
+          } !text-sm bg-[#fb866e] text-white  z-10 w-fit end-[0] mt-1 px-2 absolute top-[100%] rounded-md transition-all duration-300`}
       >
         {requiredMessage || errorView || error}
       </div>
