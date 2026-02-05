@@ -29,7 +29,7 @@ export default function Index() {
   console.log(profile)
 
   useEffect(() => {
-    axiosGet(`get-user-collection-data/Entityaccount`).then(res => {
+    axiosGet(`generic-entities/get-user-collection-data/Entityaccount`).then(res => {
       if (res.status) {
         // setUserCollectionData(res.data)
         console.log(res.data)
