@@ -29,6 +29,11 @@ const Mypage = ({ pageName, initialData, initialDataApi, pageId, entitiesId, col
 
   useEffect(() => {
     if (user) {
+      if(pageRoles.length === 0){
+        setLoadingPage(false)
+        
+        return
+      }
       if (!pageRoles.includes(user?.role_id)) {
         router.push('/404')
       } else {
