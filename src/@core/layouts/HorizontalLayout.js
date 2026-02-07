@@ -154,7 +154,7 @@ const HorizontalLayout = props => {
         </AppBar>
         {/* Content */}
         <ContentWrapper
-          className='layout-page-content'
+          className='layout-page-content !z-10' 
           sx={{
             ...(contentHeightFixed && { display: 'flex', overflow: 'hidden' }),
             ...(contentWidth === 'boxed' && {

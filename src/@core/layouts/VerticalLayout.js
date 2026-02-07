@@ -113,7 +113,7 @@ const VerticalLayout = props => {
 
           {/* Content */}
           <ContentWrapper
-            className='layout-page-content'
+            className='layout-page-content !z-10'
             sx={{
               ...(contentHeightFixed && {
                 overflow: 'hidden',
