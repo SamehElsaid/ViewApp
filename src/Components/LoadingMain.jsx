@@ -4,7 +4,7 @@ import control from 'src/Components/img/control.png'
 function LoadingMain({ login }) {
   return (
     <div
-      style={{ zIndex: 22222222 }}
+      style={{ zIndex: "1111111111111 !important" }}
       className={`${
         login ? '':'opacity-0 invisible'
       } flex || items-center || justify-center duration-500 fixed inset-0 bg-linear`}
