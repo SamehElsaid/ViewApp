@@ -69,12 +69,15 @@ export default function Index() {
           setData(res.data)
           if (profile?.view_type === 'gahar' && res.data.tasks.length === 0) {
             router.push('/FacilityTypee')
+          } else {
+            setLoading(false)
+
           }
+        } else {
+          setLoading(false)
         }
       })
-      .finally(() => {
-        setLoading(false)
-      })
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, paginationModel.page, paginationModel.pageSize, startSearch, refresh, profileLoading])
 
