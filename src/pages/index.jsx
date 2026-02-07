@@ -10,6 +10,7 @@ import { IconButton } from '@mui/material'
 import { Icon } from '@iconify/react'
 import { useSelector } from 'react-redux'
 import GetTimeinTable from 'src/Components/GetTimeinTable'
+import { useRouter } from 'next/router'
 
 export default function Index() {
   const { locale, messages } = useIntl()
@@ -33,6 +34,7 @@ export default function Index() {
 
   console.log(profile, 'profile')
 
+  const router = useRouter()
 
 
   useEffect(() => {
@@ -64,6 +66,9 @@ export default function Index() {
       .then(res => {
         if (res.status) {
           setData(res.data)
+          if (profile?.view_type === 'gahar' && res.data.tasks.length === 0) {
+            router.push('/FacilityTypee')
+          }
         }
       })
       .finally(() => {
@@ -208,7 +213,7 @@ export default function Index() {
               {data.totalCount ?? 0}
             </Avatar>
           </div>
-          {!includeCustomerAndVendor.loading && (
+          {!includeCustomerAndVendor.loading && profile?.view_type !== 'gahar' && (
             <div className="flex gap-2">
               {!includeCustomerAndVendor.includeCustomer && (
                 <Button LinkComponent={Link} href='/CustomerVendorverificationRequest/?type=customer' variant='contained' color='primary' onClick={() => {
