@@ -11,6 +11,7 @@ import { Icon } from '@iconify/react'
 import { useSelector } from 'react-redux'
 import GetTimeinTable from 'src/Components/GetTimeinTable'
 import { useRouter } from 'next/router'
+import LoadingMain from 'src/Components/LoadingMain'
 
 export default function Index() {
   const { locale, messages } = useIntl()
@@ -194,6 +195,7 @@ export default function Index() {
 
   return (
     <div>
+      {loading ? <LoadingMain login={true} /> : null}
       <Card className='w-[100%]  mb-5 py-4 '>
         <CardContent
           className='flex-col gap-2 h-full md:flex-row'
