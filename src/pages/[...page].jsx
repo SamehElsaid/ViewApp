@@ -28,20 +28,28 @@ const Mypage = ({ pageName, initialData, initialDataApi, pageId, entitiesId, col
 
 
   useEffect(() => {
-    if (user) {
-      if(pageRoles.length === 0){
-        setLoadingPage(false)
-        
-        return
-      }
-      if (!pageRoles.includes(user?.role_id)) {
-        router.push('/404')
-      } else {
-        setLoadingPage(false)
-      }
+    if (!user) return
+
+    if (pageRoles.length === 0) {
+      setLoadingPage(false)
+      
+      return
+    }
+
+    const userRoles = Array.isArray(user.role_id)
+      ? user.role_id
+      : [user.role_id]
+
+    const hasAccess = userRoles.some(role =>
+      pageRoles.includes(role)
+    )
+
+    if (!hasAccess) {
+      router.push('/404')
+    } else {
+      setLoadingPage(false)
     }
   }, [pageRoles, user, router])
-
 
   return (
     <div className=''>
@@ -91,7 +99,7 @@ export async function getServerSideProps(context) {
     const pageTypeId = response?.data?.pageTypeId ?? 1
     const findPageType = appViewOptions.find(option => option.id === pageTypeId)
 
-    if(findPageType.name_en !== process.env.APP_TYPE){
+    if (findPageType.name_en !== process.env.APP_TYPE) {
       return {
         notFound: true
       }
