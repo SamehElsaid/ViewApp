@@ -198,7 +198,7 @@ export default function Index() {
 
   return (
     <div>
-      {!loading ? <LoadingMain login={true} /> : null}
+      {loading ? <LoadingMain login={true} /> : null}
       <Card className='w-[100%]  mb-5 py-4 '>
         <CardContent
           className='flex-col gap-2 h-full md:flex-row'
