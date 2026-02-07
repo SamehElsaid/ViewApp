@@ -279,7 +279,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
   })
 
   return (
-    <div className='relative pdf-wrapper' id='pdf-content'>
+    <div className='relative pdf-wrapper !z-10' id='pdf-content'>
       {/* PDF Loading Overlay */}
       {loadingPdf && (
         <div className='fixed inset-0 z-[999999] flex items-center justify-center bg-white animate-in fade-in duration-300'>
