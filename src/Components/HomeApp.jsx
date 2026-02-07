@@ -37,7 +37,7 @@ function HomeApp({ children }) {
     }
   }, [locale, router, user, patch])
   if (patch && '/' + patch.split('/')[1] === '/' && user !== 'loading' && user === 'no') {
-    // router.push(`/${locale}/login`)
+    router.push(`/${locale}/login`)
     
     return <LoadingMain login={true} />
   }
