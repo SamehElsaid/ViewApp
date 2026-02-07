@@ -31,6 +31,9 @@ export default function Index() {
 
 
 
+  console.log(profile, 'profile')
+
+
 
   useEffect(() => {
 
