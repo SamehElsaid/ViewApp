@@ -70,7 +70,7 @@ const BackgroundRenderer = ({ data, children }) => {
       style={{
         backgroundColor: data.backgroundColor || 'transparent',
         backgroundImage: data.backgroundImage
-          ? `url(${data.backgroundImage.replace('/Uploads/', process.env.API_URL + '/file/download/')})`
+          ? `url(${process.env.API_URL + '/file/download/' + data.backgroundImage})`
           : 'none',
         backgroundSize: data.backgroundSize || 'cover',
         backgroundPosition: data.backgroundPosition || 'center',

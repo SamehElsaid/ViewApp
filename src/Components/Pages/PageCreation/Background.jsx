@@ -66,9 +66,7 @@ export default function Background({ data, onChange, buttonRef }) {
   const resolveImageUrl = path => {
     if (!path) return ''
     
-    return path.includes('/Uploads/')
-      ? path.replace('/Uploads/', process.env.API_URL + '/file/download/')
-      : path
+    return process.env.API_URL + "/file/download/" + path
   }
 
   const handleViewImage = () => {
@@ -81,6 +79,7 @@ export default function Background({ data, onChange, buttonRef }) {
 
   const handleDownloadImage = () => {
     const url = resolveImageUrl(data?.backgroundImage)
+    console.log(url)
     if (!url) return
     const link = document.createElement('a')
     link.href = url
