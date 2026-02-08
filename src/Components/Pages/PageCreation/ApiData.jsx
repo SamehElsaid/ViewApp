@@ -58,22 +58,22 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
     if (authToken) {
       apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
     }
-    
+
     if (linksToFetch.length > 0) {
       Promise.all(
         linksToFetch.map(linkObj => {
           const resolvedLink = replacePlaceholders(linkObj.link, window.location)
           const body = replaceVars(linkObj.headers)
           let headers = {}
-    
+
           try {
             headers = JSON.parse(body)
           } catch (error) {
             headers = {}
           }
-    
+
           let request
-    
+
           if (linkObj.method === 'GET') {
             request = axios.get(resolvedLink, { headers: apiHeaders })
           } else {
@@ -83,7 +83,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
               { headers: apiHeaders }
             )
           }
-    
+
           return request
             .then(response => ({
               ...linkObj,
@@ -105,7 +105,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
         dispatch(setApiData(updatedLinks))
       })
     }
-    
+
   }, [links, dispatch])
 
   const [apiHeaders, setApiHeaders] = useState('{}')

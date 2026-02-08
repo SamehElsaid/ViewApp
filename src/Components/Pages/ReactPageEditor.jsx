@@ -320,9 +320,11 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
           }}
         ></button>
       </div>
+      <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
+
       {type === 'all-pages' ? (
         <div className={`relative ${loadingPdf ? 'generate-pdf' : ''}`}>
-         
+
           <div
             ref={refPdf}
             style={{
@@ -343,7 +345,6 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
         </div>
       ) : (
         <>
-          <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
           <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>
             <DialogTitle>{messages.ReturnToPrevious}</DialogTitle>
             <DialogContent>
@@ -405,9 +406,8 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
           />
           <div className='h-[65px] '>
             <div
-              className={` ${
-                advancedEdit ? 'bgGradient' : 'bg-white'
-              } fixed top-0 py-2  duration-300  z-[11111] left-0 right-0 shadow-xl`}
+              className={` ${advancedEdit ? 'bgGradient' : 'bg-white'
+                } fixed top-0 py-2  duration-300  z-[11111] left-0 right-0 shadow-xl`}
             >
               <div className='container flex gap-2 justify-between'>
                 {advancedEdit ? (
