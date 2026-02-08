@@ -12,7 +12,7 @@ export const axiosGet = async (url, locale, token, params = {}, close) => {
   try {
     const header = {
       headers: {
-        Authorization:  `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
+        Authorization: `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
         'Accept-Language': locale
       },
       params
@@ -163,9 +163,9 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
   try {
     const res = await axios.get(
       `${process.env.API_URL}/auth/get_url_patterns/?file_name=${decryptData(authToken).username}/` +
-        fileNew.name +
-        '.' +
-        fileNew.type.split('/')[1],
+      fileNew.name +
+      '.' +
+      fileNew.type.split('/')[1],
       header
     )
 
@@ -177,13 +177,13 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
         onUploadProgress: mult
           ? onProgress
           : progressEvent => {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              if (onProgress) {
-                onProgress(percentCompleted)
-              }
-
-              return percentCompleted
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            if (onProgress) {
+              onProgress(percentCompleted)
             }
+
+            return percentCompleted
+          }
       })
 
       return {
