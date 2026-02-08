@@ -7,7 +7,7 @@ import { Icon } from '@iconify/react'
 import { FaEyeSlash } from 'react-icons/fa'
 import NewElement from '../NewElement'
 import { toast } from 'react-toastify'
-import { getData, replacePlaceholders, VaildId } from 'src/Components/_Shared'
+import {  replacePlaceholders, VaildId } from 'src/Components/_Shared'
 import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
@@ -48,6 +48,8 @@ export default function DisplayField({
   disabled,
   allFields = []
 }) {
+
+  console.log(findValue,input.key, 'findValue')
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [dirty, setDirty] = useState(dirtyProps)
@@ -62,7 +64,6 @@ export default function DisplayField({
   const [isOpen, setIsOpen] = useState(false)
   const [regex, setRegex] = useState(roles?.regex?.regex)
   const [isDisable, setIsDisable] = useState(disabled ? 'disabled' : roles?.onMount?.type == 'hide' ? 'hidden' : null)
-  const getApiData = useSelector(rx => rx.api.data)
   const [lastValue, setLastValue] = useState(null)
   const [refreshHeight, setRefreshHeight] = useState(0)
 
@@ -1172,30 +1173,25 @@ export default function DisplayField({
         }
 
         if (roles?.onMount?.value) {
-          if (roles?.api_url) {
-            const items = getApiData.find(item => item.link === roles.api_url)?.data
-            const valueFromApi = getData(items, roles?.onMount?.value, '')
-            setValue(valueFromApi)
-          } else {
-            let newValue = roles?.onMount?.value
-            const searchParams = new URLSearchParams(window.location.search)
+        
+          let newValue = roles?.onMount?.value
+          const searchParams = new URLSearchParams(window.location.search)
 
-            if (input?.type == 'Date') {
-              const valueDate = new Date(roles?.onMount?.value)
+          if (input?.type == 'Date') {
+            const valueDate = new Date(roles?.onMount?.value)
 
-              if (isNaN(valueDate.getTime())) {
-                // invalid date
-                newValue = new Date()
-              } else {
-                newValue = valueDate
-              }
+            if (isNaN(valueDate.getTime())) {
+              // invalid date
+              newValue = new Date()
+            } else {
+              newValue = valueDate
             }
-            if (newValue.startsWith('{') && newValue.endsWith('}')) {
-              const key = newValue.slice(1, -1)
-              newValue = searchParams.get(key) || ''
-            }
-            setValue(newValue)
           }
+          if (newValue.startsWith('{') && newValue.endsWith('}')) {
+            const key = newValue.slice(1, -1)
+            newValue = searchParams.get(key) || ''
+          }
+          setValue(newValue)
         }
         setReloadValue(prev => prev + 1)
       }, 0)

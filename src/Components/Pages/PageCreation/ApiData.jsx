@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { useDispatch } from 'react-redux'
 import { replacePlaceholders } from 'src/Components/_Shared'
@@ -50,25 +50,18 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
     return value
   }
 
-  const linksRef = useRef(links)
-  linksRef.current = links
-
   useEffect(() => {
     const linksToFetch = links.filter(link => link.loading)
-    if (linksToFetch.length === 0) return
 
-    const timeoutId = setTimeout(() => {
-      const toFetch = linksRef.current.filter(link => link.loading)
-      if (toFetch.length === 0) return
+    const authToken = Cookies.get('sub')
+    const apiHeaders = {}
+    if (authToken) {
+      apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
+    }
 
-      const authToken = Cookies.get('sub')
-      const apiHeaders = {}
-      if (authToken) {
-        apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
-      }
-
+    if (linksToFetch.length > 0) {
       Promise.all(
-        toFetch.map(linkObj => {
+        linksToFetch.map(linkObj => {
           const resolvedLink = replacePlaceholders(linkObj.link, window.location)
           const body = replaceVars(linkObj.headers)
           let headers = {}
@@ -111,9 +104,8 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
       ).then(updatedLinks => {
         dispatch(setApiData(updatedLinks))
       })
-    }, 3000)
+    }
 
-    return () => clearTimeout(timeoutId)
   }, [links, dispatch])
 
   const [apiHeaders, setApiHeaders] = useState('{}')

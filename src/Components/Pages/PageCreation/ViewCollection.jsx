@@ -8,19 +8,21 @@ import InputControlDesign from './InputControlDesign'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
+import { DefaultStyle, getData, getTypeFromCollection } from 'src/Components/_Shared'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
 import { CircularProgress } from '@mui/material'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 // Dnd Kit Sortable Item Component
-function SortableGridItem({
+function  SortableGridItem({
   filed,
   index,
   readOnly,
   stopSort,
   locale,
+  getApiData,
   data,
   getDesign,
   setOpen,
@@ -89,6 +91,13 @@ function SortableGridItem({
     gridColumn: `span ${currentWidth}`,
     minHeight: `${currentHeight * 100}px`,
     position: 'relative'
+  }
+
+  let findNewValue = ''
+  if(roles?.api_url){
+    const items = getApiData.find(item => item.link === roles.api_url)?.data
+    findNewValue = getData(items, roles?.onMount?.value, '')
+
   }
 
   return (
@@ -270,7 +279,7 @@ function SortableGridItem({
         dataRefWithCollectionId={dataRefWithCollectionId}
         allFields={sortedLoop}
         setTriggerData={setTriggerData}
-        findValue={entitiesData?.[filed?.key]}
+        findValue={ findNewValue || entitiesData?.[filed?.key]}
         roles={roles}
         advancedEdit={readOnly}
         reload={reload}
@@ -330,6 +339,7 @@ export default function ViewCollection({
   const SortWithXInGroup = convertTheTheSameYToGroup.map(group => group.sort((a, b) => a.x - b.x))
   const sortedData = SortWithXInGroup.flat()
   const filterSelect = getFields
+  const getApiData = useSelector(rx => rx.api.data)
 
   useEffect(() => {
     if (!loading) {
@@ -410,13 +420,17 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
+
+  const [loadingEntities, setLoadingEntities] = useState(true)
   useEffect(() => {
     if (entitiesId !== null && collectionName !== null) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
           setEntitiesData(res?.data?.entities?.[0])
         }
-      })
+      }).finally(() => setLoadingEntities(false))
+    }else{
+      setLoadingEntities(false)
     }
   }, [entitiesId, collectionName, pageName])
 
@@ -1041,7 +1055,7 @@ export default function ViewCollection({
           </div>
         </>
       )}
-      {loading ? (
+      {loading || loadingEntities ? (
         <div className='h-[300px]  flex justify-center items-center text-2xl font-bold border-2 border-dashed border-main rounded-md'>
           {messages.pleaseSelectDataModel}
         </div>
@@ -1117,6 +1131,7 @@ export default function ViewCollection({
                       readOnly={readOnly}
                       stopSort={stopSort}
                       locale={locale}
+                      getApiData={getApiData}
                       data={data}
                       getDesign={getDesign}
                       setOpen={setOpen}
