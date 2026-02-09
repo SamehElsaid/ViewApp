@@ -14,7 +14,6 @@ import ViewInput from '../FiledesComponent/ViewInput'
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import { decryptData } from 'src/Components/encryption'
-import { useSelector } from 'react-redux'
 import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 
 export default function DisplayField({
