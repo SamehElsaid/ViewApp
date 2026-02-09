@@ -361,7 +361,7 @@ const ViewInput = ({
     return from != 'table' ? (
       (isDisable === 'disabled' && value) ? <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
         <div className='flex gap-3 items-center file-name-item'>
-          <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
+          <span className='flex gap-1 items-center file-name overflow-hidden w-[calc(100%-110px)]'>
             <BsPaperclip className='text-xl text-main-color' />
             <span className='flex-1'>{fileName || value}</span>
           </span>
