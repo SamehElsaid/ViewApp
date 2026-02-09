@@ -363,7 +363,7 @@ const ViewInput = ({
         <div className='flex gap-3 items-center file-name-item'>
           <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
             <BsPaperclip className='text-xl text-main-color' />
-            <span className='flex-1'>{fileName}</span>
+            <span className='flex-1'>{fileName || value}</span>
           </span>
           <div className='flex gap-2 items-center'>
             <a
