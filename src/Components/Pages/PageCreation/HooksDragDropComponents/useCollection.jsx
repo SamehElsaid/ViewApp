@@ -27,6 +27,7 @@ export default function useCollection({
             onChange={onChange}
             readOnly={!advancedEdit}
             disabled={!readOnly}
+            advancedEdit={advancedEdit}
             workflowId={workflowId}
             pageId={pageId}
             entitiesId={entitiesId}

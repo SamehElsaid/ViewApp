@@ -1,17 +1,18 @@
 import { useIntl } from 'react-intl'
 import { axiosGet } from '../axiosCall'
 import Link from 'next/link'
-import { useRef, useState, useEffect, forwardRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Button, Dialog, DialogContent, Typography } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
-import jsPDF from 'jspdf'
 import { useReactToPrint } from 'react-to-print'
 import PrintContent from '../PrintContent'
 import { usePDF } from 'react-to-pdf'
 import { toast } from 'react-toastify'
 
 function NewElement({
+  activeTab,
   input,
+  editMode,
   onBlur,
   value,
   setValue,
@@ -20,13 +21,17 @@ function NewElement({
   disabledBtn,
   isDisable,
   readOnly,
+  tabsData,
   handleSubmit,
   dataRef,
   data,
   refError,
   setTriggerData,
   typeOfSubmit,
-  allFields = []
+  allFields = [],
+  setActiveTab,
+  allSortData = [],
+  sortedLoopWithoutTabs = []
 }) {
   const [open, setOpen] = useState(false)
   const { locale, messages } = useIntl()
@@ -34,6 +39,7 @@ function NewElement({
   const buttonRef = useRef(null)
   const componentRef = useRef()
   const [printData, setPrintData] = useState({ inputsWithValues: [], pages: [], inputsOrder: [], customCSS: '' })
+
 
 
   const { toPDF, targetRef } = usePDF({
@@ -66,38 +72,10 @@ function NewElement({
 
   })
 
-  const [activeIndex, setActiveIndex] = useState(Math.max(0, input?.data?.findIndex(t => t.active) || 0))
 
-  // Keep active tab in sync with input.data when using tabs
-  useEffect(() => {
-    if (input?.key !== 'tabs') return
-    try {
-      const list = Array.isArray(input?.data) ? input.data : []
-      const idx = list.findIndex(t => t && t.active)
-      if (idx >= 0) {
-        if (idx !== activeIndex) {
-          setActiveIndex(idx)
-          setValue(idx)
-          if (setTriggerData) {
-            setTriggerData(prev => prev + 1)
-          }
-        }
-      } else {
-        if (activeIndex !== 0) {
-          setActiveIndex(0)
-          setValue(0)
-          if (setTriggerData) {
-            setTriggerData(prev => prev + 1)
-          }
-        }
-      }
-    } catch (_) { }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input?.key, JSON.stringify(input?.data || [])])
 
   useEffect(() => {
     try {
-      setValue(activeIndex)
       if (setTriggerData) {
         setTriggerData(prev => prev + 1)
       }
@@ -105,124 +83,8 @@ function NewElement({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const generatePDF = (inputsWithValues = [], lang = 'ar', pages = []) => {
-    const doc = new jsPDF()
 
-    const boxWidth = 180
-    const x = 15
-    const pageHeight = 297 // A4 height in mm
-    const marginTop = 20
-    const lineSpacing = 6 // ارتفاع كل سطر
 
-    let y = marginTop
-
-    // 1️⃣ رسم inputsWithValues
-    if (inputsWithValues?.length) {
-      inputsWithValues.forEach(item => {
-        const label = lang === 'ar' ? item.nameAr || item.name_ar : item.nameEn || item.name_en
-        const value = String(item.value ?? '')
-
-        // تقسيم النصوص الطويلة على عدة أسطر
-        const valueLines = doc.splitTextToSize(value, boxWidth - 4) // 4px padding
-        const boxHeight = 12 + valueLines.length * lineSpacing // 12px للعنوان + نص
-
-        // صفحة جديدة إذا تجاوزنا الحد
-        if (y + boxHeight + 10 > pageHeight - 20) {
-          doc.addPage()
-          y = marginTop
-        }
-
-        // رسم البوكس
-        doc.setDrawColor(0)
-        doc.rect(x, y, boxWidth, boxHeight)
-
-        // العنوان
-        doc.setFontSize(11)
-        doc.text(label, x + boxWidth / 2, y + 8, { align: 'center' })
-
-        // خط فاصل
-        doc.line(x, y + 12, x + boxWidth, y + 12)
-
-        // القيمة
-        doc.setFontSize(14)
-        doc.text(valueLines, x + boxWidth / 2, y + 20, { align: 'center' })
-
-        y += boxHeight + 10
-      })
-    }
-
-    // 2️⃣ رسم pages بشكل ديناميكي
-    if (pages?.length) {
-      pages.forEach((page, index) => {
-        doc.addPage() // صفحة جديدة لكل content
-        let contentHTML = page.content
-
-        // استبدال placeholders بالقيم الفعلية لو موجودة
-        if (page.placeholders) {
-          Object.keys(page.placeholders).forEach(key => {
-            const regex = new RegExp(`{${key}}`, 'g')
-            contentHTML = contentHTML.replace(regex, page.placeholders[key] || '')
-          })
-        }
-
-        doc.html(contentHTML, {
-          x: x,
-          y: marginTop,
-          width: boxWidth,
-          html2canvas: { scale: 0.5 },
-          callback: function (doc) {
-            if (index === pages.length - 1) {
-              doc.save('form.pdf')
-            }
-          }
-        })
-      })
-    } else {
-      // لو مفيش pages، نرجع حفظ مباشرة
-      doc.save('form.pdf')
-    }
-  }
-
-  // Compute visible tabs with original index and disabled flag at top-level
-  const visibleTabs = (input?.key === 'tabs' ? input.data || [] : [])
-    .map((item, idx) => {
-      let isVisible = true
-      const mode = item?.visibilityMode || 'enable'
-      if (mode === 'conditional') {
-        if (typeof item.visibilityCondition === 'string' && item.visibilityCondition.trim()) {
-          try {
-            const fn = eval('(' + item.visibilityCondition + ')')
-            if (typeof fn === 'function') {
-              isVisible = !!fn({ data: dataRef?.current })
-            }
-          } catch (_) {
-            isVisible = true
-          }
-        }
-      }
-
-      return { item, originalIndex: idx, isVisible, isDisabled: mode === 'disable' }
-    })
-    .filter(t => t.isVisible)
-
-  // Ensure activeIndex points to a visible tab
-  useEffect(() => {
-    if (input?.key !== 'tabs') return
-    try {
-      const stillVisible = visibleTabs.some(t => t.originalIndex === activeIndex)
-      if (!stillVisible) {
-        const firstVisible = visibleTabs[0]?.originalIndex ?? 0
-        setActiveIndex(firstVisible)
-        setValue(firstVisible)
-        if (setTriggerData) setTriggerData(prev => prev + 1)
-      }
-    } catch (_) { }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input?.key, JSON.stringify(visibleTabs.map(v => ({ i: v.originalIndex, v: v.isVisible }))), activeIndex])
-
-  const handleValidationChanges = e => {
-    setValue('checked')
-  }
 
   const handleCheckboxChange = e => {
     if (roles?.onMount?.href) {
@@ -253,40 +115,34 @@ function NewElement({
     setValue(prev => !prev)
   }
 
-  const isConditionSatisfied = () => {
-    const trig = roles?.trigger
-    if (!trig || !trig?.typeOfValidation || !trig?.selectedField) return true
-
-    const selectedValue = dataRef?.current?.[trig.selectedField]
-    const compare = v => (trig?.isEqual === 'equal' ? v == trig?.mainValue : v != trig?.mainValue)
-
-    // For button gating, treat 'optional' and 'enable' as conditions to allow click
-    if (trig.typeOfValidation === 'optional' || trig.typeOfValidation === 'enable') {
-      return compare(selectedValue)
-    }
-
-    // Other trigger types default to allow
-    return true
-  }
+  console.log(allFields);
 
   const handleClick = e => {
     setValue('checked')
     if (roles?.type === 'print') {
       const inputsWithValues = []
+      console.log(allFields, Object.entries(dataRef.current), "heeeeeeeee");
       if (roles?.print?.includeInputs) {
-        Object.entries(dataRef.current).forEach(([key, value]) => {
-          const field = allFields.find(item => item.key === key)
 
-          if (field) {
-            inputsWithValues.push({
-              ...field,
-              value
-            })
-          }
+        const allSumbitData = {...tabsData, ...dataRef.current}
+
+        allFields.forEach(item => {
+          inputsWithValues.push({
+            ...item,
+            value: allSumbitData[item.key]
+          })
         })
       }
 
-      setPrintData({ inputsWithValues, pages: roles.print?.pages || [], inputsOrder: roles.print?.inputsOrder || [], customCSS: roles.print?.customCSS || '', selectedBorder: roles.print?.selectedBorder || null, customBorderCSS: roles.print?.customBorderCSS || '' })
+      setPrintData({
+        inputsWithValues,
+        pages: roles.print?.pages || [],
+        inputsOrder: roles.print?.inputsOrder || [],
+        inputsVisibility: roles.print?.inputsVisibility || {},
+        customCSS: roles.print?.customCSS || '',
+        selectedBorder: roles.print?.selectedBorder || null,
+        customBorderCSS: roles.print?.customBorderCSS || ''
+      })
       setTimeout(() => {
         handlePrint()
       }, 0)
@@ -330,7 +186,7 @@ function NewElement({
       }
     }
 
-    if (roles?.type === 'submit') {
+    if (input?.kind === 'submit') {
       handleSubmit(e, handleSubmitEvent)
     } else {
       handleSubmitEvent()
@@ -375,102 +231,30 @@ function NewElement({
     )
   }
   if (input.key === 'tabs') {
-    const onTabClick = index => {
-      setActiveIndex(index)
-      const selectedValue = index
-      setValue(selectedValue)
-      try {
-        if (setTriggerData) {
-          setTriggerData(prev => prev + 1)
-        }
-      } catch (_) { }
-      try {
-        if (onChangeEvent) {
-          const evaluatedFn = eval('(' + onChangeEvent + ')')
-          evaluatedFn({ type: 'tabChange', index })
-        }
-      } catch { }
-    }
-
-    // Determine if Next should be disabled based on assigned fields' errors or an optional per-tab condition
-    const isNextDisabled = (() => {
-      try {
-        const tabsElement = (data?.addMoreElement || []).find(ele => ele.id === input.id)
-        const currentTab = tabsElement?.data?.[activeIndex] || {}
-        if (currentTab.nextCondition && typeof currentTab.nextCondition === 'string') {
-          try {
-            const fn = eval('(' + currentTab.nextCondition + ')')
-            if (typeof fn === 'function') {
-              return !fn({ data: dataRef?.current })
-            }
-          } catch (_) { }
-        }
-        const assigned = Array.isArray(currentTab.fields) ? currentTab.fields : []
-        if (!assigned.length) return false
-
-        return assigned.some(fid => Array.isArray(refError?.current?.[fid]) && refError.current[fid].length > 0)
-      } catch (_) {
-        return false
-      }
-    })()
-
-    const controlsPlacement = input?.controls?.placement || 'bottom' // 'top' | 'bottom'
-    const controlsAlign = input?.controls?.align || 'start' // 'start' | 'center' | 'end'
-
-    // Find current tab position in visible tabs
-    const currentVisibleTabIndex = visibleTabs.findIndex(t => t.originalIndex === activeIndex)
-    const previousVisibleTab = currentVisibleTabIndex > 0 ? visibleTabs[currentVisibleTabIndex - 1] : null
-
-    const nextVisibleTab =
-      currentVisibleTabIndex >= 0 && currentVisibleTabIndex < visibleTabs.length - 1
-        ? visibleTabs[currentVisibleTabIndex + 1]
-        : null
-
-    const Controls = () => (
-      <div
-        className={`flex items-center gap-3 ${controlsAlign === 'center' ? 'justify-center' : controlsAlign === 'end' ? 'justify-end' : 'justify-start'
-          }`}
-      >
-        <button
-          type='button'
-          className='px-4 py-1.5 rounded text-sm border border-main-color text-main-color hover:bg-main-color/5 disabled:opacity-40 shadow'
-          onClick={() => previousVisibleTab && onTabClick(previousVisibleTab.originalIndex)}
-          disabled={!previousVisibleTab}
-        >
-          {messages?.dialogs?.previous || 'Previous'}
-        </button>
-        <button
-          type='button'
-          className='px-4 py-1.5 rounded text-sm bg-main-color text-white hover:bg-main-color/90 disabled:opacity-40 shadow'
-          onClick={() => nextVisibleTab && onTabClick(nextVisibleTab.originalIndex)}
-          disabled={!nextVisibleTab || isNextDisabled}
-        >
-          {messages?.dialogs?.next || 'Next'}
-        </button>
-      </div>
-    )
-
-    // visibleTabs computed at top-level
-
     // visibility guard handled in top-level effect
+
+
+    const tabsData = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data ?? [];
 
     return (
       <div className='flex flex-col w-full gap-2'>
-        {controlsPlacement === 'top' && <Controls />}
         <div className='flex flex-wrap w-full parent-tabs'>
-          {visibleTabs.map(({ item, originalIndex, isDisabled }) => (
+          {tabsData.map((tab, originalIndex) => (
             <button
               key={originalIndex}
               type='button'
-              className={`btn-tabs ${originalIndex === activeIndex ? 'active' : ''}`}
-              onClick={() => !isDisabled && onTabClick(originalIndex)}
-              disabled={isDisabled}
+              onClick={() => {
+                if (editMode) {
+                  setActiveTab(originalIndex)
+                }
+              }}
+              className={`btn-tabs ${originalIndex === activeTab ? 'active' : ''}`}
+
             >
-              {item[`name_${locale}`]}
+              {tab[`name_${locale}`]}
             </button>
           ))}
         </div>
-        {controlsPlacement === 'bottom' && <Controls />}
       </div>
     )
   }
@@ -590,24 +374,32 @@ function NewElement({
       <>
         <div className=' fixed  inset-0 z-[-1] opacity-0 overflow-hidden top-0 start-0'>
           {roles?.type === 'print' && (printData.inputsWithValues?.length > 0 || printData.pages?.length > 0) && (
-            <div ref={targetRef} className='print-container'>
-              <PrintContent printData={printData} />
+            <div ref={componentRef} className='print-container'>
+              <PrintContent printData={printData} data={data} allSortData={allSortData} />
             </div>
           )}
         </div>
         <button
-          disabled={isDisable === 'disable'}
+          disabled={isDisable === 'disable' || (input.kind === 'back' && activeTab === 0)}
           onClick={e => {
+            if (input.kind === 'back') {
+              setActiveTab(prev => prev - 1);
+
+              return
+            }
             handleClick(e)
             if (roles?.type === 'print') {
               const loadingToast = toast.loading('Generating PDF...')
-              setTimeout(() => {
+              setTimeout(async () => {
                 try {
-                  toPDF()
+                  handlePrint()
+                } catch (err) {
+                  console.error(err)
+                  toast.error('PDF generation failed')
                 } finally {
-                  toast.dismiss(loadingToast)
                 }
               }, 500)
+              toast.dismiss(loadingToast)
             }
           }}
           type={'button'}

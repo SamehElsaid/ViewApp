@@ -987,7 +987,7 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
                             {(() => {
                               const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
                               if (!tabsElement) return null
-                              const tabs = Array.isArray(tabsElement.data) ? tabsElement.data : []
+                              const tabs = Array.isArray(tabsElement?.data) ? tabsElement?.data : []
 
                               const currentIndex = Math.max(
                                 -1,
@@ -1484,7 +1484,7 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
                                             ele => ele.key === 'tabs'
                                           )
                                           if (!tabsElement) return null
-                                          const tabs = Array.isArray(tabsElement.data) ? tabsElement.data : []
+                                          const tabs = Array.isArray(tabsElement?.data) ? tabsElement?.data : []
 
                                           const currentIndex = Math.max(
                                             -1,

@@ -80,11 +80,9 @@ function Trigger({
     const additional_fields = data.additional_fields ?? []
     const findMyInput = additional_fields.find(inp => inp.key === open.id)
     const triggerProperty = type === 'column' ? 'triggerColumn' : open.rowId ? 'triggerRow' : 'trigger'
-    console.log(triggerProperty, 'triggerProperty')
     if (findMyInput) {
       findMyInput.roles = findMyInput.roles ?? {}
       findMyInput.roles[triggerProperty] = sendData
-      console.log(findMyInput, 'findMyInput')
     } else {
       const myEdit = {
         key: open.id,
@@ -114,7 +112,6 @@ function Trigger({
     setMainValue('')
   }
 
-  console.log(fields)
 
   return (
     <Dialog open={openTrigger} onClose={resetForm} fullWidth>
@@ -155,7 +152,6 @@ function Trigger({
                     .filter(fil => fil.key !== 'button')
                     ?.map(field => (
                       <MenuItem key={field.key} value={field.key}>
-                        {console.log(field, 'ok')}
                         {field?.[`name${locale === 'ar' ? 'Ar' : 'En'}`]}
                       </MenuItem>
                     ))}

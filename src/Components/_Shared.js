@@ -9,7 +9,8 @@ import {
   tabs,
   text,
   text_content,
-  textarea
+  textarea,
+  progress_bar
 } from './FiledesCss'
 
 export const isArabic = (value, locale) => {
@@ -84,11 +85,16 @@ export const getTypeFromCollection = (type, kind) => {
   if (kind === 'multiple_select') {
     return 'multiple_select'
   }
+
+  console.log(kind);
+
+  if (kind === 'progress_bar') {
+    return 'progress_bar'
+  }
+
   if (baseTypes[type]) return baseTypes[type]
 
-  // if (type === 'ManyToMany') {
-  //   return description === 'multiple_select' ? 'Search_Select' : 'checkbox'
-  // }
+
 
   return type.charAt(0).toUpperCase() + type.slice(1)
 }
@@ -104,7 +110,12 @@ export const getTypeFromCollectionTarget = (type, description) => {
     Password: 'password',
     File: 'file',
     LongText: 'textarea',
-    Boolean: 'boolean'
+    Boolean: 'boolean',
+  }
+
+
+  if (description === 'progress_bar') {
+    return 'progress_bar'
   }
 
   if (baseTypes[type]) return baseTypes[type]
@@ -121,6 +132,9 @@ export const getTypeFromCollectionTarget = (type, description) => {
     return 'OneToMany'
   }
 
+
+
+
   return type.charAt(0).toUpperCase() + type.slice(1)
 }
 
@@ -135,7 +149,8 @@ const styleMap = {
   button,
   multiple_select,
   tabs,
-  text_content
+  text_content,
+  progress_bar
 }
 
 export const DefaultStyle = type => {
@@ -267,12 +282,12 @@ export const getMaxLength = (value, maxLength) => {
   if (maxLength) {
     return value.slice(0, maxLength) + '...'
   }
-  
+
   return value
 }
 
 
-export const borderTemplates = [ 
+export const borderTemplates = [
   {
     id: 'border1',
     name: 'حدود مزخرفة هندسية',
@@ -458,6 +473,10 @@ export const borderTemplates = [
 
 export const appViewOptions = [
   {
+    name_ar: 'جميع العروض',
+    name_en: 'All',
+    id: 4
+  }, {
     name_ar: 'منشئ النماذج',
     name_en: 'Form Builder',
     id: 1
@@ -471,5 +490,6 @@ export const appViewOptions = [
     name_ar: 'عرض كمستخدم',
     name_en: 'View as User',
     id: 3
-  }
+  },
+
 ]

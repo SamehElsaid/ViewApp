@@ -16,7 +16,7 @@ function TableControl({ data, onChange }) {
   
   useEffect(() => {
     setLoading(true)
-    if (data.collectionId) {
+    if (data.collectionId && data.collectionName) {
       axiosGet(
         `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${
           paginationModel.pageSize

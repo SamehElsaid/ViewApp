@@ -7,20 +7,24 @@ import { Icon } from '@iconify/react'
 import { FaEyeSlash } from 'react-icons/fa'
 import NewElement from '../NewElement'
 import { toast } from 'react-toastify'
-import {  replacePlaceholders, VaildId } from 'src/Components/_Shared'
+import { getData, replacePlaceholders, VaildId } from 'src/Components/_Shared'
 import { IoMdInformationCircleOutline } from 'react-icons/io'
 import { formatDate } from '@fullcalendar/core'
 import ViewInput from '../FiledesComponent/ViewInput'
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import { decryptData } from 'src/Components/encryption'
+import { useSelector } from 'react-redux'
 import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 
 export default function DisplayField({
+  tabsData,
   onChangeData,
-  advancedEdit,
+  advancedEdit, 
+  editMode,
   from,
   input,
+  activeTab,
   dirtyProps,
   dataRefWithCollectionId,
   data,
@@ -36,6 +40,7 @@ export default function DisplayField({
   readOnly,
   findValue,
   roles,
+  setActiveTab,
   layout,
   design,
   triggerData,
@@ -45,10 +50,9 @@ export default function DisplayField({
   hiddenLabel,
   loadingBtn,
   disabled,
-  allFields = []
+  allFields = [],
+  sortedLoopWithoutTabs = []
 }) {
-
-  console.log(findValue,input.key, 'findValue')
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [dirty, setDirty] = useState(dirtyProps)
@@ -63,10 +67,10 @@ export default function DisplayField({
   const [isOpen, setIsOpen] = useState(false)
   const [regex, setRegex] = useState(roles?.regex?.regex)
   const [isDisable, setIsDisable] = useState(disabled ? 'disabled' : roles?.onMount?.type == 'hide' ? 'hidden' : null)
+  const getApiData = useSelector(rx => rx.api.data)
   const [lastValue, setLastValue] = useState(null)
   const [refreshHeight, setRefreshHeight] = useState(0)
 
-  console.log(regex, 'input')
 
   useEffect(() => {
     if (isDisabled) {
@@ -1172,25 +1176,30 @@ export default function DisplayField({
         }
 
         if (roles?.onMount?.value) {
-        
-          let newValue = roles?.onMount?.value
-          const searchParams = new URLSearchParams(window.location.search)
+          if (roles?.api_url) {
+            const items = getApiData.find(item => item.link === roles.api_url)?.data
+            const valueFromApi = getData(items, roles?.onMount?.value, '')
+            setValue(valueFromApi)
+          } else {
+            let newValue = roles?.onMount?.value
+            const searchParams = new URLSearchParams(window.location.search)
 
-          if (input?.type == 'Date') {
-            const valueDate = new Date(roles?.onMount?.value)
+            if (input?.type == 'Date') {
+              const valueDate = new Date(roles?.onMount?.value)
 
-            if (isNaN(valueDate.getTime())) {
-              // invalid date
-              newValue = new Date()
-            } else {
-              newValue = valueDate
+              if (isNaN(valueDate.getTime())) {
+                // invalid date
+                newValue = new Date()
+              } else {
+                newValue = valueDate
+              }
             }
+            if (newValue.startsWith('{') && newValue.endsWith('}')) {
+              const key = newValue.slice(1, -1)
+              newValue = searchParams.get(key) || ''
+            }
+            setValue(newValue)
           }
-          if (newValue.startsWith('{') && newValue.endsWith('}')) {
-            const key = newValue.slice(1, -1)
-            newValue = searchParams.get(key) || ''
-          }
-          setValue(newValue)
         }
         setReloadValue(prev => prev + 1)
       }, 0)
@@ -1247,7 +1256,6 @@ export default function DisplayField({
     }
 
     if (dirty) {
-      console.log(e?.target?.value, 'e?.target?.value');
       if (validations.Required && e?.target?.value?.length == 0 && isTypeNew) {
         return setError(messages.required)
       }
@@ -1256,16 +1264,12 @@ export default function DisplayField({
         const cleanedRegex = regex.replace(/^"(.*)"$/, '$1')
         const regexMatch = cleanedRegex.match(/^\/(.*)\/([gimuy]*)$/)
         if (!regexMatch) {
-          console.error('Invalid regex format:', cleanedRegex)
-          console.log(regex, 'regex');
 
           return
         }
         const [, pattern, flags] = regexMatch
         const regExp = new RegExp(pattern, flags)
-        console.log(regExp.test(e?.target?.value), 'regExp');
         if (!regExp.test(e?.target?.value)) {
-          console.log("sdad");
 
           return setError(locale == 'ar' ? roles?.regex?.message_ar : roles?.regex?.message_en)
         }
@@ -1409,14 +1413,14 @@ export default function DisplayField({
   }, [refError, input, value, validations, setTriggerData])
 
   useEffect(() => {
-    if (!input?.getDataForm || !input?.options?.source) {
+    if (!input?.getDataForm || (!input?.options?.source && !input?.staticData)) {
       setSelectedOptions([])
       setOldSelectedOptions([])
       setLoading(false)
 
       return
     }
-    if (input?.getDataForm === 'collection') {
+    if (input?.getDataForm === 'collection' && input?.options?.source) {
       axiosGet(`generic-entities/${input?.options?.source}`)
         .then(res => {
           if (res.status) {
@@ -1430,10 +1434,12 @@ export default function DisplayField({
     }
 
     if (input?.getDataForm === 'static') {
-      // setSelectedOptions(input?.staticData || [])
-      // setOldSelectedOptions(input?.staticData || [])
+      console.log(input?.staticData,"input?.staticData")
+      setSelectedOptions(input?.staticData || [])
+      setOldSelectedOptions(input?.staticData || [])
     }
   }, [input])
+
 
   const [queryParams, setQueryParams] = useState(null)
 
@@ -1628,35 +1634,13 @@ export default function DisplayField({
   const hoverText = roles?.hover?.hover_ar || roles?.hover?.hover_en
   const hintText = roles?.hint?.hint_ar || roles?.hint?.hint_en
 
-  const shouldHideForTab = (() => {
-    try {
-      const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
-      if (tabsElement && input.type !== 'new_element') {
-        const assignedIndex = Array.isArray(tabsElement.data)
-          ? tabsElement.data.findIndex(t => {
-            const fieldId = input.type === 'new_element' ? input.id : input.key
-
-            return Array.isArray(t.fields) && t.fields.includes(fieldId)
-          })
-          : -1
-        if (assignedIndex > -1) {
-          const activeIndex = Number(dataRef?.current?.[tabsElement.id])
-          if (!Number.isNaN(activeIndex) && activeIndex !== assignedIndex) {
-            return true
-          }
-        }
-      }
-    } catch (_) { }
-
-    return false
-  })()
+ 
 
   const requiredMessage =
     errorView === 'This field is required'
       ? roles?.required?.requiredMessageEn || roles?.required?.requiredMessageAr || ''
       : ''
 
-  console.log(roles?.trigger?.filterWithAPIValue)
 
   return (
     <div
@@ -1666,7 +1650,6 @@ export default function DisplayField({
           ? `s${input.id}`
           : VaildId(input.key.trim() + input.nameEn.trim().replaceAll('.', ''))
       }
-      style={{ display: shouldHideForTab ? 'none' : undefined }}
     >
       <style>{`#${input.type == 'new_element'
         ? `s${input.id}`
@@ -1702,30 +1685,7 @@ export default function DisplayField({
         </div>
         <div
           className='relative'
-          style={{
-            display: (() => {
-              try {
-                const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
-                if (tabsElement && input.type !== 'new_element') {
-                  const assignedIndex = Array.isArray(tabsElement.data)
-                    ? tabsElement.data.findIndex(t => {
-                      const fieldId = input.type === 'new_element' ? input.id : input.key
 
-                      return Array.isArray(t.fields) && t.fields.includes(fieldId)
-                    })
-                    : -1
-                  if (assignedIndex > -1) {
-                    const activeIndex = Number(dataRef?.current?.[tabsElement.id])
-                    if (!Number.isNaN(activeIndex) && activeIndex !== assignedIndex) {
-                      return 'none'
-                    }
-                  }
-                }
-              } catch (_) { }
-
-              return 'flex'
-            })()
-          }}
         >
           {isDisable == 'hidden' && readOnly && (
             <div className='flex absolute inset-0 z-10 justify-center items-center text-sm text-white rounded-md bg-main-color/20'>
@@ -1737,7 +1697,12 @@ export default function DisplayField({
 
           {input.type == 'new_element' ? (
             <NewElement
+              tabsData={tabsData}
               allFields={allFields}
+              editMode={editMode}
+              sortedLoopWithoutTabs={sortedLoopWithoutTabs || []}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
               typeOfSubmit={data?.type_of_sumbit}
               handleSubmit={handleSubmit}
               loadingBtn={loadingBtn}

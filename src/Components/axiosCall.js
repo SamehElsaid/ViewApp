@@ -3,11 +3,11 @@ import Cookies from 'js-cookie'
 import { decryptData } from './encryption'
 import { toast } from 'react-toastify'
 
-// const staticToken = `
-// Bearer eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwidHlwIjoiYXQrand0IiwiY3R5IjoiSldUIn0.x-vWqiBZuPwVugTbZyf3v_tBsq5eRF96WKYViLBzXBFw1m-SG4ElwKx57PTuQOr41ay7PMlh7xpkhXYu0Jt5PHuRtmNT3EOH.yCrtquRptQOfTTItCQXQ9g.uUeuUY7gZgHpkQt7OMdge3bx5_FiaiAozCW_qF1Z_KUuH4xlvCokuBXDVScWupBjEhz6I5QVkwKZICfz44z47yrpVv4aWSKkhSZIh4jSchelZ0-81WPoIIjQnUD5mQCtqgEE-ZP6E6KDmY1FbtMLrF4oZEL94EFKSq60HknYRRvaYfGmhHGqFzzgjcnMAiX8T3kkiSIiw3h0NxSvYr6eFCYKqbiY6-X2M3fhKVDV3c6F9pzEtQT27q05Wamogu413C7HvWJAeAmlB1yQl-9brZ2qsBXzo-MFnEfPZoegL5hm3zjMcjxwSxLkJhPxu_liDEzEkGOmmHgJSJfE4t-q4_xMuYVFpQsscvHeYmu8gkvUCUAU7dsSFx3wbVpjqj2gEyKiC17GR5j3h3pH8RA1LZ94niPoQaiteDr0BFF0gjl-XspTG9sASZu4ma9qxKjKuMlcP7M--cJHrXO5Ngo5BtRRylxZhAtxek3US_6X5LNSJLsoynuGdyWzkZVcHiL8ke4NBPt3ukqNsuRRYO4KOF6pU1cIApnn_degWqlzW4l2rb4WmjJyybOYq1vO19jSqgaqzwiMhOSxXAqvg3UpI1DENhX_lMPH4jFg8c9QtWbfFwRShr8wcLJAAkeURv_zbbi5cIl653sA-1-rIrirn4TiAXU8KForCBUzdjYDkiyynVadZ3uGHcTjAIFKdfF46QbTVctrpoAsDVqogVNp9zvbYbsdcK86gEFgw3yhvklkm9DXgZfW8VoZVeC_StDXwflznlryPU85H0DT5SpwtWTUTRAAXNDzcto8OM1rB8S8S0qjMs00hA2mh1EBDrqyixMv6TPm4kUIjZqrrN_5PXqCiyN_z2c4fkvV6o5NOurONkZR3gcg_2T6hf_Q_DKzU5XUt1sbJbE0c3kWL_iPt6kBxjoP1mmKhY7SmLEo34y56qHpaGda8zMNoegDnqOyDjx4J3Hf3VjmcsIzazJ0w8xIpp_wtWrC66ToCOec1q6vRzPDDu0imZhjBsYGQAlOTpWNiAMvBEr-ESNbF_h6_2p3jqBjkjqXWtuqRS53dfQxgAkvB_pBP1bHba68ohiOZH5Mo_nmTMHtBk4cYu27PGD3HjFMf4J0LdXRRNE2GPJO0US6l9zSwcKN5BAvxFqlG4FQXylHKPTEVWxawpmZeU6UxOav0aQWbSKR91J9_kdiC3LWhp9nc73EJNAUp_30KrmZAzk4otVDA2Vde8qPoik-10HVuKQgAbD5UVULhQVI-tHuNawQxvLgeWca4hYrqdv3Hyg_5lwWC5Q0nZpn0usewua5FbT8TecelFcTWH65LUc1RelRkf8lOiYu_nAMHZd2BILv_ALvhDK8i8KqGhC98RLIc0wWIAD842G_pql0H2Nh7YptZX1c6iWQDfzzaO_DeZ1d3k9-0NNtOpOjb7NorCHIM62rvVBGeP3FDyGTrDVC1PZMKSFNVua2144hTKqzzmI2dKs_shwJz3TotZ-5ReyCgRVEIdy7TQUlNc2OMK4qmUpWcHe997H8s0UhZINO_SdnZX5GMf4gOGF6MEdUIQE8dZLtGwIExxVUh6VWlGoFkUz4TMx9qTZa8GPtVeNhgblt2oarGKobTnqgQJ4Mh-TV4h0LuDXzlHidhaLNdCnoJq3gKuZnKgQsi1hGwQMxdtUFuj4tnvtlAwxV-g.34SctE98E_-gF5ssKPu7H72PIpLiFjUFLq12YXv7kj8`
+const staticToken = `Bearer eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwidHlwIjoiYXQrand0IiwiY3R5IjoiSldUIn0.s5w4sN-Nv-vyhNNfX9wFIaAZW4G5yW_bUoJA9pBW6vnIJ7ppYtin6Se0qO0bAQvZENvMWMVDl3QjSvkJXBLAoAT06tIL3mLf.IXHBcpoQxqecNHcUhS23lQ.kOksuZ4ho_cviKJ_xKWcAif6lbjWRVH6acqkOKWxBL-n5otDDGEhNkmyDVX1ukw05ysWCVQITFJANa2l0f5SubB0nEyd_GSkkZ9COxfmJWNjlDronQJZmW55-LXCe3ZhRa9WI8lvumlw44ylgfysdhJL9whP4jgVV8hUxJUjr2Je4UoPRf-g_NO5DpAA47oCeuxm-i9hXDCe7MAtQLiAhtsFxo7-SKpiNE99EO_JoAEgagEnktgw-wyVXmRTkqe1_gOm80uh0Y0nssV7HZsue2Zfr3kgGA9WYtBB4s1XhCRxK4YQVrxrSJ9nJxjTaxV5lhipKsSseZiY0LvfEhJxTuSteep9CmgRbVZdTtNRwUoG0izk99SzX5M-KfxO8ISq7EMcvM_jcNZRUGP9EwC6xu2f-HfUtiMB8-Ikb3XaWwaGtlHBK7YVxWi1kKKCNV-QBycQB5Hme7xtmMaUImN6dqPju2Turj6-R7E_sDQ0l2gCB8tE-QmtkFoG0OzJ7-b47GtHf-H3gKFBCfk0NSB1zmXH29-Jm5EgUnLMbHcnSFyIfIaaXuoIp13e2wQ7C5jHCvmtH4HFWeCSm8kgiLxTRnYHYeYaX2PElMbd7J9Al60tmtZ6i7HkdLyK1S9uB2tFjT6CfQajzUvkVwJe-5khQyyMHQ0jD1GIuWxAIrhFQigjfcMlwcqArzObwaEvgrAbY0qsO4TXe8j4yBz5EZy0vkMydDkhv8TmDqM8nG4Fx2OZgKTV74xY8cQeEHyXmHCLo7Y9EV7ZTBN151jKusnfiMOQUJ2_xR-vAjSurjL53MZhRuPIk2L1LhqZDgXQ_9WvZX2VIEDjyhspTrcMqCcMatxE1IY4-JCR21JahJQEA4wezZRojSqAC46F9Y1fPK9hXRa2YO3hX6uVMyWFL8nmdBIRvyCOCqv0s2ZZLoVpkVxiZbox_EeEO1C6Sv0JtzE7Myd7biC2PH_t0G0Vl64CtJWYBM7vVW2I9_ui-OgWvEJQMM3seLBaty_f_cJqRxGB7GaDMPyKWV0WWQFdeTJQAP3xzFyyeLI7yA9NMsEhfxRC5xyp71wujWk7lGZ6TIczvYdsj21mOxaJ79_SAvGBOMVHmnlGMe5HsYvV1RTpALMlBLrBoTuDdTjSdEyKdkrZpHz0wEhGytL6zJFhe2tAxIuuH3v4XW-6NibCG8JWkzkl4qmKYio7ihQfrHhcc23d_7GADZHW1eMUNJqjLdGjzxi6JRLm0Hy2x9UW4aCkDaOJ0tSJrxmJSI9xA0aIkCbqNLlAEhae2rcAHwWjOEiMpAXNq3I6UKZIsBkJyPkokn5A5rfkfZ-RUo-dDKybzFYw3KVz4k2rUbv9_9rNW17RrJyu4UOpEltaGIlPHzKdWB7sSvYTdwLN0H2SOfnpa45L7q0oNTpzzYXYo8YGmd_tnaLDiYACC7lOwBvZU-SxIYz3N7fCZLZmmDjxFs7gdlGoV_UrtcigQ0KXQY2FuuidH0og251vQRGs9jvt8kv7NG8C19D3SnWYrSzItlvc38UZ.PYzs3rFVxRQnoB88n5OrjzauchEs2tYkFlaTu-1i9-A`
 
 export const axiosGet = async (url, locale, token, params = {}, close) => {
   const authToken = Cookies.get('sub')
+  
 
   try {
     const header = {
@@ -89,7 +89,6 @@ export const axiosPost = async (url, locale, data, file, close) => {
 
     return { ...fetchData.data, status: true }
   } catch (err) {
-    console.log('err222', err)
 
     return {
       status: false,
@@ -163,9 +162,9 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
   try {
     const res = await axios.get(
       `${process.env.API_URL}/auth/get_url_patterns/?file_name=${decryptData(authToken).username}/` +
-      fileNew.name +
-      '.' +
-      fileNew.type.split('/')[1],
+        fileNew.name +
+        '.' +
+        fileNew.type.split('/')[1],
       header
     )
 
@@ -177,13 +176,13 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
         onUploadProgress: mult
           ? onProgress
           : progressEvent => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            if (onProgress) {
-              onProgress(percentCompleted)
-            }
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              if (onProgress) {
+                onProgress(percentCompleted)
+              }
 
-            return percentCompleted
-          }
+              return percentCompleted
+            }
       })
 
       return {

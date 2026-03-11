@@ -171,6 +171,9 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig, type }) {
         body,
         viewAsInput
       }
+      console.log(config,"config");
+      
+
       onSave?.(config)
       onClose?.()
       resetForm()
@@ -182,8 +185,10 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig, type }) {
   useEffect(() => {
     if (dataSourceType === 'collection' && open && open.source) {
       const loadingToast = toast.loading(messages.loading)
+      console.log(open.source);
       axiosGet(`collections/get-by-key?key=${open.source}`, locale).then(res => {
-        if (res.status) {
+        console.log(res);
+        if (res.status && res?.isSuccess) {
           axiosGet(`collection-fields/get?CollectionId=${res.data.id}`, locale)
             .then(res => {
               if (res.status) {
@@ -233,9 +238,7 @@ function AssociationsSetup({ open, onClose, onSave, initialConfig, type }) {
               {open?.field?.type === 'ManyToMany' && open.type !== 'normal' && (
                 <ToggleButton value='checkbox'>checkbox</ToggleButton>
               )}
-              {open?.field?.type === 'ManyToMany' && open.type !== 'normal' && (
-                <ToggleButton value='Table'>Table</ToggleButton>
-              )}
+         
               {(open?.field?.type !== 'ManyToMany' || open.type === 'normal') && (
                 <ToggleButton value='radio'>radio</ToggleButton>
               )}

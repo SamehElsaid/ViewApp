@@ -79,7 +79,6 @@ export default function Background({ data, onChange, buttonRef }) {
 
   const handleDownloadImage = () => {
     const url = resolveImageUrl(data?.backgroundImage)
-    console.log(url)
     if (!url) return
     const link = document.createElement('a')
     link.href = url

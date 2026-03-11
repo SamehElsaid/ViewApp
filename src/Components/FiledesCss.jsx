@@ -485,3 +485,38 @@ export const checkbox = `
       border-color: #191919;
     }
 `
+
+export const progress_bar = `
+/* The background track */
+.progress-container {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 25px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+  overflow: hidden; /* Keeps the bar inside the rounded corners */
+  margin: 20px 0;
+}
+
+/* The moving bar */
+.progress-bar {
+  width: 0%; /* Change this to control progress */
+  height: 30px;
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  transition: width 0.5s ease-in-out;
+  box-shadow: 0 3px 10px rgba(79, 172, 254, 0.4);
+}
+
+/* The percentage text */
+.progress-text {
+  color: white;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 14px;
+  margin-right: 15px;
+}
+
+`

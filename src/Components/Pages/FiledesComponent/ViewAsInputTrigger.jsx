@@ -15,9 +15,7 @@ function ViewAsInputTrigger({ collectionInput, viewAsInput, setRefreshHeight, va
         if (res.status) {
           axiosGet(`collection-fields/get?CollectionId=${res.data.id}`, locale).then(res => {
             if (res.status) {
-              console.log(res.data, 'res.data')
               const filterFields = res.data.filter(field => viewAsInput?.includes(field?.key))
-              console.log(filterFields, 'filterFields')
               setGetFields(filterFields)
               setRefreshHeight(prev => prev + 1)
             }
@@ -28,11 +26,11 @@ function ViewAsInputTrigger({ collectionInput, viewAsInput, setRefreshHeight, va
   }, [collectionInput, viewAsInput, locale, setRefreshHeight])
 
   useEffect(() => {
-    if (value) {
+    if (value && collectionInput) {
+      
       axiosGet(`/generic-entities/${collectionInput}/${value}`, locale).then(res => {
         if (res.status) {
           // setValue(res.data)
-          console.log(res?.data?.entities?.[0], 'res.data')
           setEntitiesData(res?.data?.entities?.[0])
         }
       })

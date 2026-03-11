@@ -56,6 +56,7 @@ const ViewInput = ({
   setRedirect,
   triggerData
 }) => {
+
   const [isOpen, setIsOpen] = useState(false)
 
   const handleKeyDown = event => {
@@ -77,31 +78,36 @@ const ViewInput = ({
     if (input?.kind == 'Table') {
       axiosGet(`/collections/get-by-key?key=${input?.options?.source}`)
         .then(res => {
-          const selected = JSON.parse(input?.descriptionEn) || []
-          setCollectionData(prev => ({ ...prev, data: res.data }))
-          const findDataFromAllData = data[input.key]
+          if (res.status) {
 
-          setTableData({
-            ...findDataFromAllData,
-            collectionId: res.data.id,
-            collectionName: res.data.key,
-
-            delete: true,
-            edit: true,
-            kind: 'form-table',
-            selected: selected
-          })
+            const selected = JSON.parse(input?.descriptionEn) || []
+            setCollectionData(prev => ({ ...prev, data: res.data }))
+            const findDataFromAllData = data[input.key]
+            setTableData({
+              ...findDataFromAllData,
+              collectionId: res.data.id,
+              collectionName: res.data.key,
+              showOldData: roles?.showOldData,
+              delete: true,
+              edit: true,
+              kind: 'form-table',
+              selected: selected
+            })
+          }
         })
         .finally(() => {
           setCollectionData(prev => ({ ...prev, loading: false }))
         })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input])
+  }, [input?.key, input?.kind])
 
   if (input?.kind == 'select') {
     const label = JSON.parse(input?.descriptionEn) || []
     const valueSend = JSON.parse(input?.selectedValueSend) || []
+
+
+    console.log(label, input, selectedOptions, "selectedOptions")
 
     return (
       <div id='custom-select'>
@@ -242,6 +248,31 @@ const ViewInput = ({
     )
   }
 
+  if (input.type == 'Number' && input.descriptionAr == 'progress_bar') {
+    const progress = Math.min(100, Math.max(0, Number(value ?? 0)))
+
+    const segments = (roles?.progressBarSegments ?? [])
+      .map(s => ({
+        ...s,
+        percentage: Number(s.percentage)
+      }))
+      .sort((a, b) => a.percentage - b.percentage)
+
+    const currentSegment = segments
+      .filter(segment => progress >= segment.percentage)
+      .pop()
+
+    console.log(currentSegment)
+
+    return (
+      <div className="progress-container" style={{ width: '100%' }}>
+        <div className="progress-bar" id="myBar" style={{ width: `${progress}%`, background: currentSegment?.backgroundColor ?? 'linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);' }}>
+          <span className="progress-text">{progress}%</span>
+        </div>
+      </div>
+    )
+  }
+
   if (
     input.type == 'SingleText' ||
     input.type == 'Number' ||
@@ -359,122 +390,95 @@ const ViewInput = ({
 
   if (input.type == 'File') {
     return from != 'table' ? (
-      (isDisable === 'disabled' && value) ? <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
-        <div className='flex gap-3 items-center file-name-item'>
-          <span className='flex gap-1 items-center file-name overflow-hidden w-[calc(100%-110px)]'>
-            <BsPaperclip className='text-xl text-main-color' />
-            <span className='flex-1'>{fileName || value}</span>
-          </span>
-          <div className='flex gap-2 items-center'>
-            <a
-              href={process.env.API_URL + "/file/download/" + value}
-              target='_blank'
-              rel='noreferrer'
-              className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-            >
-              <Icon icon='tabler:eye' fontSize='1.25rem' />
-            </a>
-            <a
-              href={process.env.API_URL + "/file/download/" + value}
-              download
-              target='_blank'
-              className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-            >
-              <Icon icon='tabler:download' fontSize='1.25rem' />
-            </a>
+      <div className='px-4 w-full relative'>
+        {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>}
+        <div id='file-upload-container'>
+          <label htmlFor={input.key} id='file-upload-label'>
+            <div id='label-color'>{locale == 'ar' ? input.nameAr : input.nameEn}</div>
+            <div id='file-upload-content'>
+              <svg
+                id='file-upload-icon'
+                aria-hidden='true'
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 20 16'
+              >
+                <path
+                  stroke='currentColor'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2'
+                />
+              </svg>
 
-          </div>
-        </div>
-      </div> :
-        <div className='px-4 w-full relative'>
-          {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>}
-          <div id='file-upload-container'>
-            <label htmlFor={input.key} id='file-upload-label'>
-              <div id='label-color'>{locale == 'ar' ? input.nameAr : input.nameEn}</div>
-              <div id='file-upload-content'>
-                <svg
-                  id='file-upload-icon'
-                  aria-hidden='true'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 20 16'
-                >
-                  <path
-                    stroke='currentColor'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2'
-                  />
-                </svg>
-
-                <p id='file-upload-text'>{locale == 'ar' ? ' اسحب وأفلت' : 'Drag and Drop'}</p>
-                <p id='file-upload-subtext'>
-                  {input?.options?.uiSchema?.xComponentProps?.fileTypes?.length > 0
-                    ? input.options.uiSchema.xComponentProps.fileTypes.join(', ').toUpperCase()
-                    : locale == 'ar'
-                      ? 'SVG, PNG, JPG أو GIF (MAX. 800x400px)'
-                      : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
-                </p>
+              <p id='file-upload-text'>{locale == 'ar' ? ' اسحب وأفلت' : 'Drag and Drop'}</p>
+              <p id='file-upload-subtext'>
+                {input?.options?.uiSchema?.xComponentProps?.fileTypes?.length > 0
+                  ? input.options.uiSchema.xComponentProps.fileTypes.join(', ').toUpperCase()
+                  : locale == 'ar'
+                    ? 'SVG, PNG, JPG أو GIF (MAX. 800x400px)'
+                    : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
+              </p>
 
 
-                {value && (
-                  <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
-                    <div className='flex gap-3 items-center file-name-item'>
-                      <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
-                        <BsPaperclip className='text-xl text-main-color' />
-                        <span className='flex-1'>{fileName}</span>
-                      </span>
-                      <div className='flex gap-2 items-center'>
-                        <a
-                          href={process.env.API_URL + "/file/download/" + value}
-                          target='_blank'
-                          rel='noreferrer'
-                          className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                        >
-                          <Icon icon='tabler:eye' fontSize='1.25rem' />
-                        </a>
-                        <a
-                          href={process.env.API_URL + "/file/download/" + value}
-                          download
-                          target='_blank'
-                          className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                        >
-                          <Icon icon='tabler:download' fontSize='1.25rem' />
-                        </a>
-                        <button
-                          type='button'
-                          className='delete-button w-[25px] h-[25px] bg-red-500/70 rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                          onClick={e => handleDelete(e)}
-                        >
-                          <BsTrash />
-                        </button>
-                      </div>
+              {value && (
+                <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
+                  <div className='flex gap-3 items-center file-name-item'>
+                    <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
+                      <BsPaperclip className='text-xl text-main-color' />
+                      <span className='flex-1'>{fileName}</span>
+                    </span>
+                    <div className='flex gap-2 items-center'>
+                      <a
+                        href={process.env.API_URL + "/file/download/" + value}
+                        target='_blank'
+                        rel='noreferrer'
+                        className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                      >
+                        <Icon icon='tabler:eye' fontSize='1.25rem' />
+                      </a>
+                      <a
+                        href={process.env.API_URL + "/file/download/" + value}
+                        download
+                        target='_blank'
+                        className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                      >
+                        <Icon icon='tabler:download' fontSize='1.25rem' />
+                      </a>
+                      <button
+                        type='button'
+                        className='delete-button w-[25px] h-[25px] bg-red-500/70 rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                        onClick={e => handleDelete(e)}
+                      >
+                        <BsTrash />
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-              <input
-                type='file'
-                disabled={isDisable == 'disabled'}
-                id={input.key}
-                onChange={onChangeFile}
-                onBlur={e => {
-                  if (onBlur) {
-                    const evaluatedFn = eval('(' + onBlur + ')')
+                </div>
+              )}
+            </div>
+            <input
+              type='file'
+              disabled={isDisable == 'disabled'}
+              id={input.key}
+              onChange={onChangeFile}
+              onBlur={e => {
+                if (onBlur) {
+                  const evaluatedFn = eval('(' + onBlur + ')')
 
-                    evaluatedFn(e)
-                  }
-                }}
-                accept={
-                  input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
-                    ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
-                    : undefined
+                  evaluatedFn(e)
                 }
-              />
-            </label>
-          </div>
+              }}
+              accept={
+                input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
+                  ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
+                  : undefined
+              }
+            />
+          </label>
         </div>
+      </div>
     ) : (
       <div className='flex gap-2 items-center relative'>
         <a
@@ -721,9 +725,18 @@ const ViewInput = ({
       })
     }
 
+
+
+
+    console.log(tableData, "tableData");
+
+
+
+
     return (
       <div className='w-full '>
         <TableView
+          setValue={onChange}
           input={input}
           data={tableData}
           reloadHight={setTriggerData}

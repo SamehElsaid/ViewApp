@@ -51,7 +51,9 @@ function ViewInputInTable({
     }
   }
 
-  console.log(columnId);
+
+  
+
 
 
   return (
@@ -59,9 +61,7 @@ function ViewInputInTable({
       className='relative w-full'
       onBlur={() => {
 
-        console.log(dataRef.current, 'dataRef.current');
         setChangedValue(prev => {
-          console.log(prev, 'prev');
           const newPrev = [...prev]
           const findWithId = newPrev.find(e => e.Id === row.Id)
           if (findWithId) {
@@ -72,7 +72,7 @@ function ViewInputInTable({
 
           return newPrev
         })
-        const newPrev = [...data.newRows]
+        const newPrev = [...(data?.newRows || [])]
         const index = newPrev.findIndex(e => e.Id === row.Id)
 
         if (index !== -1) {
@@ -88,7 +88,6 @@ function ViewInputInTable({
 
       }}
     >
-      {console.log(formTable, 'ele')}
       {!readOnly && formTable === 'table' && (
         <div
           onContextMenu={e => {
@@ -108,9 +107,10 @@ function ViewInputInTable({
             }}
             onClick={e => {
               e.stopPropagation()
+              
               setOpen({ ...ele, rowId: columnId })
             }}
-            className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
+            className='w-[30px] || h-[30px] z-20 relative hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
           >
             <IoMdSettings />
           </button>
@@ -119,7 +119,7 @@ function ViewInputInTable({
           input={ele}
           key={row.index}
           findValue={row?.[ele?.key]}
-          design={getDesign(ele.id, ele)}
+          design={getDesign(ele.key, ele)}
           readOnly={disabled}
           disabledBtn={!data.type_of_sumbit || (data.type_of_sumbit === 'api' && !data.submitApi)}
           refError={refError}

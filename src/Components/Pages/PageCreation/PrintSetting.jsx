@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, Fragment } from 'react'
 import { UnmountClosed } from 'react-collapse'
 import {
   Box,
@@ -21,58 +21,197 @@ import {
 import { useIntl } from 'react-intl'
 import CodeMirror from '@uiw/react-codemirror'
 import { css } from '@codemirror/lang-css'
-import GridLayout, { WidthProvider } from 'react-grid-layout'
-import 'react-grid-layout/css/styles.css'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor } from '@dnd-kit/core'
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import Editor from 'src/Components/Editor/Editor'
 import ShowEditor from 'src/Components/Editor/ShowEditor'
+import HtmlEditor from 'src/Components/FormCreation/PageCreation/HtmlEditor'
 import { borderTemplates } from 'src/Components/_Shared'
 
-const ResponsiveGridLayout = WidthProvider(GridLayout)
+// عرض عنصر input فقط (بدون تحديث ارتفاع)
+const RenderPrintInputItem = ({ field }) => (
+  <div>
+    <label style={{ display: 'block', marginBottom: '8px' }}>
+      {field.nameAr || field.nameEn || field.key}:
+    </label>
+    <input
+      type='text'
+      placeholder='Enter value...'
+      readOnly
+      style={{
+        width: '100%',
+        padding: '10px 14px',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        fontSize: '14px'
+      }}
+    />
+  </div>
+)
 
-// Component منفصل لعنصر الـ input في الترتيب - لكن يجب استخدامه مباشرة في map
-const RenderPrintInputItem = ({ field, layoutItem, setInputsLayout }) => {
-  const ref = useRef(null)
+// عنصر قابل للسحب مع تحكم العرض والارتفاع (نفس فكرة ViewCollection: Width / Height)
+function SortablePrintInputItem({ field, layoutItem, layout, setInputsLayout, locale }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: layoutItem.i
+  })
 
-  useEffect(() => {
-    setTimeout(() => {
-      setInputsLayout(prev => {
-        return prev.map(item => {
-          if (item.i === layoutItem.i) {
-            return { ...item, h: ref.current.scrollHeight / 70 }
-          }
+  const currentLayoutItem = layout.find(l => l.i === layoutItem.i) || layoutItem
+  const currentWidth = currentLayoutItem?.w ?? 12
+  const currentHeight = currentLayoutItem?.h ?? (field?.type === 'LongText' ? 1.8 : 1)
 
-          return item
-        })
-      })
-    }, 100)
-  }, [ref, layoutItem.i, setInputsLayout])
+  const handleWidthChange = delta => {
+    const newWidth = Math.max(1, Math.min(12, currentWidth + delta))
+    setInputsLayout(prev =>
+      prev.map(item => (item.i === layoutItem.i ? { ...item, w: newWidth } : item))
+    )
+  }
 
+  const handleHeightChange = delta => {
+    const newHeight = Math.max(0.5, Math.min(10, Math.round((currentHeight + delta) * 10) / 10))
+    setInputsLayout(prev =>
+      prev.map(item => (item.i === layoutItem.i ? { ...item, h: newHeight } : item))
+    )
+  }
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    gridColumn: `span ${currentWidth}`,
+    minHeight: `${currentHeight * 70}px`
+  }
+
+  const isAr = locale === 'ar'
+  const widthLabel = isAr ? 'العرض' : 'Width'
+  const heightLabel = isAr ? 'الارتفاع' : 'Height'
 
   return (
     <div
-      ref={ref}>
-      <label style={{ display: 'block', marginBottom: '8px' }}>
-        {field.nameAr || field.nameEn || field.key}:
-      </label>
-      <input
-        type='text'
-        placeholder='Enter value...'
-        readOnly
-        style={{
-          width: '100%',
-          padding: '10px 14px',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          fontSize: '14px'
+      ref={setNodeRef}
+      {...attributes}
+      style={{
+        ...style,
+        border: '1px solid',
+        borderColor: '#e0e0e0',
+        borderRadius: '4px',
+        padding: '16px',
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        position: 'relative'
+      }}
+    >
+      {/* تحكم العرض والارتفاع - نفس ViewCollection */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 20,
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+          alignItems: 'flex-start',
+          gap: 1,
+          border: '1px dashed',
+          borderColor: 'primary.main',
+          borderRadius: 1,
+          p: 1,
+          pointerEvents: 'none'
         }}
-      />
+      >
+        <Box sx={{ pointerEvents: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {/* Width */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'white', borderRadius: 1, border: '1px solid', borderColor: 'primary.main', overflow: 'hidden' }}>
+            <Typography variant='caption' sx={{ px: 1, py: 0.5, textAlign: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+              {widthLabel}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button
+                size='small'
+                sx={{ minWidth: 28, height: 28, p: 0 }}
+                onClick={e => { e.stopPropagation(); handleWidthChange(-1) }}
+                title={isAr ? 'تقليل العرض' : 'Decrease Width'}
+              >
+                -
+              </Button>
+              <Typography variant='caption' sx={{ px: 1, minWidth: 28, textAlign: 'center' }}>
+                {currentWidth}
+              </Typography>
+              <Button
+                size='small'
+                sx={{ minWidth: 28, height: 28, p: 0 }}
+                onClick={e => { e.stopPropagation(); handleWidthChange(1) }}
+                title={isAr ? 'زيادة العرض' : 'Increase Width'}
+              >
+                +
+              </Button>
+            </Box>
+          </Box>
+          {/* Height */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', bgcolor: 'white', borderRadius: 1, border: '1px solid', borderColor: 'primary.main', overflow: 'hidden' }}>
+            <Typography variant='caption' sx={{ px: 1, py: 0.5, textAlign: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+              {heightLabel}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button
+                size='small'
+                sx={{ minWidth: 28, height: 28, p: 0 }}
+                onClick={e => { e.stopPropagation(); handleHeightChange(-0.1) }}
+                title={isAr ? 'تقليل الارتفاع' : 'Decrease Height'}
+              >
+                -
+              </Button>
+              <Typography variant='caption' sx={{ px: 1, minWidth: 36, textAlign: 'center' }}>
+                {currentHeight.toFixed(1)}
+              </Typography>
+              <Button
+                size='small'
+                sx={{ minWidth: 28, height: 28, p: 0 }}
+                onClick={e => { e.stopPropagation(); handleHeightChange(0.1) }}
+                title={isAr ? 'زيادة الارتفاع' : 'Increase Height'}
+              >
+                +
+              </Button>
+            </Box>
+          </Box>
+          {/* Drag handle - listeners فقط على المقبض لتفعيل السحب منه فقط */}
+          <Box
+            {...listeners}
+            sx={{
+              cursor: 'grab',
+              p: 1,
+              display: 'flex',
+              alignItems: 'center',
+              bgcolor: 'white',
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'primary.main',
+              '&:active': { cursor: 'grabbing' }
+            }}
+            title={isAr ? 'اسحب للترتيب' : 'Drag to reorder'}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <circle cx="7" cy="5" r="1.5" />
+              <circle cx="13" cy="5" r="1.5" />
+              <circle cx="7" cy="10" r="1.5" />
+              <circle cx="13" cy="10" r="1.5" />
+              <circle cx="7" cy="15" r="1.5" />
+              <circle cx="13" cy="15" r="1.5" />
+            </svg>
+          </Box>
+        </Box>
+      </Box>
+      <div style={{ flex: 1, minWidth: 0, paddingTop: '36px' }}>
+        <RenderPrintInputItem field={field} />
+      </div>
     </div>
   )
 }
 
 function PrintSetting({ open, roles, onChange, data, fields }) {
   const { messages, locale } = useIntl()
-  console.log(fields, 'fields');
 
 
   const printConfig = roles?.print || {
@@ -247,11 +386,16 @@ input:focus {
   const [editingIndex, setEditingIndex] = useState(null)
   const [pageTitle, setPageTitle] = useState('')
   const [pageContent, setPageContent] = useState({ content_ar: '', content_en: '' })
+  const [isHtml, setIsHtml] = useState(false)
 
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [viewIndex, setViewIndex] = useState(null)
 
   const [isInputsOrderDialogOpen, setIsInputsOrderDialogOpen] = useState(false)
+
+  const tabs = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data || []
+
+  console.log(tabs);
 
 
 
@@ -303,9 +447,7 @@ input:focus {
     }
   }, [fields, data?.additional_fields, printConfig.inputsOrder, open?.id, isInputsOrderDialogOpen])
 
-  console.log(inputsLayout, 'inputsLayout');
 
-  const refTest = useRef(null)
 
   const updatePrintConfig = updater => {
     if (!data?.additional_fields || !open?.id) return
@@ -333,22 +475,6 @@ input:focus {
     }))
   }
 
-  const handleToggleInputInclude = (fieldKey, checked) => {
-    updatePrintConfig(prev => {
-      const currentVisibility = prev.inputsVisibility || {}
-
-      return {
-        ...prev,
-        inputsVisibility: {
-          ...currentVisibility,
-          [fieldKey]: {
-            ...(currentVisibility[fieldKey] || {}),
-            include: checked
-          }
-        }
-      }
-    })
-  }
 
   const handleToggleInputHiddenShow = (fieldKey, checked) => {
     updatePrintConfig(prev => {
@@ -468,6 +594,7 @@ input:focus {
     setEditingIndex(null)
     setPageTitle('')
     setPageContent({ content_ar: '', content_en: '' })
+    setIsHtml(false)
     setIsPageDialogOpen(true)
   }
 
@@ -490,6 +617,10 @@ input:focus {
         content_en: ''
       })
     }
+
+    // استعادة حالة HTML
+    setIsHtml(Boolean(page.ishtml))
+
     setIsPageDialogOpen(true)
   }
 
@@ -498,6 +629,7 @@ input:focus {
     setEditingIndex(null)
     setPageTitle('')
     setPageContent({ content_ar: '', content_en: '' })
+    setIsHtml(false)
   }
 
   const handleSavePage = () => {
@@ -517,10 +649,20 @@ input:focus {
         current.title = title || current.title || `صفحة ${editingIndex + 1}`
         current.content_ar = contentAr
         current.content_en = contentEn
+        current.ishtml_ar = isHtml.ishtml_ar
+        current.ishtml_en = isHtml.ishtml_en
 
         // إزالة content القديم إذا كان موجوداً
         if (current.content) {
           delete current.content
+        }
+
+        // إزالة html_ar و html_en القديمين إذا كانا موجودين
+        if (current.html_ar) {
+          delete current.html_ar
+        }
+        if (current.html_en) {
+          delete current.html_en
         }
         list[editingIndex] = current
       } else {
@@ -528,7 +670,8 @@ input:focus {
           id: Date.now(),
           title: title || `صفحة ${list.length + 1}`,
           content_ar: contentAr,
-          content_en: contentEn
+          content_en: contentEn,
+          ishtml: isHtml
         })
       }
 
@@ -572,24 +715,32 @@ input:focus {
   }
 
   const handleOpenInputsOrder = () => {
-    // تهيئة layout من printConfig أو إنشاء layout جديد
-    const additionalFields = data?.additional_fields || []
-    const currentLayout = printConfig.inputsOrder || []
+    // نفس فكرة ViewCollection: بناء القائمة من الحقول المتاحة مع احترام الترتيب المحفوظ
+    const fieldsList = fields || data?.additional_fields || []
+    const availableFields = fieldsList.filter(f => f.key !== open?.id)
+    const savedOrder = Array.isArray(printConfig.inputsOrder) ? printConfig.inputsOrder : []
+    const savedIds = savedOrder.map(l => l.i)
 
-    // إنشاء layout للـ inputs التي لا توجد في layout الحالي
-    const existingIds = currentLayout.map(item => item.i)
+    // ترتيب: أولاً العناصر المحفوظة (الموجودة في الحقول)، ثم أي حقل جديد غير موجود في المحفوظ
+    const orderedIds = [
+      ...savedIds.filter(id => availableFields.some(f => f.key === id)),
+      ...availableFields.map(f => f.key).filter(key => !savedIds.includes(key))
+    ]
 
-    const newLayout = additionalFields
-      .filter(field => field.key !== open?.id && !existingIds.includes(field.key))
-      .map((field, index) => ({
-        i: field.key,
+    const newLayout = orderedIds.map((id, y) => {
+      const prev = savedOrder.find(l => l.i === id)
+      const field = availableFields.find(f => f.key === id)
+
+      return {
+        i: id,
         x: 0,
-        y: currentLayout.length + index,
-        w: 12,
-        h: 1
-      }))
+        y,
+        w: prev?.w ?? 12,
+        h: prev?.h ?? (field?.type === 'LongText' ? 1.8 : 1)
+      }
+    })
 
-    setInputsLayout([...currentLayout, ...newLayout])
+    setInputsLayout(newLayout)
     setIsInputsOrderDialogOpen(true)
   }
 
@@ -605,12 +756,98 @@ input:focus {
     handleCloseInputsOrder()
   }
 
+  // @dnd-kit: نفس ViewCollection - sensors و onDragEnd لإعادة ترتيب القائمة
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 }
+    }),
+    useSensor(KeyboardSensor)
+  )
+
+  const handleInputsOrderDragEnd = useCallback(event => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const fieldsList = fields || data?.additional_fields || []
+    const visibilityMap = printConfig.inputsVisibility || {}
+
+    const visibleLayout = inputsLayout.filter(item => {
+      const field = fieldsList.find(f => f.key === item.i)
+
+      return field && !Boolean(visibilityMap[field.key]?.hiddenShow)
+    })
+
+    const hiddenLayout = inputsLayout.filter(item => {
+      const field = fieldsList.find(f => f.key === item.i)
+
+      return field && Boolean(visibilityMap[field.key]?.hiddenShow)
+    })
+    const oldIndex = visibleLayout.findIndex(item => item.i === active.id)
+    const newIndex = visibleLayout.findIndex(item => item.i === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const reorderedVisible = arrayMove(visibleLayout, oldIndex, newIndex)
+    const newVisibleWithY = reorderedVisible.map((item, y) => ({ ...item, y }))
+    const newHiddenWithY = hiddenLayout.map((item, y) => ({ ...item, y: newVisibleWithY.length + y }))
+    setInputsLayout([...newVisibleWithY, ...newHiddenWithY])
+  }, [inputsLayout, fields, data?.additional_fields, printConfig.inputsVisibility])
+
   const currentViewPage = viewIndex !== null && viewIndex >= 0 && viewIndex < pages.length ? pages[viewIndex] : null
+
+  // في نافذة الترتيب نعرض فقط الحقول غير المخفية (Hidden غير مفعّل)
+  const visibleInSortLayout = useMemo(() => {
+    const fieldsList = fields || data?.additional_fields || []
+    const visibilityMap = printConfig.inputsVisibility || {}
+
+    return inputsLayout.filter(item => {
+      const field = fieldsList.find(f => f.key === item.i)
+
+      return field && !Boolean(visibilityMap[field.key]?.hiddenShow)
+    })
+  }, [inputsLayout, fields, data?.additional_fields, printConfig.inputsVisibility])
 
   const [loadingSave, setLoadingSave] = useState(false)
 
+  const allFieldsList = fields || data?.additional_fields || []
+
+  const renderPrintInputRow = field => {
+    const visibility = (printConfig.inputsVisibility || {})[field.key] || {}
+
+    return (
+      <Box
+        key={field.key}
+        display='flex'
+        alignItems='center'
+        justifyContent='space-between'
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1,
+          p: 1,
+          mb: 1
+        }}
+      >
+        <Typography variant='body2'>
+          {locale === 'ar' ? field.nameAr : field.nameEn || field.key}
+        </Typography>
+        <Box display='flex' alignItems='center' columnGap={2}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                color='primary'
+                checked={Boolean(visibility.hiddenShow)}
+                onChange={(_, checked) => handleToggleInputHiddenShow(field.key, checked)}
+                size='small'
+              />
+            }
+            label={locale === 'ar' ? 'مخفي' : 'Hidden'}
+          />
+        </Box>
+      </Box>
+    )
+  }
+
   // قوالب الحدود (PDF Borders)
- 
+
 
   // الحصول على الـ inputs للعرض في الترتيب
 
@@ -640,60 +877,32 @@ input:focus {
         {Boolean(printConfig.includeInputs) && (
           <Box mt={2}>
             <Typography variant='subtitle2' color='text.secondary' mb={1}>
-              الحقول المضمنة في الطباعة
+              {locale === 'ar' ? 'الحقول المضمنة في الطباعة' : 'Printed Fields'}
             </Typography>
-            {(inputsLayout || []).map(layoutItem => {
-              const fieldsList = fields || data?.additional_fields || []
-              const field = fieldsList.find(f => f.key === layoutItem.i)
-
-              if (!field) return null
-
-              const visibility = (printConfig.inputsVisibility || {})[field.key] || {}
-
-              return (
-                <Box
-                  key={layoutItem.i}
-                  display='flex'
-                  alignItems='center'
-                  justifyContent='space-between'
-                  sx={{
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    p: 1,
-                    mb: 1
-                  }}
-                >
-                  <Typography variant='body2'>
-                    {field.nameAr || field.nameEn || field.key}
+            {(tabs && tabs.length > 0
+              ? tabs.map(tab => (
+                <Box key={tab.id} mb={2}>
+                  <Typography variant='subtitle2' color='text.secondary' mb={0.5}>
+                    {locale === 'ar' ? tab.name_ar : tab.name_en}
                   </Typography>
-                  <Box display='flex' alignItems='center' columnGap={2}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          color='primary'
-                          checked={Boolean(visibility.include)}
-                          onChange={(_, checked) => handleToggleInputInclude(field.key, checked)}
-                          size='small'
-                        />
-                      }
-                      label='Include'
-                    />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          color='primary'
-                          checked={Boolean(visibility.hiddenShow)}
-                          onChange={(_, checked) => handleToggleInputHiddenShow(field.key, checked)}
-                          size='small'
-                        />
-                      }
-                      label='Hidden-Show'
-                    />
-                  </Box>
+
+                  {(tab.fields || []).map(fieldKey => {
+                    const field = allFieldsList.find(f => f.key === fieldKey)
+
+                    if (!field) return null
+
+                    return renderPrintInputRow(field)
+                  })}
                 </Box>
-              )
-            })}
+              ))
+              : (inputsLayout || []).map(layoutItem => {
+                const field = allFieldsList.find(f => f.key === layoutItem.i)
+
+                if (!field) return null
+
+                return renderPrintInputRow(field)
+              })
+            )}
           </Box>
         )}
 
@@ -706,7 +915,7 @@ input:focus {
               size='small'
               onClick={handleOpenInputsOrder}
             >
-              ترتيب عرض inputs
+              {locale === 'ar' ? 'ترتيب عرض inputs' : 'View Inputs Order'}
             </Button>
           </Box>
         )}
@@ -905,14 +1114,14 @@ input:focus {
                         overflow: 'hidden',
                         '&::before': isSelected
                           ? {
-                              content: '""',
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 4,
-                              bgcolor: 'primary.dark'
-                            }
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 4,
+                            bgcolor: 'primary.dark'
+                          }
                           : {},
                         '&:hover': {
                           elevation: 4,
@@ -1084,28 +1293,64 @@ input:focus {
                 size='small'
               />
               <Box>
-                <Typography variant='subtitle2' color='primary' fontWeight='bold' mb={1}>
-                  {messages.dialogs.titleAr || 'المحتوى بالعربية'}
-                </Typography>
-                <Editor
-                  loadingSave={loadingSave}
-                  setLoadingSave={setLoadingSave}
-                  initialTemplateName={pageContent.content_ar || ''}
-                  refresh={0}
-                  onChange={e => setPageContent(prev => ({ ...prev, content_ar: e }))}
-                />
+                <Box display='flex' justifyContent='space-between' alignItems='center' mb={1}>
+                  <Typography variant='subtitle2' color='primary' fontWeight='bold'>
+                    {messages.dialogs.titleAr || 'المحتوى بالعربية'}
+                  </Typography>
+                  <Button
+                    size='small'
+                    variant={isHtml ? 'contained' : 'outlined'}
+                    color='primary'
+                    onClick={() => setIsHtml(!isHtml)}
+                  >
+                    Insert HTML
+                  </Button>
+                </Box>
+                {isHtml ? (
+                  <HtmlEditor
+                    Html={pageContent.content_ar || ''}
+                    onValueChange={value => setPageContent(prev => ({ ...prev, content_ar: value }))}
+                    height='400px'
+                  />
+                ) : (
+                  <Editor
+                    loadingSave={loadingSave}
+                    setLoadingSave={setLoadingSave}
+                    initialTemplateName={pageContent.content_ar || ''}
+                    refresh={0}
+                    onChange={e => setPageContent(prev => ({ ...prev, content_ar: e }))}
+                  />
+                )}
               </Box>
               <Box mt={3}>
-                <Typography variant='subtitle2' color='primary' fontWeight='bold' mb={1}>
-                  {messages.dialogs.titleEn || 'المحتوى بالإنجليزية'}
-                </Typography>
-                <Editor
-                  loadingSave={loadingSave}
-                  setLoadingSave={setLoadingSave}
-                  initialTemplateName={pageContent.content_en || ''}
-                  refresh={0}
-                  onChange={e => setPageContent(prev => ({ ...prev, content_en: e }))}
-                />
+                <Box display='flex' justifyContent='space-between' alignItems='center' mb={1}>
+                  <Typography variant='subtitle2' color='primary' fontWeight='bold'>
+                    {messages.dialogs.titleEn || 'المحتوى بالإنجليزية'}
+                  </Typography>
+                  <Button
+                    size='small'
+                    variant={isHtml ? 'contained' : 'outlined'}
+                    color='primary'
+                    onClick={() => setIsHtml(!isHtml)}
+                  >
+                    Insert HTML
+                  </Button>
+                </Box>
+                {isHtml ? (
+                  <HtmlEditor
+                    Html={pageContent.content_en || ''}
+                    onValueChange={value => setPageContent(prev => ({ ...prev, content_en: value }))}
+                    height='400px'
+                  />
+                ) : (
+                  <Editor
+                    loadingSave={loadingSave}
+                    setLoadingSave={setLoadingSave}
+                    initialTemplateName={pageContent.content_en || ''}
+                    refresh={0}
+                    onChange={e => setPageContent(prev => ({ ...prev, content_en: e }))}
+                  />
+                )}
               </Box>
               {/* <TextField
                  label={messages.dialogs.printPageContentLabel}
@@ -1133,21 +1378,24 @@ input:focus {
         <Dialog open={isViewDialogOpen && Boolean(currentViewPage)} onClose={handleCloseView} maxWidth='sm' fullWidth>
           <DialogTitle>{currentViewPage?.title || messages.dialogs.printViewPageTitleFallback}</DialogTitle>
           <DialogContent dividers>
-            <Typography
-              variant='body2'
-              sx={{
-                whiteSpace: 'pre-wrap'
-              }}
-            >
-              <ShowEditor 
-                initialTemplateName={
-                  locale === 'ar' 
-                    ? (currentViewPage?.content_ar || currentViewPage?.content || '')
-                    : (currentViewPage?.content_en || currentViewPage?.content || '')
-                } 
-              />
-              {/* {currentViewPage?.content || messages.dialogs.printNoContent} */}
-            </Typography>
+            {currentViewPage?.ishtml ? (
+              <Box dangerouslySetInnerHTML={{ __html: locale === 'ar' ? (currentViewPage?.content_ar || '') : (currentViewPage?.content_en || '') }} />
+            ) : (
+              <Typography
+                variant='body2'
+                sx={{
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                <ShowEditor
+                  initialTemplateName={
+                    locale === 'ar'
+                      ? (currentViewPage?.content_ar || currentViewPage?.content || '')
+                      : (currentViewPage?.content_en || currentViewPage?.content || '')
+                  }
+                />
+              </Typography>
+            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseView} color='inherit'>
@@ -1156,9 +1404,9 @@ input:focus {
           </DialogActions>
         </Dialog>
 
-        {/* Dialog ترتيب عرض inputs */}
-        <Dialog open={isInputsOrderDialogOpen} onClose={handleCloseInputsOrder} maxWidth='lg' fullWidth>
-          <DialogTitle>ترتيب عرض inputs</DialogTitle>
+        {/* Dialog ترتيب عرض inputs - نفس أسلوب ViewCollection مع @dnd-kit */}
+        <Dialog open={isInputsOrderDialogOpen} onClose={handleCloseInputsOrder} fullScreen fullWidth>
+          <DialogTitle>ترتيب عرض  inputs</DialogTitle>
           <DialogContent dividers sx={{ minHeight: '400px', p: 2 }}>
             <Box id='print-preview'>
               <style>{`#print-preview { ${getCurrentCSS()} }`}</style>
@@ -1166,49 +1414,81 @@ input:focus {
                 <Typography variant='body2' color='text.secondary' textAlign='center' py={4}>
                   لا توجد inputs للعرض
                 </Typography>
+              ) : visibleInSortLayout.length === 0 ? (
+                <Typography variant='body2' color='text.secondary' textAlign='center' py={4}>
+                  جميع الحقول مخفية — قم بإلغاء تفعيل Hidden من القائمة أعلاه
+                </Typography>
               ) : (
-                <ResponsiveGridLayout
-                  className='layout'
-                  layout={inputsLayout}
-                  ref={refTest}
-                  cols={12}
-                  rowHeight={97} allowOverlap={false}
-                  onLayoutChange={newLayout => {
-                    setInputsLayout(newLayout)
-                  }}
-                  draggableHandle='.drag-handle'
-                  isResizable={true}
-                  isDraggable={true}
-                  margin={[10, 10]}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleInputsOrderDragEnd}
                 >
-                  {inputsLayout.map(layoutItem => {
-                    // البحث عن الـ field المقابل
-                    const fieldsList = fields || data?.additional_fields || []
-                    const field = fieldsList.find(f => f.key === layoutItem.i)
+                  <SortableContext
+                    items={visibleInSortLayout.map(item => item.i)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(12, 1fr)',
+                        gap: '10px',
+                        gridAutoFlow: 'row',
+                        width: '100%'
+                      }}
+                    >
+                      {(tabs && tabs.length > 0
+                        ? tabs.map((tab, tabIndex) => {
+                          const tabLayoutItems = (visibleInSortLayout || []).filter(
+                            layoutItem => (tab.fields || []).includes(layoutItem.i)
+                          )
+                          if (!tabLayoutItems.length) return null
 
-                    if (!field) return null
+                          return (
+                            <Fragment key={tab.id || tabIndex}>
+                              <Box mb={2} sx={{ gridColumn: '1 / -1' }}>
+                                <Typography variant='subtitle2' color='text.secondary' mb={0.5}>
+                                  {locale === 'ar' ? tab.name_ar : tab.name_en}
+                                </Typography>
+                              </Box>
 
-                    // يجب أن يكون العنصر مباشرة بدون wrapper component
-                    return (
-                      <div
-                        key={layoutItem.i}
-                        className='drag-handle'
-                        style={{
-                          border: '1px solid',
-                          borderColor: '#e0e0e0',
-                          borderRadius: '4px',
-                          padding: '16px',
-                          backgroundColor: '#ffffff',
-                          cursor: 'move',
-                          height: '100%',
-                          width: '100%'
-                        }}
-                      >
-                        <RenderPrintInputItem field={field} layoutItem={layoutItem} setInputsLayout={setInputsLayout} />
-                      </div>
-                    )
-                  })}
-                </ResponsiveGridLayout>
+                              {tabLayoutItems.map(layoutItem => {
+                                const field = allFieldsList.find(f => f.key === layoutItem.i)
+                                if (!field) return null
+
+                                return (
+                                  <SortablePrintInputItem
+                                    key={layoutItem.i}
+                                    field={field}
+                                    layoutItem={layoutItem}
+                                    layout={inputsLayout}
+                                    setInputsLayout={setInputsLayout}
+                                    locale={locale}
+                                  />
+                                )
+                              })}
+                            </Fragment>
+                          )
+                        })
+                        : visibleInSortLayout.map(layoutItem => {
+                          const field = allFieldsList.find(f => f.key === layoutItem.i)
+                          if (!field) return null
+
+                          return (
+                            <SortablePrintInputItem
+                              key={layoutItem.i}
+                              field={field}
+                              layoutItem={layoutItem}
+                              layout={inputsLayout}
+                              setInputsLayout={setInputsLayout}
+                              locale={locale}
+                            />
+                          )
+                        })
+                      )}
+                    </Box>
+                  </SortableContext>
+                </DndContext>
               )}
             </Box>
           </DialogContent>

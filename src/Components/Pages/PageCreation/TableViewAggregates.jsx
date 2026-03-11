@@ -49,7 +49,7 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
       }
     })
 
-    if(!table || columns?.length === 0){
+    if (!table || columns?.length === 0) {
       return
     }
     axiosPost(`dynamic-report-data/get-collections-aggregated-data`, locale, {
@@ -92,12 +92,12 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
   const exportToPDF = () => {
     const doc = new jsPDF()
     const tableName = data.collectionName || 'Table'
-    
+
     // Prepare headers
-    const headers = filterWithSelect.map(field => 
+    const headers = filterWithSelect.map(field =>
       locale === 'ar' ? field.nameAr : field.nameEn
     )
-    
+
     // Prepare data rows
     const rows = getFields.map(row => {
       return filterWithSelect.map(field => {
@@ -109,7 +109,7 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
         return String(value)
       })
     })
-    
+
     // Add table to PDF
     autoTable(doc, {
       head: [headers],
@@ -118,20 +118,20 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
       styles: { fontSize: 8 },
       headStyles: { fillColor: [66, 139, 202] }
     })
-    
+
     // Save PDF
     doc.save(`${tableName}_export.pdf`)
   }
-  
+
   // Export to XLSX function
   const exportToXLSX = () => {
     const tableName = data.collectionName || 'Table'
-    
+
     // Prepare headers
-    const headers = filterWithSelect.map(field => 
+    const headers = filterWithSelect.map(field =>
       locale === 'ar' ? field.nameAr : field.nameEn
     )
-    
+
     // Prepare data rows
     const rows = getFields.map(row => {
       return filterWithSelect.map(field => {
@@ -143,16 +143,16 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
         return value
       })
     })
-    
+
     // Create workbook and worksheet
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows])
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-    
+
     // Generate Excel file buffer
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    
+
     // Save file
     saveAs(blob, `${tableName}_export.xlsx`)
   }
@@ -222,8 +222,10 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
   }
   const [loadingButton, setLoadingButton] = useState(false)
 
-  const defaultDesign =
-    open?.type === 'new_element' ? DefaultStyle(open?.key) : open?.options?.uiSchema?.xComponentProps?.cssClass
+  open?.type === 'new_element'
+    ? DefaultStyle(open?.key)
+    : DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText', open?.descriptionAr === 'progress_bar' ? 'progress_bar' : open?.kind))
+
   let additionalField = null
   const additionalFieldDesign = data?.additional_fields?.find(ele => ele.key === open?.id)?.design
   if (additionalFieldDesign) {
@@ -366,10 +368,10 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
                     ele.fieldCategory === 'Associations'
                       ? []
                       : ele.type === 'Date'
-                      ? new Date()
-                      : ele.type === 'DateTime'
-                      ? new Date()
-                      : ''
+                        ? new Date()
+                        : ele.type === 'DateTime'
+                          ? new Date()
+                          : ''
                 })
                 setGetFields([newData, ...getFields])
               }}

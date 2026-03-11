@@ -23,7 +23,6 @@ const Editor = ({ initialTemplateName, onChange, loadingData, loadingSave, setLo
     }, 0)
   }, [loadingData])
 
-  console.log(loadingSave)
 
   return loading ? (
     <div className='w-full'>
@@ -56,8 +55,8 @@ const Editor = ({ initialTemplateName, onChange, loadingData, loadingSave, setLo
             ['fontColor', 'hiliteColor'],
             ['outdent', 'indent'],
             ['undo', 'redo'],
-            ['removeFormat',"table"],
-            ['preview']
+            ['removeFormat', "table"],
+            ['preview', "codeView"]
           ]
         }}
         height='400px'

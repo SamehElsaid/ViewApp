@@ -7,7 +7,6 @@ function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open,
   const findWithRowId = roles?.triggerRow?.rowId === open.rowId
   const triggerProperty = type === 'column' ? 'triggerColumn' : findWithRowId ? 'triggerRow' : 'trigger'
   const currentTrigger = type === 'column' ? roles?.triggerColumn : findWithRowId ? roles?.triggerRow : roles?.trigger
-  console.log(roles, 'roles', triggerProperty)
 
   const deleteTrigger = () => {
     const sendData = {
@@ -37,9 +36,7 @@ function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open,
     setOpenDelete(false)
   }
 
-  {
-    console.log(data)
-  }
+ 
 
   return (
     <>

@@ -24,6 +24,7 @@ import useGoogleMap from './useMap'
 import useChart from './useChart'
 import useAggregates from './useAggregates'
 import useReport from './useReport'
+import useIFrame from './useIframe'
 
 export default function useCellPlugins({
   advancedEdit,
@@ -79,6 +80,7 @@ export default function useCellPlugins({
   const { dynamicTable } = useDynamicTable({ locale, buttonRef, advancedEdit })
   const { GoogleMap } = useGoogleMap({ locale, buttonRef })
   const { spacer } = useSpacer({ locale, buttonRef })
+  const { iFrame } = useIFrame({ advancedEdit, locale, readOnly, buttonRef })
 
   const cellPlugins = useMemo(
     () => [
@@ -105,7 +107,8 @@ export default function useCellPlugins({
       report,
       SectionControl,
       dynamicTable,
-      GoogleMap
+      GoogleMap,
+      iFrame
     ],
     [
       backgroundPlugin,
@@ -130,7 +133,8 @@ export default function useCellPlugins({
       report,
       SectionControl,
       dynamicTable,
-      GoogleMap
+      GoogleMap,
+      iFrame
     ]
   )
 

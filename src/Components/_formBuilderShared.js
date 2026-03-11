@@ -11,7 +11,8 @@ export const fieldTypes = [
   'text',
   'textarea',
   'time',
-  'url'
+  'url',
+  "progress_bar"
 ]
 
 export const fileTypes = [

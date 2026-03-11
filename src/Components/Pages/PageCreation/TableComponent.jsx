@@ -22,6 +22,7 @@ import { IoMdSettings } from 'react-icons/io'
 import InputControlDesign from './InputControlDesign'
 import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
 import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
+import { useRouter } from 'next/router'
 
 // Constants
 const BORDER_COLOR = 'rgba(224, 224, 224, 1)'
@@ -78,7 +79,7 @@ CellValueRenderer.displayName = 'CellValueRenderer'
  * Renders action buttons for table rows
  */
 const ActionButtons = memo(
-  ({ isFormTable, column, editAction, deleteAction, messages, onEdit, onDelete, onFormTableDelete }) => {
+  ({ isFormTable, column, editAction, deleteAction, detailsAction, messages, onEdit, onDelete, onFormTableDelete, onDetails   }) => {
     if (isFormTable) {
       return (
         <TableCell className='flex justify-center items-center' sx={{ borderBlockEnd: `1px solid ${BORDER_COLOR}` }}>
@@ -91,7 +92,7 @@ const ActionButtons = memo(
       )
     }
 
-    if (!editAction && !deleteAction) {
+    if (!editAction && !deleteAction && !detailsAction) {
       return null
     }
 
@@ -99,7 +100,9 @@ const ActionButtons = memo(
       <TableCell sx={ACTIONS_COLUMN_WIDTH} className='flex justify-center items-center'>
         {editAction && (
           <Tooltip title={messages.edit}>
-            <IconButton size='small' onClick={onEdit} aria-label={messages.edit}>
+            <IconButton size='small' onClick={() => {
+              onEdit(column)
+            }} aria-label={messages.edit}>
               <IconifyIcon icon='tabler:edit' />
             </IconButton>
           </Tooltip>
@@ -108,6 +111,15 @@ const ActionButtons = memo(
           <Tooltip title={messages.delete}>
             <IconButton size='small' onClick={onDelete} aria-label={messages.delete}>
               <IconifyIcon icon='tabler:trash' />
+            </IconButton>
+          </Tooltip>
+        )}
+        {detailsAction && (
+          <Tooltip title={messages.details}>
+            <IconButton size='small' onClick={() => {
+              onDetails(column)
+            }} aria-label={messages.details}>
+              <IconifyIcon icon='tabler:eye' />
             </IconButton>
           </Tooltip>
         )}
@@ -121,15 +133,19 @@ ActionButtons.displayName = 'ActionButtons'
 /**
  * Renders table header cells
  */
-const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, messages, setOpen, readOnly, data }) => (
-  <TableRow
-    sx={{
+const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, messages, setOpen, readOnly, data }) => {
+  
+  return <TableRow
+  sx={{
       '&:not(:last-child) td, &:not(:last-child) th': {
         borderBottom: `1px solid ${BORDER_COLOR}`
       }
     }}
   >
     {filterWithSelect.map(column => {
+      let roles = data?.additional_fields?.find(el => el.key === column.id)?.roles
+      console.log(roles);
+
       // const columnRole =
       return (
         <TableCell
@@ -140,7 +156,9 @@ const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, message
             '&:last-child': { borderInlineEnd: 0 }
           }}
         >
-          {locale === 'ar' ? column.nameAr : column.nameEn}
+          {console.log(data)
+          }
+          {locale === 'ar' ? roles?.label?.label_ar ?? column.nameAr : roles?.label?.label_en ?? column.nameEn}
           {!readOnly && (
             <div className='absolute inset-0 z-20 flex || justify-end border-main-color border-dashed border rounded-md'>
               <button
@@ -151,7 +169,12 @@ const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, message
                 }}
                 onClick={e => {
                   e.stopPropagation()
-                  setOpen(column)
+                  const newColumn = { ...column }
+                  if (newColumn.fieldCategory === 'ManyToMany' || newColumn.fieldCategory === 'OneToMany' || newColumn.fieldCategory === 'OneToOne') {
+                    newColumn.fieldCategory = 'Associations'
+                  }
+
+                  setOpen(newColumn)
                 }}
                 className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
               >
@@ -168,7 +191,7 @@ const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, message
       </TableCell>
     )}
   </TableRow>
-))
+})
 
 TableHeader.displayName = 'TableHeader'
 
@@ -177,6 +200,7 @@ TableHeader.displayName = 'TableHeader'
  */
 const TableRowComponent = memo(
   ({
+    setTotalCount,
     allData,
     column,
     filterWithSelect,
@@ -192,32 +216,31 @@ const TableRowComponent = memo(
     setChangedValue,
     editAction,
     deleteAction,
+    detailsAction,
     messages,
     onEdit,
     onDelete,
+    onDetails,
     reloadHight,
     formTable,
     setOpen,
     columnId
   }) => {
     const isFormTable = data.kind === 'form-table'
-    console.log(column, 'column.id')
 
     const handleFormTableDelete = useCallback(() => {
       if (reloadHight) {
         reloadHight(prev => prev + 1)
       }
-      console.log(column.Id, 'column.Id')
       setGetFields(prev => prev.filter(ele => ele.Id !== column.Id))
-      console.log(data.newRows, 'data.newRows')
 
       onChange({
         ...data,
         newRows: data.newRows ? data.newRows.filter(ele => ele.Id !== column.Id) : []
       })
-    }, [column.Id, setGetFields, reloadHight, onChange, data])
+      setTotalCount(prev => prev - 1)
+    }, [column.Id, setGetFields, reloadHight, onChange, data, setTotalCount])
     const findData = data.newRows?.find(ele => ele.Id === column.Id)
-    console.log(findData, 'findData');
 
     const dataRef = useRef(findData ?? {})
 
@@ -225,7 +248,6 @@ const TableRowComponent = memo(
 
 
 
-    console.log(dataRef);
 
     return (
       <TableRow key={column.id}>
@@ -263,10 +285,12 @@ const TableRowComponent = memo(
           column={column}
           editAction={editAction}
           deleteAction={deleteAction}
+          detailsAction={detailsAction}
           messages={messages}
           onEdit={onEdit}
           onDelete={onDelete}
           onFormTableDelete={handleFormTableDelete}
+          onDetails={onDetails}
         />
       </TableRow>
     )
@@ -276,11 +300,13 @@ const TableRowComponent = memo(
 TableRowComponent.displayName = 'TableRowComponent'
 
 function TableComponent({
+  setTotalCount,
   filterWithSelect = [],
   columns = [],
   paginationModel,
   setPaginationModel,
   totalCount = 0,
+  detailsAction = false,
   loadingEntity = false,
   loadingHeader = false,
   readOnly = false,
@@ -307,16 +333,13 @@ function TableComponent({
   const [open, setOpen] = useState(false)
   const [associationsOpen, setAssociationsOpen] = useState(false)
   const [associationsConfig, setAssociationsConfig] = useState(data?.associationsConfig ?? [])
-  const [selectedOptions, setSelectedOptions] = useState(data?.selectedOptions ?? [])
+  const router = useRouter()
 
   const handleChange = (event, fieldCategory, skipCheck, field) => {
     // const
     const { value, checked } = event.target
     const isChecked = skipCheck || checked
 
-    setSelectedOptions(prevSelected =>
-      isChecked ? [...prevSelected, value] : prevSelected.filter(item => item !== value)
-    )
 
     const oldAdditionalFields = data?.additional_fields ?? []
     const filteredAdditionalFields = oldAdditionalFields.filter(inp => inp.key !== field?.id)
@@ -432,8 +455,10 @@ function TableComponent({
   const handleDelete = useCallback(
     column => {
       setDeleteOpen?.(column)
+      setTotalCount(prev => prev - 1)
+
     },
-    [setDeleteOpen]
+    [setDeleteOpen, setTotalCount]
   )
 
   if (loadingHeader) {
@@ -446,19 +471,6 @@ function TableComponent({
     )
   }
 
-  console.log(
-    sortedLoop
-      ? [
-        ...sortedLoop.map(ele => {
-          return {
-            ...ele,
-            key: `${ele.collectionId}.${ele.key}`
-          }
-        }),
-        ...filterWithSelect
-      ]
-      : filterWithSelect
-  )
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -522,13 +534,14 @@ function TableComponent({
               <TableRow>
                 <TableCell colSpan={colSpan} className='text-center p-4'>
                   <Typography variant='body2' color='text.secondary'>
-                    {messages.noData || 'No data available'}
+                    {messages.notFound || 'No data available'}
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               columns.map(column => (
                 <TableRowComponent
+                  setTotalCount={setTotalCount}
                   key={column.id || column.Id}
                   columnId={column.id || column.Id}
                   allData={allData}
@@ -547,9 +560,21 @@ function TableComponent({
                   setChangedValue={setChangedValue}
                   editAction={editAction}
                   deleteAction={deleteAction}
+                  detailsAction={detailsAction}
                   messages={messages}
-                  onEdit={() => handleEdit(column)}
-                  onDelete={() => handleDelete(column)}
+                  onEdit={(column) => {
+                    // rou
+                    router.push(`/${locale}/${data.editPageNameRedirect ?? ''}?entitiesId=${column.Id}`)
+
+                  }}
+
+                  onDetails={(column) => {
+                    router.push(`/${locale}/${data.detailsPageNameRedirect ?? ''}?entitiesId=${column.Id}`)
+                  }}
+                  onDelete={() => {
+
+                    handleDelete(column)
+                  }}
                   reloadHight={reloadHight}
                   type={type}
                   setOpen={setOpen}
@@ -562,7 +587,7 @@ function TableComponent({
 
       <TablePagination
         component='div'
-        count={totalCount}
+        count={Math.ceil(totalCount)}
         page={paginationModel.page}
         onPageChange={handlePageChange}
         rowsPerPage={paginationModel.pageSize}
@@ -570,7 +595,7 @@ function TableComponent({
         rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
         labelRowsPerPage={messages.rowsPerPage || 'Rows per page:'}
         labelDisplayedRows={({ from, to, count }) =>
-          `${from}–${to} ${messages.of || 'of'} ${count !== -1 ? count : `${messages.moreThan || 'more than'} ${to}`}`
+          `${from} ${messages.of || 'of'} ${count !== -1 ? count : `${messages.moreThan || 'more than'} ${to}`}`
         }
       />
 
@@ -581,6 +606,7 @@ function TableComponent({
         }}
         initialConfig={associationsConfig}
         onSave={config => {
+
           let newConfig = data?.associationsConfig ?? []
 
           const found = newConfig.find(item => item.key === config.key)
@@ -590,7 +616,6 @@ function TableComponent({
             newConfig = [...newConfig, config]
           }
 
-          setSelectedOptions(prevSelected => [...prevSelected, config.key])
 
           handleChange({ target: { value: config.key } }, '', newConfig)
         }}

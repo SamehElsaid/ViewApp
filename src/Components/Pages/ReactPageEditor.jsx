@@ -22,7 +22,7 @@ import AddPage from 'src/Components/Pages/AddPage'
 import axios from 'axios'
 import { useReactToPrint } from 'react-to-print'
 
-const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, entitiesId, collectionName }) => {
+const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, workflowId, entitiesId, collectionName, pageRoles, pageTypeId }) => {
   const [newData, setNewData] = useState(initialData)
   const [editorValue, setEditorValue] = useState(initialData ?? null)
   const [readOnly, setReadOnly] = useState(type === 'all-pages' ? true : false)
@@ -279,7 +279,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
   })
 
   return (
-    <div className='relative pdf-wrapper !z-10' id='pdf-content'>
+    <div className='relative pdf-wrapper' id='pdf-content'>
       {/* PDF Loading Overlay */}
       {loadingPdf && (
         <div className='fixed inset-0 z-[999999] flex items-center justify-center bg-white animate-in fade-in duration-300'>
@@ -320,8 +320,6 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
           }}
         ></button>
       </div>
-      <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
-
       {type === 'all-pages' ? (
         <div className={`relative ${loadingPdf ? 'generate-pdf' : ''}`}>
 
@@ -345,6 +343,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
         </div>
       ) : (
         <>
+          <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
           <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>
             <DialogTitle>{messages.ReturnToPrevious}</DialogTitle>
             <DialogContent>
@@ -369,6 +368,9 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, type, pageId, 
                     const apiUrls = apiData.map(item => item.link)
                     setLoadingSaveData(true)
                     axiosPatch(`page/update/${pageName}`, locale, {
+                      pageRoles: pageRoles,
+                      pageTypeId: pageTypeId,
+                      workflowId: workflowId,
                       VersionReason: new Date().toISOString(),
                       description: '',
                       pageComponents: [],

@@ -206,13 +206,15 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
     if (fieldType === 'date' || fieldType === 'time') {
       validationData.push({ RuleType: 'ColumnDataType', Parameters: { expectedType: 'System.DateTime' } })
     }
-    if (fieldType === 'number') {
+    if (fieldType === 'number' || fieldType === 'progress_bar') {
       validationData.push({ RuleType: 'ColumnDataType', Parameters: { expectedType: 'System.Int64' } })
     }
 
     if (isFileStep && fileExtensions.length === 0) {
       return toast.error(messages.dialogs.fileTypesRequired)
     }
+
+    const isNumber = fieldType === 'number' || fieldType === 'progress_bar'
 
     const sendData = {
       collectionId: open.id,
@@ -221,13 +223,13 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       nameEn: fieldLabelEn.trim(),
       descriptionAr: fieldLabel.trim(),
       descriptionEn: fieldLabelEn.trim(),
-      type: getType(fieldType === 'time' ? 'date' : fieldType === 'rate' ? 'number' : fieldType),
+      type: getType(fieldType === 'time' ? 'date' : isNumber ? 'number' : fieldType),
       FieldCategory: FindFieldCategory(fieldType),
 
       options: {
         uiSchema: {
           xComponentProps: {
-            cssClass: DefaultStyle(fieldType === 'time' ? 'date' : fieldType === 'rate' ? 'number' : fieldType),
+            cssClass: DefaultStyle(fieldType === 'time' ? 'date' : isNumber ? 'number' : fieldType),
             fileTypes: isFileStep ? fileExtensions : []
           }
         }
@@ -279,6 +281,13 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       sendData.key = `${open.key}${collection.key}`
       sendData.descriptionAr = 'multiple_select'
     }
+
+    if (fieldType === 'progress_bar') {
+      sendData.descriptionAr = 'progress_bar'
+    }
+
+
+
 
     setLoading(true)
 

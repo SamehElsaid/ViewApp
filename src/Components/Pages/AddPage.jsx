@@ -89,7 +89,6 @@ const AddPage = props => {
         order: index + 1
       }))
     }
-    console.log(data.pageRoles);
     if (data.pageRoles?.length > 0) {
       sendData.pageRoles = data.pageRoles.map(role => (typeof role === 'object' && role?.id != null ? role.id : role))
     }
@@ -130,7 +129,6 @@ const AddPage = props => {
   const [loadingWorkflow, setLoadingWorkflow] = useState(true)
   const [roles, setRoles] = useState([])
 
-  console.log(getValues('pageRoles'));
 
   // تعبئة الحقول عند فتح صفحة للتعديل (بدون roles/workflows عشان الـ select ما يقفلش)
   useEffect(() => {
@@ -138,11 +136,20 @@ const AddPage = props => {
       setValue('name', open.name)
       setValue('description', open.description)
       setValue('versionReason', open.versionReason)
+      setValue('pageTypeId', open.pageTypeId)
+      const rolesArray = []
+      open.pageRoles.forEach(roleName => {
+        const roleData = roles.find(role => role.id === roleName)
+        if (roleData) rolesArray.push(roleData)
+      })
+      setValue('pageRoles', rolesArray)
       trigger('name')
       trigger('description')
       trigger('versionReason')
+      trigger('pageRoles')
+      trigger('pageTypeId')
     }
-  }, [open, setValue, trigger])
+  }, [open, setValue, trigger, roles])
 
   // تعبئة workflow لما البيانات تتحمل (effect منفصل عشان ميعملش re-render يغلق الـ dropdownات)
   useEffect(() => {
@@ -157,17 +164,6 @@ const AddPage = props => {
   }, [open, workflows, setValue])
 
   // تعبئة pageRoles لما الـ roles تتحمل (effect منفصل عشان الـ roles select ما يقفلش)
-  useEffect(() => {
-    if (typeof open !== 'boolean' && roles?.length >= 0 && open.pageRoles && Array.isArray(open.pageRoles)) {
-      const rolesArray = []
-      open.pageRoles.forEach(roleName => {
-        const roleData = roles.find(role => role.name === roleName)
-        if (roleData) rolesArray.push(roleData)
-      })
-      setValue('pageRoles', rolesArray)
-    }
-  }, [open, roles, setValue])
-
   useEffect(() => {
     setLoadingWorkflow(true)
     axiosGet('Workflow/get-workflows', locale)

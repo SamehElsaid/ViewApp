@@ -15,7 +15,8 @@ import {
   InputLabel,
   Checkbox,
   FormControlLabel,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { styled } from '@mui/material/styles'
@@ -34,7 +35,6 @@ import { toast } from 'react-toastify'
 import Trigger from '../ControlDesignAndValidation/Trigger'
 import SwitchView from '../ControlDesignAndValidation/SwitchView'
 import TriggerControl from '../ControlDesignAndValidation/TriggerControl'
-import Tabs from '../ControlDesignAndValidation/Tabs'
 import PrintSetting from './PrintSetting'
 
 const Header = styled(Box)(() => ({
@@ -276,18 +276,25 @@ export default function InputControlDesign({
     }
   }, [open])
 
+  const updateProgressBarSegments = segments => {
+    const additional_fields = data.additional_fields ?? []
+    const findMyInput = additional_fields.find(inp => inp.key === open.id)
+    if (findMyInput) {
+      findMyInput.roles = findMyInput.roles ?? {}
+      findMyInput.roles.progressBarSegments = segments
+    } else {
+      additional_fields.push({
+        key: open.id,
+        design: objectToCss(Css).replaceAll('NaN', ''),
+        roles: { ...roles, progressBarSegments: segments }
+      })
+    }
+    onChange({ ...data, additional_fields })
+  }
+
   return (
     <>
-      {/* Tabs */}
-      <Tabs
-        openTab={openTab}
-        handleCloseTab={handleCloseTab}
-        messages={messages}
-        editTab={editTab}
-        tabData={tabData}
-        setTabData={setTabData}
-        addTab={addTab}
-      />
+
 
       <Trigger
         openTrigger={openTrigger}
@@ -364,17 +371,18 @@ export default function InputControlDesign({
                     {messages.dialogs.print}
                   </Button>
                 )}
-                {open.data && (
+
+                {open?.descriptionAr === 'progress_bar' && open?.type === 'Number' && (
                   <Button
                     onClick={() => {
-                      setSelect('tabs')
+                      setSelect('progress_bar')
                     }}
-                    variant={selected === 'tabs' ? 'contained' : 'outlined'}
+                    variant={selected === 'progress_bar' ? 'contained' : 'outlined'}
                   >
-                    {messages.dialogs.tabs}
+                    {messages.dialogs.progress_bar_control}
                   </Button>
                 )}
-                {type === 'from-collection' && open.fieldCategory === 'Associations' && (
+                {type === 'from-collection' && (open.fieldCategory === 'Associations' || open.type === "SingleText") && (
                   <Button
                     onClick={() => {
                       setSelect('associations')
@@ -1594,6 +1602,35 @@ export default function InputControlDesign({
                       variant='filled'
                       label={messages.dialogs.requiredMessageInArabic || 'Required Message in Arabic'}
                     />
+                    {open.kind === "Table" && (
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={Boolean(roles?.showOldData)}
+                            onChange={e => {
+                              const additional_fields = data.additional_fields ?? []
+                              const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                              if (findMyInput) {
+                                findMyInput.roles = findMyInput.roles ?? {}
+                                findMyInput.roles.showOldData = e.target.checked
+                              } else {
+                                const myEdit = {
+                                  key: open.id,
+                                  design: objectToCss(Css).replaceAll('NaN', ''),
+                                  roles: {
+                                    ...roles,
+                                    showOldData: e.target.checked
+                                  }
+                                }
+                                additional_fields.push(myEdit)
+                              }
+                              onChange({ ...data, additional_fields: additional_fields })
+                            }}
+                          />
+                        }
+                        label={locale === 'ar' ? 'إظهار البيانات القديمة' : 'Show Old Data'}
+                      />
+                    )}
                     <div className='w-full'>
                       <h2 className='mt-5 text-[#555] mb-3 font-bold'>{messages.dialogs.cssEditorForInput}</h2>
                       <CssEditor data={data} onChange={onChange} Css={design} open={open} roles={roles} />
@@ -1659,8 +1696,7 @@ export default function InputControlDesign({
                                 <h2 className='mt-2 text-lg font-bold text-main-color'>{messages.OnMount}</h2>
                                 <FormControl fullWidth margin='normal'>
                                   <InputLabel>{messages.State}</InputLabel>
-                                  {console.log(roles?.OnMountTriggerRow?.type, roles?.OnMountTriggerRow?.type?.rowId === open.rowId)
-                                  }
+
                                   <Select
                                     variant='filled'
                                     value={roles?.OnMountTriggerRow?.rowId === open.rowId ? roles?.OnMountTriggerRow?.type : roles?.onMount?.type}
@@ -2333,201 +2369,168 @@ export default function InputControlDesign({
                     )}
                   </div>
                 </UnmountClosed>
-                <UnmountClosed isOpened={Boolean(selected === 'tabs')}>
-                  <div className='pt-2 border-t-2 border-dashed border-main-color'>
-                    <div className='flex justify-between items-center mb-3'>
-                      <h2 className='mt-2 text-lg font-bold text-main-color'>{messages.Tabs}</h2>
-                      <Button variant='contained' color='primary' onClick={() => setOpenTab(true)}>
-                        {messages.Add_Tab}
-                      </Button>
-                    </div>
-                    {/* Controls for step buttons position and alignment */}
-                    <div className='flex flex-wrap gap-2 items-center p-2 mb-3 rounded-md border border-dashed border-main-color'>
-                      <span className='text-sm text-main-color'>
-                        {messages?.Controls_Position || 'Controls Position'}
-                      </span>
-                      <select
-                        className='px-2 py-1 border border-main-color rounded text-sm bg-white'
-                        value={addMoreElement.find(inp => inp.id === open?.id)?.controls?.placement || 'bottom'}
-                        onChange={e => {
-                          const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-                          if (findMyInput) {
-                            findMyInput.controls = { ...(findMyInput.controls || {}), placement: e.target.value }
-                            onChange({ ...data, addMoreElement: addMoreElement })
-                          }
-                        }}
+
+                <UnmountClosed isOpened={Boolean(selected === 'progress_bar')}>
+                  <div className='flex flex-col gap-4 px-1'>
+                    <Box>
+                      <Typography variant='subtitle1' className='font-semibold' color='text.primary'>
+                        {messages.dialogs.progressBarSegments}
+                      </Typography>
+                      <Typography variant='caption' color='text.secondary' display='block' sx={{ mt: 0.5 }}>
+                        {locale === 'ar' ? 'حدد النسبة ولون كل شريحة (المجموع 100% أفضل)' : 'Set percentage and color per segment (total 100% recommended)'}
+                      </Typography>
+                    </Box>
+                    {(roles?.progressBarSegments ?? []).length === 0 ? (
+                      <Box
+                        className='rounded-lg border-2 border-dashed p-6 text-center'
+                        sx={{ borderColor: 'divider', backgroundColor: 'action.hover' }}
                       >
-                        <option value='top'>{messages?.Top || 'Top'}</option>
-                        <option value='bottom'>{messages?.Bottom || 'Bottom'}</option>
-                      </select>
-                      <span className='text-sm text-main-color'>{messages?.Alignment || 'Alignment'}</span>
-                      <select
-                        className='px-2 py-1 border border-main-color rounded text-sm bg-white'
-                        value={addMoreElement.find(inp => inp.id === open?.id)?.controls?.align || 'start'}
-                        onChange={e => {
-                          const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-                          if (findMyInput) {
-                            findMyInput.controls = { ...(findMyInput.controls || {}), align: e.target.value }
-                            onChange({ ...data, addMoreElement: addMoreElement })
+                        <Icon icon='tabler:chart-donut' className='mx-auto text-gray-400' fontSize='2.5rem' />
+                        <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+                          {locale === 'ar' ? 'لا توجد شرائح بعد. أضف شريحة لبدء التخصيص.' : 'No segments yet. Add a segment to get started.'}
+                        </Typography>
+                        <Button
+                          variant='contained'
+                          size='small'
+                          startIcon={<Icon icon='tabler:plus' />}
+                          onClick={() =>
+                            updateProgressBarSegments([{ percentage: 0, backgroundColor: '#4caf50' }])
                           }
-                        }}
-                      >
-                        <option value='start'>{messages?.Start || 'Start'}</option>
-                        <option value='center'>{messages?.Center || 'Center'}</option>
-                        <option value='end'>{messages?.End || 'End'}</option>
-                      </select>
-                    </div>
-                    <div className='flex flex-wrap gap-1 parent-tabs'>
-                      {open?.data?.map((item, index) => (
-                        <div
-                          key={index}
-                          className='flex flex-col gap-2 p-2 w-full rounded-md border-2 border-main-color'
+                          sx={{ mt: 2 }}
                         >
-                          <div className='flex justify-between items-center'>
-                            <div className='flex items-center gap-2'>
-                              <span className='text-xs text-gray-500 min-w-[30px]'>#{index + 1}</span>
-                              <TextField
-                                type='number'
-                                size='small'
-                                value={index + 1}
-                                onChange={e => {
-                                  const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-                                  if (findMyInput) {
-                                    const newIndex =
-                                      Math.max(
-                                        1,
-                                        Math.min(parseInt(e.target.value, 10) || 1, findMyInput.data?.length || 1)
-                                      ) - 1
-                                    if (
-                                      newIndex !== index &&
-                                      newIndex >= 0 &&
-                                      newIndex < (findMyInput.data?.length || 0)
-                                    ) {
-                                      const tabs = [...(findMyInput.data || [])]
-                                      const [movedTab] = tabs.splice(index, 1)
-                                      tabs.splice(newIndex, 0, movedTab)
-                                      findMyInput.data = tabs
-                                      onChange({ ...data, addMoreElement: addMoreElement })
+                          {messages.dialogs.add}
+                        </Button>
+                      </Box>
+                    ) : (
+                      <>
+                        {(roles?.progressBarSegments ?? []).map((segment, index) => {
+                          const bgValue = segment.backgroundColor ?? '#4caf50'
+                          const isHex = v => /^#[0-9A-Fa-f]{3,8}$/.test((v || '').trim())
+                          const pickerBg = isHex(bgValue) ? bgValue : '#4caf50'
+
+                          return (
+                            <Box
+                              key={index}
+                              className='flex flex-col gap-3 rounded-lg p-3'
+                              sx={{
+                                backgroundColor: 'grey.50',
+                                border: '1px solid',
+                                borderColor: 'divider'
+                              }}
+                            >
+                              <Box className='flex flex-wrap items-center gap-3'>
+                                <Box
+                                  className='flex items-center justify-center rounded-full shrink-0'
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    background: bgValue,
+                                    color: '#ffffff',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem'
+                                  }}
+                                >
+                                  {index + 1}
+                                </Box>
+                                <TextField
+                                  type='text'
+                                  size='small'
+                                  label={messages.dialogs.percentage}
+                                  value={segment.percentage ?? ''}
+                                  onChange={e => {
+                                    const segments = [...(roles?.progressBarSegments ?? [])]
+                                    segments[index] = { ...segment, percentage: e.target.value }
+                                    updateProgressBarSegments(segments)
+                                  }}
+                                  variant='filled'
+                                  sx={{ minWidth: 100, flex: '1 1 100px' }}
+                                />
+                                <Tooltip title={messages.dialogs.delete}>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                    onClick={() =>
+                                      updateProgressBarSegments(
+                                        (roles?.progressBarSegments ?? []).filter((_, i) => i !== index)
+                                      )
                                     }
-                                  }
-                                }}
-                                inputProps={{
-                                  min: 1,
-                                  max: open?.data?.length || 1,
-                                  style: { width: '50px', padding: '4px', textAlign: 'center' }
-                                }}
-                                sx={{ width: '60px' }}
-                                title={messages?.Tab_Index || 'Tab Index'}
-                              />
-                              <span>{item?.[`name_${locale}`]}</span>
-                            </div>
-                            <div className='flex items-center'>
-                              <IconButton
-                                onClick={() => {
-                                  const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-                                  if (findMyInput && index > 0) {
-                                    const tabs = [...(findMyInput.data || [])]
-                                    const temp = tabs[index]
-                                    tabs[index] = tabs[index - 1]
-                                    tabs[index - 1] = temp
-                                    findMyInput.data = tabs
-                                    onChange({ ...data, addMoreElement: addMoreElement })
-                                  }
-                                }}
-                                disabled={index === 0}
-                                title={messages?.Move_Up || 'Move Up'}
-                              >
-                                <IconifyIcon icon='mdi:arrow-up' />
-                              </IconButton>
-                              <IconButton
-                                onClick={() => {
-                                  const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-                                  if (findMyInput && index < (findMyInput.data?.length || 0) - 1) {
-                                    const tabs = [...(findMyInput.data || [])]
-                                    const temp = tabs[index]
-                                    tabs[index] = tabs[index + 1]
-                                    tabs[index + 1] = temp
-                                    findMyInput.data = tabs
-                                    onChange({ ...data, addMoreElement: addMoreElement })
-                                  }
-                                }}
-                                disabled={index >= (open?.data?.length || 0) - 1}
-                                title={messages?.Move_Down || 'Move Down'}
-                              >
-                                <IconifyIcon icon='mdi:arrow-down' />
-                              </IconButton>
-                              <IconButton
-                                onClick={() => {
-                                  setEditTab(index + 1)
-                                  setTabData({
-                                    name_ar: item.name_ar,
-                                    name_en: item.name_en,
-                                    link: item.link,
-                                    active: item.active,
-                                    visibilityMode: item.visibilityMode,
-                                    visibilityCondition: item.visibilityCondition
-                                  })
-                                  setOpenTab(true)
-                                }}
-                                title={messages?.Edit || 'Edit'}
-                              >
-                                <IconifyIcon icon='mdi:edit' />
-                              </IconButton>
-                              <IconButton
-                                onClick={() => {
-                                  const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-
-                                  if (findMyInput) {
-                                    findMyInput.data.splice(index, 1)
-                                  }
-                                  onChange({ ...data, addMoreElement: addMoreElement })
-                                }}
-                                title={messages?.Delete || 'Delete'}
-                              >
-                                <IconifyIcon icon='tabler:trash' />
-                              </IconButton>
-                            </div>
-                          </div>
-                          <div className='flex flex-col gap-2'>
-                            <span className='text-sm text-main-color'>
-                              {messages?.Select_Fields || 'Select Fields for this Tab'}
-                            </span>
-                            <div className='flex flex-wrap gap-2'>
-                              {fields?.map(f => {
-                                const fieldId = f?.id ?? f?.key
-                                const isAssigned = Array.isArray(item.fields) && item.fields.includes(fieldId)
-
-                                return (
-                                  <label
-                                    key={f.id}
-                                    className='flex items-center gap-1 text-sm border rounded px-2 py-1'
+                                    aria-label={messages.dialogs.delete}
                                   >
-                                    <input
-                                      type='checkbox'
-                                      checked={isAssigned}
-                                      onChange={() => {
-                                        const findMyInput = addMoreElement.find(inp => inp.id === open?.id)
-                                        if (!findMyInput) return
-                                        const next = [...(findMyInput.data || [])]
-                                        const tabObj = { ...(next[index] || {}) }
-                                        const current = Array.isArray(tabObj.fields) ? tabObj.fields : []
-                                        tabObj.fields = isAssigned
-                                          ? current.filter(id => id !== fieldId)
-                                          : [...current, fieldId]
-                                        next[index] = tabObj
-                                        findMyInput.data = next
-                                        onChange({ ...data, addMoreElement })
-                                      }}
-                                    />
-                                    <span>{locale === 'ar' ? f.nameAr : f.nameEn}</span>
-                                  </label>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                                    <Icon icon='tabler:trash' fontSize='1.25rem' />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                              <Box className='flex flex-col gap-2'>
+                                <Typography variant='caption' color='text.secondary' fontWeight={500}>
+                                  {messages.dialogs.backgroundColor}
+                                </Typography>
+                                <Box className='flex flex-wrap items-center gap-2'>
+                                  <Box
+                                    className='rounded border shrink-0'
+                                    sx={{
+                                      width: 36,
+                                      height: 36,
+                                      background: bgValue,
+                                      borderColor: 'divider'
+                                    }}
+                                  />
+                                  <TextField
+                                    type='color'
+                                    size='small'
+                                    value={pickerBg}
+                                    onChange={e => {
+                                      const segments = [...(roles?.progressBarSegments ?? [])]
+                                      segments[index] = { ...segment, backgroundColor: e.target.value }
+                                      updateProgressBarSegments(segments)
+                                    }}
+                                    sx={{ width: 48, minWidth: 48, '& .MuiInput-input': { height: 36, cursor: 'pointer' } }}
+                                  />
+                                  <TextField
+                                    type='text'
+                                    size='small'
+                                    fullWidth
+                                    placeholder={messages.dialogs.colorOrCss}
+                                    value={typeof bgValue === 'string' ? bgValue : ''}
+                                    onChange={e => {
+                                      const segments = [...(roles?.progressBarSegments ?? [])]
+                                      segments[index] = { ...segment, backgroundColor: e.target.value }
+                                      updateProgressBarSegments(segments)
+                                    }}
+                                    variant='filled'
+                                  />
+                                </Box>
+                              </Box>
+                            </Box>
+                          )
+                        })}
+                        <Box className='flex items-center justify-between gap-2 flex-wrap'>
+                          <Typography variant='caption' color='text.secondary' component='span' sx={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                            {locale === 'ar' ? 'المجموع: ' : 'Total: '}
+                            <strong>
+                              {(roles?.progressBarSegments ?? []).reduce((s, seg) => s + (Number(seg.percentage) || 0), 0)}%
+                            </strong>
+                            {(roles?.progressBarSegments ?? []).reduce((s, seg) => s + (Number(seg.percentage) || 0), 0) !== 100 && (
+                              <Typography component='span' variant='caption' color='warning.main'>
+                                ({locale === 'ar' ? 'يفضل أن يكون 100%' : '100% recommended'})
+                              </Typography>
+                            )}
+                          </Typography>
+                          <Button
+                            variant='outlined'
+                            size='small'
+                            startIcon={<Icon icon='tabler:plus' />}
+                            onClick={() =>
+                              updateProgressBarSegments([
+                                ...(roles?.progressBarSegments ?? []),
+                                { percentage: 0, backgroundColor: '#4caf50' }
+                              ])
+                            }
+                          >
+                            {messages.dialogs.add}
+                          </Button>
+                        </Box>
+                      </>
+                    )}
                   </div>
                 </UnmountClosed>
                 <UnmountClosed isOpened={Boolean(selected === 'associations')}>
@@ -2541,7 +2544,10 @@ export default function InputControlDesign({
                     Setup Associations
                   </Button>
                 </UnmountClosed>
-                <PrintSetting open={open} roles={roles} onChange={onChange} data={data} fields={fields} />
+                <UnmountClosed isOpened={Boolean(selected === 'print')}>
+                  <PrintSetting open={open} roles={roles} onChange={onChange} data={data} fields={fields} />
+                </UnmountClosed>
+
               </div>
             )}
           </div>

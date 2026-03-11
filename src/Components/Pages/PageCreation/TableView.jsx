@@ -27,7 +27,8 @@ function TableView({
   type,
   formTable,
   FilterData,
-  filterWithAPIValue
+  filterWithAPIValue,
+  setValue
 }) {
   const [getFields, setGetFields] = useState([])
   const [changedValue, setChangedValue] = useState([])
@@ -37,10 +38,18 @@ function TableView({
   const [editOpen, setEditOpen] = useState(false)
   const { messages } = useIntl()
   const errorAllRef = useRef([])
-  const showBtnCheckbox = data.showBtn ?? true
+  const showBtnCheckbox = data?.showBtn ?? true
   const [newDataInsert, setNewDataInsert] = useState([])
   const [open, setOpen] = useState(false)
   const [columnControl, setColumnControl] = useState(false)
+
+
+  useEffect(() => {
+    if (setValue) {
+      setValue({ target: { value: data.newRows } });
+    }
+  }, [data?.newRows]);
+
 
   const handleClosePop = () => {
     setOpen(false)
@@ -56,13 +65,10 @@ function TableView({
   useEffect(() => {
     setLoading(true)
     const getOldRows = data.newRows || []
-    const getFilterData = FilterData?.find(ele => ele.facilityType == filterWithAPIValue)
-    console.log(getFilterData)
 
-    if (data.collectionId) {
+    if (data.collectionId && data.collectionName && data.showOldData) {
       axiosGet(
-        `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${
-          paginationModel.pageSize
+        `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${paginationModel.pageSize
         }&isLookup=true`,
         locale
       )
@@ -84,20 +90,22 @@ function TableView({
             if (paginationModel.page === 0) {
               newEntities = [...newChangedValue, ...newEntities]
             }
-            console.log(getFilterData, 'getFilterData')
 
             setGetFields([...getOldRows, ...newEntities, ...newDataInsert])
-            setTotalCount(res.totalCount)
+
+            setTotalCount(res.totalCount === 0 ? getOldRows.length === 0 ? 0 : 1 : res.totalCount)
           } else {
             setGetFields([...getOldRows, ...newDataInsert])
+            setTotalCount(getOldRows.length === 0 ? 0 : 1)
           }
         })
         .finally(() => setLoading(false))
     } else {
       setGetFields([...getOldRows, ...newDataInsert])
+      setTotalCount(getOldRows.length === 0 ? 0 : 1)
       setLoading(false)
     }
-  }, [locale, data.collectionId, paginationModel, newDataInsert.length])
+  }, [locale, data.collectionId, paginationModel, newDataInsert.length, data.showOldData])
 
   useEffect(() => {
     if (loading || !filterWithAPIValue) return
@@ -113,20 +121,18 @@ function TableView({
           ele.fieldCategory === 'Associations'
             ? insert?.Id ?? []
             : ele.type === 'Date'
-            ? new Date()
-            : ele.type === 'DateTime'
-            ? new Date()
-            : ''
+              ? new Date()
+              : ele.type === 'DateTime'
+                ? new Date()
+                : ''
       })
 
       newDataInsert.push(newData)
     })
-    console.log(newDataInsert)
 
     setNewDataInsert(newDataInsert)
   }, [filterWithAPIValue?.changedValue, loading])
 
-  console.log(data)
 
   const [loadingHeader, setLoadingHeader] = useState(true)
   useEffect(() => {
@@ -137,10 +143,13 @@ function TableView({
           if (res.status) {
             const associationsConfig = data.associationsConfig || []
 
+            
             const filterData = res.data.map(field => {
               const filterWith = type !== 'from-collection' ? field?.key : field?.id
               const find = associationsConfig.find(item => item?.key === filterWith)
               const filedData = { ...field }
+
+
               if (find) {
                 filedData.kind = find.viewType
                 filedData.descriptionEn = JSON.stringify(find.selectedOptions)
@@ -175,15 +184,8 @@ function TableView({
       if (field?.type === 'new_element') {
         defaultDesign = DefaultStyle(field?.key)
       } else {
-        if (field?.kind) {
-          defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.kind || field.descriptionAr))
-        } else {
-          if (field?.options?.uiSchema?.xComponentProps?.cssClass) {
-            defaultDesign = field?.options?.uiSchema?.xComponentProps?.cssClass
-          } else {
-            defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.kind || field.descriptionAr))
-          }
-        }
+        defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.descriptionAr === 'progress_bar' ? 'progress_bar' : field.kind || field.descriptionAr))
+
       }
       let additionalField = null
       const additionalFieldDesign = data?.additional_fields?.find(ele => ele.key === key)?.design
@@ -220,12 +222,12 @@ function TableView({
 
     const cleanedCurrent = allData?.current
       ? Object.fromEntries(
-          Object.entries(allData.current).map(([key, value]) => {
-            const newKey = key.includes('.') ? key.split('.').pop() : key
+        Object.entries(allData.current).map(([key, value]) => {
+          const newKey = key.includes('.') ? key.split('.').pop() : key
 
-            return [newKey, value]
-          })
-        )
+          return [newKey, value]
+        })
+      )
       : {}
 
     const lastData = []
@@ -259,7 +261,16 @@ function TableView({
     })
 
     setFilterWithSelect(!readOnly ? filteredFields : lastData)
+
+    onChange({
+      ...data,
+      inputsVisibility: !readOnly ? filteredFields : lastData
+    })
   }, [collectionFields.length, data?.selected?.length, data.sortWithId, reloadRef])
+
+  
+  console.log(data);
+  
 
   const SortableButton = SortableElement(({ value }) => (
     <>
@@ -404,7 +415,6 @@ function TableView({
                     .then(res => {
                       if (res.status) {
                         setGetFields(getFields.filter(ele => ele.Id !== deleteOpen.Id))
-                        setTotalCount(totalCount - 1)
                       }
                     })
                     .finally(_ => {
@@ -437,10 +447,10 @@ function TableView({
                     ele.fieldCategory === 'Associations'
                       ? []
                       : ele.type === 'Date'
-                      ? new Date()
-                      : ele.type === 'DateTime'
-                      ? new Date()
-                      : ''
+                        ? new Date()
+                        : ele.type === 'DateTime'
+                          ? new Date()
+                          : ''
                 })
                 setGetFields([newData, ...getFields])
                 onChange({
@@ -463,6 +473,7 @@ function TableView({
           }}
         >
           <TableComponent
+            setTotalCount={setTotalCount}
             allData={allData}
             filterWithSelect={filterWithSelect}
             columns={getFields}
@@ -482,6 +493,7 @@ function TableView({
             setGetFields={setGetFields}
             editAction={data.edit}
             deleteAction={data.delete}
+            detailsAction={data.details}
             setEditOpen={setEditOpen}
             setDeleteOpen={setDeleteOpen}
             setChangedValue={setChangedValue}
@@ -490,6 +502,7 @@ function TableView({
             type={type}
             formTable={formTable}
           />
+          {console.log(data,"data.details")}
           {data.kind === 'form-table' && type !== 'from-collection' && paginationModel.page === 0 && (
             <div className='flex justify-end px-5 mt-3'>
               <Button

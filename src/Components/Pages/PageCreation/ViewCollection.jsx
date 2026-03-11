@@ -8,21 +8,21 @@ import InputControlDesign from './InputControlDesign'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, KeyboardSensor } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { DefaultStyle, getData, getTypeFromCollection } from 'src/Components/_Shared'
+import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
 import { CircularProgress } from '@mui/material'
 import { useDispatch } from 'react-redux'
-import { useSelector } from 'react-redux'
 
 // Dnd Kit Sortable Item Component
-function  SortableGridItem({
+function SortableGridItem({
+  tabsData,
   filed,
-  index,
+  advancedEdit,
+  activeTab,
   readOnly,
   stopSort,
   locale,
-  getApiData,
   data,
   getDesign,
   setOpen,
@@ -32,7 +32,7 @@ function  SortableGridItem({
   onChange,
   layout,
   dataRef,
-  dataRefWithCollectionId,
+  dataRefWithCollectionId, setActiveTab,
   sortedLoop,
   setTriggerData,
   entitiesData,
@@ -47,7 +47,8 @@ function  SortableGridItem({
   loading,
   disabled,
   reload,
-  messages
+  messages,
+  sortedLoopWithoutTabs
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: filed.id,
@@ -93,13 +94,7 @@ function  SortableGridItem({
     position: 'relative'
   }
 
-  
-  let findNewValue = ''
-  if(roles?.api_url){
-    const items = getApiData.find(item => item.link === roles.api_url)?.data
-    findNewValue = getData(items, roles?.onMount?.value, '')
 
-  }
 
   return (
     <div
@@ -263,11 +258,15 @@ function  SortableGridItem({
         </div>
       )}
 
+
       <DisplayField
         handleSubmit={handleSubmit}
+        tabsData={tabsData}
         loadingBtn={loading}
         input={filed}
         design={getDesign(filed.id, filed)}
+        setActiveTab={setActiveTab}
+        activeTab={activeTab}
         readOnly={disabled}
         disabledBtn={data.type_of_sumbit === 'api' && !data.submitApi}
         refError={refError}
@@ -278,11 +277,12 @@ function  SortableGridItem({
         onChangeData={onChange}
         dataRef={dataRef}
         dataRefWithCollectionId={dataRefWithCollectionId}
-        allFields={sortedLoop}
+        allFields={sortedLoopWithoutTabs}
         setTriggerData={setTriggerData}
-        findValue={ findNewValue || entitiesData?.[filed?.key]}
+        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key]}
         roles={roles}
         advancedEdit={readOnly}
+        editMode={advancedEdit}
         reload={reload}
         errorView={errors?.[filed.type === 'new_element' ? filed.id : filed.key]?.[0]}
         findError={
@@ -299,8 +299,8 @@ export default function ViewCollection({
   onChange,
   readOnly,
   disabled,
-  workflowId,
   pageId,
+  advancedEdit,
   entitiesId,
   collectionName,
   pageName
@@ -314,13 +314,26 @@ export default function ViewCollection({
   const dataRef = useRef({})
   const dataRefWithCollectionId = useRef({})
   const [triggerData, setTriggerData] = useState(0)
-  const [assignTabIndex, setAssignTabIndex] = useState(0)
-  const [renameTabIndex, setRenameTabIndex] = useState(0)
-  const [renameTabValueAr, setRenameTabValueAr] = useState('')
-  const [renameTabValueEn, setRenameTabValueEn] = useState('')
   const [entitiesData, setEntitiesData] = useState(null)
   const dispatch = useDispatch()
+  const [activeTab, setActiveTab] = useState(0)
+  const [tabsData, setTabsData] = useState({})
+  const [stopSortLayout, setStopSortLayout] = useState(false)
 
+
+  useEffect(() => {
+    setStopSortLayout(!readOnly ? true : false)
+  }, [readOnly])
+
+  useEffect(() => {
+    refError.current = {}
+    dataRef.current = {}
+  }, [activeTab])
+
+
+
+
+  const findActiveTab = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data?.find((ele, index) => index === activeTab)
 
   const {
     query: { requestId },
@@ -340,7 +353,8 @@ export default function ViewCollection({
   const SortWithXInGroup = convertTheTheSameYToGroup.map(group => group.sort((a, b) => a.x - b.x))
   const sortedData = SortWithXInGroup.flat()
   const filterSelect = getFields
-  const getApiData = useSelector(rx => rx.api.data)
+
+
 
   useEffect(() => {
     if (!loading) {
@@ -367,6 +381,24 @@ export default function ViewCollection({
     if (data.collectionId) {
       Promise.all([
         ...(data?.SelectedRelatedCollectionsFields?.map(async item => {
+          if (item.isTable) {
+            const tableKey = 'form-table[' + (item.collection?.key ?? '') + ']'
+
+            const tableInput = {
+              ...item.collection,
+              nameAr: item.collection.nameAr,
+              nameEn: item.collection.nameEn,
+              type: "OneToMany",
+              fieldCategory: "Associations",
+              key: tableKey,
+              id: tableKey,
+              descriptionEn: JSON.stringify(item.selected),
+              validationData: [], options: { source: item.collection.key },
+              kind: 'Table'
+            }
+
+            return [tableInput]
+          }
           const res = await axiosGet(`collection-fields/get?CollectionId=${item.collection.id}`, locale)
           if (res.status) {
             const selectedFields = res.data.filter(field => item.selected.includes(field.key))
@@ -421,17 +453,13 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
-
-  const [loadingEntities, setLoadingEntities] = useState(true)
   useEffect(() => {
-    if (entitiesId !== null && collectionName !== null) {
+    if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
           setEntitiesData(res?.data?.entities?.[0])
         }
-      }).finally(() => setLoadingEntities(false))
-    }else{
-      setLoadingEntities(false)
+      })
     }
   }, [entitiesId, collectionName, pageName])
 
@@ -468,31 +496,111 @@ export default function ViewCollection({
       }
     }
 
-    console.log(errors)
+
 
     if (errors.find(ele => typeof ele === 'object')) {
+
       return setErrors(refError.current)
     }
 
-    const output = {}
+    let output = {}
 
     Object.entries(sendData).forEach(([key, value]) => {
+
+      // 👈 لو form-table
+      if (key.startsWith("form-table[")) {
+
+        const match = key.match(/^form-table\[(.+)\]$/)
+
+        if (match) {
+          const arrayName = match[1]
+
+          const tableData = dataRef.current[key]
+
+          if (Array.isArray(tableData)) {
+
+            const cleaned = tableData.map(item => {
+
+              const newItem = {}
+
+              Object.entries(item).forEach(([k, v]) => {
+
+                // ❌ نشيل Id
+                if (k === "Id") return
+
+                // ❌ نشيل s + أرقام
+                if (/^s\d+$/.test(k)) return
+
+                // ❌ نشيل undefined.form-table
+                if (k.startsWith("undefined.form-table")) return
+
+                // ❌ نشيل uuid.Anything
+                if (/^[a-f0-9-]+\./i.test(k)) return
+
+
+                // ✅ لو Date نحوله
+                if (v instanceof Date && !isNaN(v)) {
+                  const localISO = new Date(
+                    v.getTime() - v.getTimezoneOffset() * 60000
+                  )
+                    .toISOString()
+                    .slice(0, 19)
+
+                  newItem[k] = localISO
+                } else {
+                  newItem[k] = v
+                }
+
+              })
+
+              return newItem
+            })
+
+            output[arrayName] = cleaned
+          }
+        }
+
+        return
+      }
+
+      // 👇 باقي المعالجة الطبيعية
       const match = key.match(/^(.+)\[(.+)\]$/)
+
       if (match) {
         const [, mainKey, subKey] = match
         output[subKey] = output[subKey] || {}
         output[subKey][mainKey] = value
       } else {
         if (value instanceof Date && !isNaN(value)) {
-          const date = value
-          const localISO = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 19) // remove milliseconds and 'Z'
+          const date = new Date(
+            value.getTime() - value.getTimezoneOffset() * 60000
+          )
+            .toISOString()
+            .slice(0, 19)
 
-          output[key] = localISO
+          output[key] = date
         } else {
           output[key] = value
         }
       }
     })
+
+
+
+    const tabsDataArray = data?.addMoreElement.find(ele => ele.key === 'tabs')?.data ?? [];
+
+
+    if (tabsDataArray.length > 0 && activeTab + 1 < tabsDataArray.length) {
+      setActiveTab(prev => prev + 1)
+      setTabsData(prev => ({ ...prev, ...output }))
+
+
+      return
+    } else {
+      output = { ...tabsData, ...output }
+    }
+
+
 
     setLoading(true)
 
@@ -501,10 +609,9 @@ export default function ViewCollection({
         ? data.submitApi
         : `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
 
-    console.log(handleSubmitEvent, 'handleSubmitEvent')
     if (handleSubmitEvent) {
       handleSubmitEvent()
-    } 
+    }
     if (entitiesId && collectionName) {
 
       if (data.onSubmit) {
@@ -524,7 +631,7 @@ export default function ViewCollection({
           if (res.status) {
             setReload(prev => prev + 1)
             toast.success(messages.dialogs.dataSentSuccessfully)
-           
+
             if (data?.redirect) {
               push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
             }
@@ -564,10 +671,7 @@ export default function ViewCollection({
   const defaultDesign =
     open?.type === 'new_element'
       ? DefaultStyle(open?.key)
-      : open?.kind
-        ? DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText', open?.kind))
-        : open?.options?.uiSchema?.xComponentProps?.cssClass ??
-        DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText'))
+      : DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText', open?.descriptionAr === 'progress_bar' ? 'progress_bar' : open?.kind))
   let additionalField = null
   const additionalFieldDesign = data?.additional_fields?.find(ele => ele.key === open?.id)?.design
   if (additionalFieldDesign) {
@@ -621,15 +725,7 @@ export default function ViewCollection({
       if (field?.type === 'new_element') {
         defaultDesign = DefaultStyle(field?.key)
       } else {
-        if (field?.kind) {
-          defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.kind || field.descriptionAr))
-        } else {
-          if (field?.options?.uiSchema?.xComponentProps?.cssClass) {
-            defaultDesign = field?.options?.uiSchema?.xComponentProps?.cssClass
-          } else {
-            defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.kind || field.descriptionAr))
-          }
-        }
+        defaultDesign = DefaultStyle(getTypeFromCollection(field.type, field.descriptionAr === 'progress_bar' ? 'progress_bar' : field.kind || field.descriptionAr))
       }
       let additionalField = null
       const additionalFieldDesign = data?.additional_fields?.find(ele => ele.key === key)?.design
@@ -646,9 +742,13 @@ export default function ViewCollection({
       return design
     },
     [data?.additional_fields]
+
   )
 
-  const refTest = useRef()
+
+
+
+
 
   useEffect(() => {
     if (layout) {
@@ -661,7 +761,81 @@ export default function ViewCollection({
     }
   }, [layout])
 
+
   const sortedLoop = useMemo(() => {
+    const items = [...filterSelect, ...addMoreElement]
+    const fixedKeys = ["tabs", "submit", "back"]
+
+    const sorted = items.sort((a, b) => {
+      const indexA = sortedData.findIndex(f => f.i === a.id)
+      const indexB = sortedData.findIndex(f => f.i === b.id)
+
+      return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB)
+    })
+
+    if (stopSortLayout) {
+      const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+      const tabs = tabsElement?.data || []
+
+      if (tabs.length === 0) return sorted
+
+      const assignedFieldIds = tabs.flatMap(t => Array.isArray(t.fields) ? t.fields : [])
+
+      // ابني map من item.id => y من الـ layout
+      const getY = (id) => layout.find(l => l.i === id)?.y ?? 9999
+
+      // كل الـ real items مع y بتاعهم
+      const allRealItems = sorted.map(ele => ({
+        ...ele,
+        __y: getY(ele.id),
+        __isFixed: fixedKeys.includes(ele.kind || ele.key),
+        __fieldId: ele.type === 'new_element' ? ele.id : ele.key
+      }))
+
+      // حسب لكل tab أصغر y بين fields بتاعته
+      const tabHeaderItems = tabs.map((tab, tabIndex) => {
+        const tabFieldIds = Array.isArray(tab.fields) ? tab.fields : []
+
+        const tabFieldsYValues = allRealItems
+          .filter(ele => !ele.__isFixed && tabFieldIds.includes(ele.__fieldId))
+          .map(ele => ele.__y)
+
+        const minY = tabFieldsYValues.length > 0
+          ? Math.min(...tabFieldsYValues) - 0.5
+          : tabIndex * 1000  // fallback لو tab فاضي
+
+        return {
+          id: `__tab_header_${tabIndex}`,
+          type: '__tab_header__',
+          tabName: tab?.[`name_${locale}`] || tab?.name_en || tab?.name_ar || `Tab ${tabIndex + 1}`,
+          tabIndex,
+          __y: minY
+        }
+      })
+
+      // دمج كل حاجة مع بعض
+      const combined = [
+        ...allRealItems,
+        ...tabHeaderItems
+      ]
+
+      // sort بالـ y
+      combined.sort((a, b) => a.__y - b.__y)
+
+      return combined
+    }
+
+    return sorted.filter(ele =>
+      findActiveTab
+        ? fixedKeys.includes(ele.kind || ele.key)
+          ? true
+          : findActiveTab?.fields?.includes(ele.type === 'new_element' ? ele.id : ele.key)
+        : true
+    )
+
+  }, [filterSelect, addMoreElement, sortedData, findActiveTab, stopSortLayout, data?.addMoreElement, locale, layout])
+
+  const sortedLoopWithoutTabs = useMemo(() => {
     const items = [...filterSelect, ...addMoreElement]
 
     const sorted = items.sort((a, b) => {
@@ -671,8 +845,10 @@ export default function ViewCollection({
       return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB)
     })
 
+
+
     return sorted
-  }, [filterSelect, addMoreElement, sortedData])
+  }, [filterSelect, addMoreElement, sortedData, findActiveTab, stopSortLayout])
 
   // Dnd Kit sensors
   const sensors = useSensors(
@@ -687,37 +863,56 @@ export default function ViewCollection({
   // Handle drag end
   const handleDragEnd = event => {
     const { active, over } = event
-
-    if (!over || active.id === over.id) {
-      return
-    }
+    if (!over || active.id === over.id) return
 
     const oldIndex = sortedLoop.findIndex(item => item.id === active.id)
     const newIndex = sortedLoop.findIndex(item => item.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
 
-    if (oldIndex === -1 || newIndex === -1) {
-      return
-    }
-
-    // Create new sorted array
+    // نعمل arrayMove على sortedLoop كامل (شاملة virtual headers)
     const newSortedLoop = arrayMove(sortedLoop, oldIndex, newIndex)
 
-    // Update layout to reflect new order - maintain x position but update y
-    const newLayout = newSortedLoop.map((item, index) => {
-      const existingLayout = layout.find(l => l.i === item.id)
+    // نشيل الـ virtual tab headers ونبني layout من الـ real items بس
+    let yCounter = 0
+    const newLayout = []
 
-      return {
+    newSortedLoop.forEach(item => {
+      // تجاهل virtual tab headers في بناء الـ layout
+      if (item.type === '__tab_header__') return
+
+      const existingLayout = layout.find(l => l.i === item.id)
+      newLayout.push({
         i: item.id,
         x: existingLayout?.x ?? 0,
-        y: index,
+        y: yCounter,
         w: existingLayout?.w ?? 12,
         h: existingLayout?.h ?? (item.type === 'LongText' ? 1.8 : 1),
         minH: 0
-      }
+      })
+      yCounter++
     })
 
     setLayout(newLayout)
     onChange({ ...data, layout: newLayout })
+  }
+
+  const handleTabReorder = (oldIndex, newIndex) => {
+    const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+    if (!tabsElement) return
+
+    const addMore = [...(data.addMoreElement || [])]
+    const tabsIdx = addMore.findIndex(ele => ele.key === 'tabs')
+    if (tabsIdx === -1) return
+
+    const nextTabsEl = { ...addMore[tabsIdx] }
+    const nextData = [...(nextTabsEl.data || [])]
+
+    // arrayMove على الـ tabs
+    const reordered = arrayMove(nextData, oldIndex, newIndex)
+    nextTabsEl.data = reordered
+    addMore[tabsIdx] = nextTabsEl
+
+    onChange({ ...data, addMoreElement: addMore })
   }
 
   return (
@@ -751,317 +946,27 @@ export default function ViewCollection({
               {!stopSort ? 'Disable Sort' : 'Enable Sort'}
             </button>
           </div>
-          <div className='flex flex-col gap-2 mb-3'>
-            <div className='flex justify-between items-center p-2 rounded-md border-2 border-dashed border-main-color bg-white/70'>
-              {(() => {
-                const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
-                if (tabsElement) {
-                  return (
-                    <div className='flex gap-2 items-center'>
-                      <button
-                        type='button'
-                        className='px-3 py-1 rounded text-sm bg-main-color text-white hover:bg-main-color/90 shadow'
-                        onClick={() => {
-                          const addMore = [...(data.addMoreElement || [])]
-                          const idx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                          if (idx > -1) {
-                            const next = { ...addMore[idx] }
-                            const count = (next.data || []).length + 1
-                            next.data = [
-                              {
-                                name_ar: `تبويب ${count}`,
-                                name_en: `Tab ${count}`,
-                                link: '',
-                                active: false,
-                                fields: []
-                              },
-                              ...(next.data || [])
-                            ]
-                            addMore[idx] = next
-                            onChange({ ...data, addMoreElement: addMore })
-                          }
-                        }}
-                      >
-                        {messages?.Add_Tab || 'Add Tab'}
-                      </button>
-                      <span className='text-xs text-gray-500'>|</span>
-                      <button
-                        type='button'
-                        className='px-3 py-1 rounded text-sm border border-main-color text-main-color hover:bg-main-color/5 shadow'
-                        onClick={() => {
-                          // Auto-arrange all inputs sequentially (x=0, w=12) with Tabs pinned to top if present
-                          const tabsEl = (addMoreElement || []).find(ele => ele.key === 'tabs')
-                          const fields = [...(getFields || [])]
-                          const extras = (addMoreElement || []).filter(ele => ele?.id !== tabsEl?.id)
-                          const items = tabsEl ? [tabsEl, ...fields, ...extras] : [...fields, ...extras]
 
-                          const newLayout = items.map((item, index) => ({
-                            i: item.id,
-                            x: 0,
-                            y: index,
-                            w: 12,
-                            h: item.type === 'LongText' ? 1.8 : 1
-                          }))
-                          setLayout(newLayout)
-                          onChange({ ...data, layout: newLayout })
-                        }}
-                      >
-                        {messages?.Arrange_Inputs || 'Arrange Inputs'}
-                      </button>
-                    </div>
-                  )
-                }
 
-                return (
-                  <button
-                    type='button'
-                    className='px-3 py-1 rounded text-sm bg-main-color text-white hover:bg-main-color/90 shadow'
-                    onClick={() => {
-                      const addMore = [...(data.addMoreElement || [])]
-                      addMore.push({
-                        name_ar: 'التبويبات',
-                        name_en: 'Tabs',
-                        key: 'tabs',
-                        type: 'new_element',
-                        data: [{ name_ar: 'التبويب الاول', name_en: 'Tab 1', link: '', active: true, fields: [] }],
-                        id: 's' + new Date().getTime()
-                      })
-                      onChange({ ...data, addMoreElement: addMore })
-                    }}
-                  >
-                    {messages?.Add_Tabs || 'Add Tabs'}
-                  </button>
-                )
-              })()}
-            </div>
-            {/* Tabs controls (position/alignment) */}
-            {(() => {
-              const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
-              if (!tabsElement) return null
-
-              return (
-                <div className='flex flex-wrap gap-2 items-center p-3 rounded-md border-2 border-dashed border-main-color bg-white/70'>
-                  <span className='text-sm font-semibold text-main-color'>
-                    {messages?.Tabs_Controls || 'Tabs Controls'}
-                  </span>
-                  <span className='text-sm text-gray-600'>{messages?.Controls_Position || 'Controls Position'}</span>
-                  <select
-                    className='px-2 py-1 border border-main-color rounded text-sm bg-white focus:outline-none'
-                    value={tabsElement?.controls?.placement || 'bottom'}
-                    onChange={e => {
-                      const addMore = [...(data.addMoreElement || [])]
-                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                      if (tabsIdx === -1) return
-                      const nextTabsEl = { ...addMore[tabsIdx] }
-                      nextTabsEl.controls = { ...(nextTabsEl.controls || {}), placement: e.target.value }
-                      addMore[tabsIdx] = nextTabsEl
-                      onChange({ ...data, addMoreElement: addMore })
-                    }}
-                  >
-                    <option value='top'>{messages?.Top || 'Top'}</option>
-                    <option value='bottom'>{messages?.Bottom || 'Bottom'}</option>
-                  </select>
-                  <span className='text-sm text-gray-600'>{messages?.Alignment || 'Alignment'}</span>
-                  <select
-                    className='px-2 py-1 border border-main-color rounded text-sm bg-white focus:outline-none'
-                    value={tabsElement?.controls?.align || 'start'}
-                    onChange={e => {
-                      const addMore = [...(data.addMoreElement || [])]
-                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                      if (tabsIdx === -1) return
-                      const nextTabsEl = { ...addMore[tabsIdx] }
-                      nextTabsEl.controls = { ...(nextTabsEl.controls || {}), align: e.target.value }
-                      addMore[tabsIdx] = nextTabsEl
-                      onChange({ ...data, addMoreElement: addMore })
-                    }}
-                  >
-                    <option value='start'>{messages?.Start || 'Start'}</option>
-                    <option value='center'>{messages?.Center || 'Center'}</option>
-                    <option value='end'>{messages?.End || 'End'}</option>
-                  </select>
-                </div>
-              )
-            })()}
-
-            {/* Rename tab UI */}
-            {(() => {
-              const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
-              if (!tabsElement) return null
-              const tabs = Array.isArray(tabsElement.data) ? tabsElement.data : []
-              const safeIndex = Math.min(Math.max(renameTabIndex, 0), Math.max(0, tabs.length - 1))
-
-              return (
-                <div className='flex flex-wrap gap-2 items-center p-3 rounded-md border-2 border-dashed border-main-color bg-white/70'>
-                  <span className='text-sm font-semibold text-main-color'>{messages?.Rename_Tab || 'Rename Tab'}</span>
-                  <select
-                    className='px-2 py-1 border border-main-color rounded text-sm bg-white focus:outline-none'
-                    value={safeIndex}
-                    onChange={e => {
-                      const idx = parseInt(e.target.value, 10) || 0
-                      setRenameTabIndex(idx)
-                      const t = tabs[idx] || {}
-                      setRenameTabValueAr(t?.name_ar || '')
-                      setRenameTabValueEn(t?.name_en || '')
-                    }}
-                  >
-                    {tabs.map((t, ti) => (
-                      <option key={ti} value={ti}>
-                        {t?.[`name_${locale}`] || t?.name_en || t?.name_ar || `Tab ${ti + 1}`}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    className='px-2 py-1 border border-main-color rounded text-sm focus:outline-none'
-                    placeholder='Name (AR)'
-                    value={renameTabValueAr}
-                    onChange={e => {
-                      const cleaned = (e.target.value || '').replace(/[^\w\sأ-ي]/g, '')
-                      setRenameTabValueAr(cleaned)
-                    }}
-                  />
-                  <input
-                    className='px-2 py-1 border border-main-color rounded text-sm focus:outline-none'
-                    placeholder='Name (EN)'
-                    value={renameTabValueEn}
-                    onChange={e => {
-                      const cleaned = (e.target.value || '').replace(/[^\w\s]/g, '')
-                      setRenameTabValueEn(cleaned)
-                    }}
-                  />
-                  <button
-                    type='button'
-                    className='px-3 py-1 rounded text-sm bg-main-color text-white hover:bg-main-color/90 shadow'
-                    onClick={() => {
-                      const addMore = [...(data.addMoreElement || [])]
-                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                      if (tabsIdx === -1) return
-                      const nextTabsEl = { ...addMore[tabsIdx] }
-                      const nextData = [...(nextTabsEl.data || [])]
-                      const t = { ...(nextData[safeIndex] || {}) }
-                      t.name_ar = (renameTabValueAr || '').trim()
-                      t.name_en = (renameTabValueEn || '').trim()
-                      nextData[safeIndex] = t
-                      nextTabsEl.data = nextData
-                      addMore[tabsIdx] = nextTabsEl
-                      onChange({ ...data, addMoreElement: addMore })
-                    }}
-                  >
-                    {messages?.Save || 'Save'}
-                  </button>
-                  <span className='text-xs text-gray-500'>|</span>
-                  <button
-                    type='button'
-                    className='px-2 py-1 rounded text-sm border border-main-color text-main-color hover:bg-main-color/5 shadow'
-                    onClick={() => {
-                      const addMore = [...(data.addMoreElement || [])]
-                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                      if (tabsIdx === -1) return
-                      if (safeIndex <= 0) return
-                      const nextTabsEl = { ...addMore[tabsIdx] }
-                      const nextData = [...(nextTabsEl.data || [])]
-                      const tmp = nextData[safeIndex - 1]
-                      nextData[safeIndex - 1] = nextData[safeIndex]
-                      nextData[safeIndex] = tmp
-                      nextTabsEl.data = nextData
-                      addMore[tabsIdx] = nextTabsEl
-                      onChange({ ...data, addMoreElement: addMore })
-                      setRenameTabIndex(safeIndex - 1)
-                    }}
-                  >
-                    {messages?.Move_Up || 'Move Up'}
-                  </button>
-                  <button
-                    type='button'
-                    className='px-2 py-1 rounded text-sm border border-main-color text-main-color hover:bg-main-color/5 shadow'
-                    onClick={() => {
-                      const addMore = [...(data.addMoreElement || [])]
-                      const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                      if (tabsIdx === -1) return
-                      if (safeIndex >= (tabs?.length || 1) - 1) return
-                      const nextTabsEl = { ...addMore[tabsIdx] }
-                      const nextData = [...(nextTabsEl.data || [])]
-                      const tmp = nextData[safeIndex + 1]
-                      nextData[safeIndex + 1] = nextData[safeIndex]
-                      nextData[safeIndex] = tmp
-                      nextTabsEl.data = nextData
-                      addMore[tabsIdx] = nextTabsEl
-                      onChange({ ...data, addMoreElement: addMore })
-                      setRenameTabIndex(safeIndex + 1)
-                    }}
-                  >
-                    {messages?.Move_Down || 'Move Down'}
-                  </button>
-                </div>
-              )
-            })()}
-            {(() => {
-              const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
-              if (!tabsElement) return null
-              const tabs = Array.isArray(tabsElement.data) ? tabsElement.data : []
-              const currentIndex = Math.min(Math.max(assignTabIndex, 0), Math.max(0, tabs.length - 1))
-              const fieldsList = filterSelect || []
-
-              return (
-                <div className='flex flex-col gap-2 p-2 border rounded'>
-                  <div className='flex items-center gap-2'>
-                    <span className='text-sm'>{messages?.Select_Tab || 'Select Tab'}</span>
-                    <select
-                      className='px-2 py-1 border rounded text-sm bg-white'
-                      value={currentIndex}
-                      onChange={e => setAssignTabIndex(parseInt(e.target.value, 10) || 0)}
-                    >
-                      {tabs.map((t, ti) => (
-                        <option key={ti} value={ti}>
-                          {t?.[`name_${locale}`] || t?.name_en || t?.name_ar || `Tab ${ti + 1}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className='flex flex-wrap gap-2'>
-                    {fieldsList.map(f => {
-                      const fieldId = f?.key ?? f?.id
-
-                      const assigned = Array.isArray(tabs[currentIndex]?.fields)
-                        ? tabs[currentIndex].fields.includes(fieldId)
-                        : false
-
-                      return (
-                        <label key={fieldId} className='flex items-center gap-1 text-sm border rounded px-2 py-1'>
-                          <input
-                            type='checkbox'
-                            checked={assigned}
-                            onChange={() => {
-                              const addMore = [...(data.addMoreElement || [])]
-                              const tabsIdx = addMore.findIndex(ele => ele.id === tabsElement.id)
-                              if (tabsIdx === -1) return
-                              const nextTabsEl = { ...addMore[tabsIdx] }
-                              const nextData = [...(nextTabsEl.data || [])]
-                              const tabObj = { ...(nextData[currentIndex] || {}) }
-                              const current = Array.isArray(tabObj.fields) ? tabObj.fields : []
-                              tabObj.fields = assigned ? current.filter(id => id !== fieldId) : [...current, fieldId]
-                              nextData[currentIndex] = tabObj
-                              nextTabsEl.data = nextData
-                              addMore[tabsIdx] = nextTabsEl
-                              onChange({ ...data, addMoreElement: addMore })
-                            }}
-                          />
-                          <span>{locale === 'ar' ? f.nameAr : f.nameEn}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })()}
-          </div>
         </>
       )}
-      {loading || loadingEntities ? (
+      {loading ? (
         <div className='h-[300px]  flex justify-center items-center text-2xl font-bold border-2 border-dashed border-main rounded-md'>
           {messages.pleaseSelectDataModel}
         </div>
       ) : (
-        <form className={'w-[calc(100%)]'} onClick={() => setErrors(false)} onSubmit={handleSubmit}>
+        <form className={'w-[calc(100%)]'} onClick={(e) => {
+          const button = e.target.closest('button')
+
+          if (button?.type === 'submit') {
+            return
+          } else {
+            setErrors(false)
+          }
+
+        }} onSubmit={handleSubmit}>
+
+          {/* <TabsComponent data={data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data} setActiveTab={setActiveTab} /> */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -1078,6 +983,56 @@ export default function ViewCollection({
                 }}
               >
                 {sortedLoop.map((filed, i) => {
+
+
+                  if (filed.type === '__tab_header__') {
+                    const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+                    const tabs = tabsElement?.data || []
+                    const totalTabs = tabs.length
+                    const currentTabIndex = filed.tabIndex
+
+                    return (
+                      <div
+                        key={filed.id}
+                        style={{ gridColumn: 'span 12' }}
+                        className='w-full mt-4 mb-1 px-2'
+                      >
+                        <div className='flex items-center gap-2'>
+                          <div className='flex-1 h-px bg-main-color opacity-30' />
+                          <span className='text-sm font-semibold text-main-color px-3 py-1 border border-main-color rounded-full'>
+                            {filed.tabName}
+                          </span>
+
+                          {/* أزرار تحريك الـ tab */}
+                          {!readOnly && currentTabIndex !== -1 && (
+                            <div className='flex flex-col gap-0.5'>
+                              <button
+                                type='button'
+                                disabled={currentTabIndex === 0}
+                                onClick={() => handleTabReorder(currentTabIndex, currentTabIndex - 1)}
+                                className='w-5 h-5 flex items-center justify-center text-xs border border-main-color rounded hover:bg-main-color hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                                title={locale === 'ar' ? 'تحريك لأعلى' : 'Move Up'}
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type='button'
+                                disabled={currentTabIndex === totalTabs - 1}
+                                onClick={() => handleTabReorder(currentTabIndex, currentTabIndex + 1)}
+                                className='w-5 h-5 flex items-center justify-center text-xs border border-main-color rounded hover:bg-main-color hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                                title={locale === 'ar' ? 'تحريك لأسفل' : 'Move Down'}
+                              >
+                                ▼
+                              </button>
+                            </div>
+                          )}
+
+                          <div className='flex-1 h-px bg-main-color opacity-30' />
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const roles = data?.additional_fields?.find(ele => ele.key === filed.id)?.roles ?? {
                     onMount: { type: '', value: '' },
                     placeholder: {
@@ -1124,15 +1079,18 @@ export default function ViewCollection({
                   const layoutItem = layout.find(l => l.i === filed.id)
                   const gridColumnSpan = layoutItem?.w || 12
 
+                  console.log(dataRef, tabsData, "dataRef");
+
                   return (
                     <SortableGridItem
+                      tabsData={tabsData}
                       key={filed.id}
+                      advancedEdit={advancedEdit}
                       filed={filed}
                       index={i}
                       readOnly={readOnly}
                       stopSort={stopSort}
                       locale={locale}
-                      getApiData={getApiData}
                       data={data}
                       getDesign={getDesign}
                       setOpen={setOpen}
@@ -1153,7 +1111,10 @@ export default function ViewCollection({
                       hoverText={hoverText}
                       hintText={hintText}
                       roles={roles}
+                      setActiveTab={setActiveTab}
+                      activeTab={activeTab}
                       handleSubmit={handleSubmit}
+                      sortedLoopWithoutTabs={sortedLoopWithoutTabs}
                       loading={loading}
                       disabled={disabled}
                       reload={reload}

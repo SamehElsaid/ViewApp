@@ -275,7 +275,7 @@ function StatisticsSection({ data, onChange }) {
 
         {!loading && statisticsValues.length === 0 && (
           <div className='text-center py-4 text-gray-500'>
-            <span>{messages?.noData || 'No data available'}</span>
+            <span>{messages?.notFound || 'No data available'}</span>
           </div>
         )}
       </div>
