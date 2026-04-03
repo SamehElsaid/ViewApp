@@ -32,6 +32,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
   layOutWorkflowId,
   layOutPageRoles,
   layOutPageTypeId,
+  pageId,
   isPrint }) => {
   const loading = useSelector(rx => rx.LoadingPages.loading)
   const [editorValue, setEditorValue] = useState(null)
@@ -105,7 +106,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
         {(loading || loadingPage) && <LoadingMain login={true} />}
         <div className="parent-print" ref={refPdf} >
           <div className='py-10 min-h-screen bg-white main-container'>
-          
+
 
 
             {(initialLayout && readOnly) ? <>
@@ -127,6 +128,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
                 type='all-pages'
                 entitiesId={entitiesId}
                 collectionName={collectionName}
+                pageId={pageId}
               >
 
                 <ReactPageEditor
@@ -135,6 +137,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
                   initialData={editorValue || initialData}
                   initialDataApi={initialDataApi}
                   workflowId={workflowId}
+                  pageId={pageId}
                   pageRoles={pageRoles}
                   pageTypeId={pageTypeId}
                   readOnly={readOnly}
@@ -158,6 +161,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
                 setEditorValueNewData={setEditorValue}
                 initialDataApi={initialDataApi}
                 workflowId={workflowId}
+                pageId={pageId}
                 pageRoles={pageRoles}
                 pageTypeId={pageTypeId}
                 readOnly={readOnly}
@@ -205,6 +209,7 @@ export async function getServerSideProps(context) {
     const response = await axios.get(apiUrl, { headers, httpsAgent })
     const data = JSON.parse(response?.data?.jsonData) ?? null
     const initialLayout = data?.layout ?? null
+    let pageId = response?.data?.id ?? null
 
     let layOutData = null
     let layOutInitialData = null
@@ -226,6 +231,7 @@ export async function getServerSideProps(context) {
         layOutWorkflowId = res.data?.workflowId ?? ''
         layOutPageRoles = res.data?.pageRoles ?? []
         layOutPageTypeId = res.data?.pageTypeId ?? 1
+        pageId = res.data?.pageId ?? null
       } catch (error) {
 
 
@@ -264,6 +270,7 @@ export async function getServerSideProps(context) {
         layOutWorkflowId,
         layOutPageRoles,
         layOutPageTypeId,
+        pageId,
         isPrint,
         entitiesId,
         collectionName
