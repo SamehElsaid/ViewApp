@@ -12,29 +12,43 @@ body {
 }
 
 @font-face {
-  font-family: 'cairo';
-  src: url('/font/Cairo-Bold.ttf');
-  font-family: 800;
+  font-family: 'Noto Naskh Arabic';
+  src: url('/fonts/NotoNaskhArabic-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'cairo';
-  src: url('/font/Cairo-SemiBold.ttf');
-  font-family: 600;
+  src: url('/font/Cairo-Bold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'cairo';
-  src: url('/font/Cairo-Regular.ttf');
-  font-family: 400;
+  src: url('/font/Cairo-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'cairo';
+  src: url('/font/Cairo-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 body * {
-  font-family: 'Public Sans', 'cairo', sans-serif !important;
+  font-family: 'Public Sans', 'Noto Naskh Arabic', 'cairo', sans-serif !important;
 }
 
 body {
-  background-color: #f8f7fa !important;
+  background-color: #fff !important;
 }
 body.dark-mode {
   background-color: #25293c !important;
@@ -765,49 +779,7 @@ video:fullscreen {
 }
 
 .bg-linear {
-  background-image: radial-gradient(
-      circle at 25% 54%,
-      rgba(18, 18, 18, 0.06) 0%,
-      rgba(18, 18, 18, 0.06) 22%,
-      transparent 22%,
-      transparent 100%
-    ),
-    radial-gradient(
-      circle at 67% 98%,
-      rgba(223, 223, 223, 0.06) 0%,
-      rgba(223, 223, 223, 0.06) 52%,
-      transparent 52%,
-      transparent 100%
-    ),
-    radial-gradient(
-      circle at 7% 92%,
-      rgba(169, 169, 169, 0.06) 0%,
-      rgba(169, 169, 169, 0.06) 52%,
-      transparent 52%,
-      transparent 100%
-    ),
-    radial-gradient(
-      circle at 46% 37%,
-      rgba(187, 187, 187, 0.06) 0%,
-      rgba(187, 187, 187, 0.06) 47%,
-      transparent 47%,
-      transparent 100%
-    ),
-    radial-gradient(
-      circle at 38% 35%,
-      rgba(57, 57, 57, 0.06) 0%,
-      rgba(57, 57, 57, 0.06) 99%,
-      transparent 99%,
-      transparent 100%
-    ),
-    radial-gradient(
-      circle at 46% 86%,
-      rgba(100, 100, 100, 0.06) 0%,
-      rgba(100, 100, 100, 0.06) 60%,
-      transparent 60%,
-      transparent 100%
-    ),
-    linear-gradient(90deg, rgb(57, 8, 200), rgb(240, 145, 202));
+  background-image:radial-gradient(circle, #dae0f2, #acb9e8, #8193dc, #566dce, #2247be)
 }
 
 .loader22 {
@@ -1588,9 +1560,7 @@ select {
   margin-right: 0 !important;
   @apply !me-3;
 }
-.rtl .MuiTablePagination-actions button {
-  transform: rotate(180deg) !important;
-}
+
 .generate-pdf .react-grid-layout {
   width: 72% !important;
   margin: auto !important;
@@ -1663,13 +1633,7 @@ select {
 
 
 
-.print-container {
-border: 20px solid red;      /* ✅ الـ Border */
-box-sizing: border-box;
 
-page-break-after: avoid;    /* ✅ صفحة جديدة */
-
-}
 @media print {
 
   body {
@@ -1722,4 +1686,28 @@ page-break-after: avoid;    /* ✅ صفحة جديدة */
 
 }
 
+/* CKEditor 5 Styles */
+.ck-editor {
+  border-radius: 4px;
+}
+
+.ck-editor__editable {
+  direction: rtl;
+  text-align: right;
+  min-height: 360px;
+}
+
+.ck-editor__editable_inline {
+  direction: rtl;
+}
+.print-body .btn-print{
+  display: none !important;
+}
+.print-body .content-editor-print{
+  position: static !important;
+}
+
+.print-body .no-print{
+  display: none !important;
+}
 

@@ -8,10 +8,10 @@ import axios from 'axios'
 import https from 'https'
 import { useIntl } from 'react-intl'
 import { useSelector } from 'react-redux'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { useReactToPrint } from 'react-to-print'
 import LoadingMain from 'src/Components/LoadingMain'
 import { useRouter } from 'next/router'
+import { appViewOptions } from 'src/Components/_Shared'
 
 let ReactPageEditor = dynamic(
   () =>
@@ -35,7 +35,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
   isPrint }) => {
   const loading = useSelector(rx => rx.LoadingPages.loading)
   const [editorValue, setEditorValue] = useState(null)
-  const [readOnly, setReadOnly] = useState(isPrint ? true : false)
+  const [readOnly, setReadOnly] = useState(true)
   const refPdf = useRef()
   const [startPrint, setStartPrint] = useState(false)
   const [loadingPage, setLoadingPage] = useState(true)
@@ -92,12 +92,12 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
   useEffect(() => {
     // Reset local page state when route param (page) changes.
     setEditorValue(null)
-    setReadOnly(isPrint ? true : false)
+    setReadOnly(true)
   }, [pageName, isPrint])
 
 
 
- 
+
 
   return (
     <div className=''>
@@ -105,30 +105,7 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
         {(loading || loadingPage) && <LoadingMain login={true} />}
         <div className="parent-print" ref={refPdf} >
           <div className='py-10 min-h-screen bg-white main-container'>
-            {/* <div className="fixed h-36 bg-red-200 z-50 top-0 left-0 right-0"></div> */}
-            {loading && (
-              <div className='h-[calc(100vh)] loading-animation flex flex-col justify-center items-center fixed top-0 left-0 right-0 bottom-0 bg-white z-[111111111]'>
-                <div className='modelViewPort'>
-                  <div className='eva'>
-                    <div className='head'>
-                      <div className='eyeChamber'>
-                        <div className='eye' />
-                        <div className='eye' />
-                      </div>
-                    </div>
-                    <div className='body'>
-                      <div className='hand' />
-                      <div className='hand' />
-                      <div className='scannerThing' />
-                      <div className='scannerOrigin' />
-                    </div>
-                  </div>
-                </div>
-                <div className='mt-4 text-2xl font-bold animate-pulse'>
-                  {messages.dialogs.loading}
-                </div>
-              </div>
-            )}
+          
 
 
             {(initialLayout && readOnly) ? <>
@@ -203,7 +180,6 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
 
 export default Index
 
-Index.getLayout = page => <BlankLayout>{page}</BlankLayout>
 
 export async function getServerSideProps(context) {
   const page = context.query.page
@@ -263,6 +239,13 @@ export async function getServerSideProps(context) {
     const pageRoles = response?.data?.pageRoles ?? []
     const pageTypeId = response?.data?.pageTypeId ?? 1
 
+    const findPageType = appViewOptions.find(option => option.id === pageTypeId)
+
+    if (findPageType.name_en !== process.env.APP_TYPE) {
+      return {
+        notFound: true
+      }
+    }
 
 
 
