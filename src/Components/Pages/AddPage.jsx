@@ -29,7 +29,7 @@ const Header = styled(Box)(({ theme }) => ({
 
 const AddPage = props => {
   // ** Props
-  const { open, toggle, setRefresh } = props
+  const { open, toggle, setRefresh, formType } = props
   const editorValue = open?.editorValue || ''
   const apiData = open?.apiData || ''
   const { messages, locale } = useIntl()
@@ -50,7 +50,7 @@ const AddPage = props => {
     versionReason: '',
     workflow: [],
     jsonData: '',
-    pageTypeId: '',
+    pageTypeId: 4,
     pageRoles: []
   }
 
@@ -81,7 +81,11 @@ const AddPage = props => {
       versionReason: data.versionReason,
       pageComponents: [],
       jsonData: JSON.stringify({ editorValue, apiData }),
-      pageTypeId: data.pageTypeId || 0
+    }
+    if (formType) {
+      sendData.FormType = formType
+    } else {
+      sendData.pageTypeId = data.pageTypeId || 0
     }
     if (data.workflow?.length > 0) {
       sendData.pageWorkflows = data.workflow.map((workflow, index) => ({
@@ -102,9 +106,7 @@ const AddPage = props => {
             setRefresh(prev => prev + 1)
           }
         })
-        .catch(err => {
-          toast.error(messages.ErrorOccurred)
-        })
+
         .finally(_ => {
           setLoading(false)
         })
@@ -117,9 +119,7 @@ const AddPage = props => {
             setRefresh(prev => prev + 1)
           }
         })
-        .catch(err => {
-          toast.error(messages.ErrorOccurred)
-        })
+
         .finally(_ => {
           setLoading(false)
         })
@@ -283,8 +283,12 @@ const AddPage = props => {
                 <CustomTextField
                   fullWidth
                   type='text'
-                  label={messages['versionReason']}
                   value={value}
+                  label={
+                    <span>
+                      {messages['versionReason']} {typeof open === 'boolean' ? `` : <span style={{ color: 'red' }}>*</span>}
+                    </span>
+                  }
                   sx={{ mb: 4 }}
                   onChange={onChange}
                   error={Boolean(errors.versionReason)}
@@ -294,92 +298,96 @@ const AddPage = props => {
               )}
             />
 
-            <Controller
-              name='pageTypeId'
-              control={control}
-              render={({ field: { value, onChange } }) => (
-                <FormControl fullWidth sx={{ mb: 4 }}>
-                  <InputLabel>{messages['appView'] || 'App View'}</InputLabel>
-                  <Select
-                    variant='outlined'
-                    value={value || ''}
-                    onChange={onChange}
-                    label={messages['appView'] || 'App View'}
-                  >
-                    {appViewOptions.map(option => (
-                      <MenuItem key={option.id} value={option.id}>
-                        {locale === 'ar' ? option.name_ar : option.name_en}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-            />
 
-            <div className='relative'>
-              {loadingRoles && (
-                <div className='absolute top-[10px] left-0 w-full h-full flex justify-end px-3 items-center'>
-                  <CircularProgress size={20} />
-                </div>
-              )}
+            {!formType && (
+              <>
+                <Controller
+                  name='pageTypeId'
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <FormControl fullWidth sx={{ mb: 4 }}>
+                      <InputLabel>{messages['appView'] || 'App View'} <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        variant='outlined'
+                        value={value || ''}
+                        onChange={onChange}
+                        label={messages['appView'] || 'App View'}
+                      >
+                        {appViewOptions.map(option => (
+                          <MenuItem key={option.id} value={option.id}>
+                            {locale === 'ar' ? option.name_ar : option.name_en}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+                <div className='relative'>
+                  {loadingRoles && (
+                    <div className='absolute top-[10px] left-0 w-full h-full flex justify-end px-3 items-center'>
+                      <CircularProgress size={20} />
+                    </div>
+                  )}
 
-              <Controller
-                name='pageRoles'
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <CustomAutocomplete
-                    multiple
-                    disabled={loadingRoles}
-                    value={value || []}
-                    options={roles}
-                    filterSelectedOptions
-                    disablePortal
-                    id='autocomplete-page-roles'
-                    getOptionLabel={option => (option?.name != null ? option.name : '')}
-                    isOptionEqualToValue={(option, val) => option?.id === val?.id}
-                    renderInput={params => (
-                      <CustomTextField
-                        placeholder={value?.length > 0 ? '' : messages['pageRoles'] || 'Page Roles'}
-                        {...params}
-                        label={messages['pageRoles'] || 'Page Roles'}
+                  <Controller
+                    name='pageRoles'
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <CustomAutocomplete
+                        multiple
+                        disabled={loadingRoles}
+                        value={value || []}
+                        options={roles}
+                        filterSelectedOptions
+                        disablePortal
+                        id='autocomplete-page-roles'
+                        getOptionLabel={option => (option?.name != null ? option.name : '')}
+                        isOptionEqualToValue={(option, val) => option?.id === val?.id}
+                        renderInput={params => (
+                          <CustomTextField
+                            placeholder={value?.length > 0 ? '' : messages['pageRoles'] || 'Page Roles'}
+                            {...params}
+                            label={messages['pageRoles'] || 'Page Roles'}
+                          />
+                        )}
+                        onChange={(event, newValue) => {
+                          onChange(newValue)
+                        }}
                       />
                     )}
-                    onChange={(event, newValue) => {
-                      onChange(newValue)
-                    }}
                   />
-                )}
-              />
-            </div>
-
-            <div className='relative'>
-              {loadingWorkflow && (
-                <div className='absolute top-[10px] left-0 w-full h-full flex justify-end px-3 items-center'>
-                  <CircularProgress size={20} />
                 </div>
-              )}
 
-              <Controller
-                name='workflow'
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <CustomAutocomplete
-                    multiple
-                    disabled={loadingWorkflow}
-                    value={value}
-                    options={workflows}
-                    key={open}
-                    filterSelectedOptions
-                    id='autocomplete-multiple-outlined'
-                    getOptionLabel={option => option.name || ''}
-                    renderInput={params => <CustomTextField placeholder={value.length > 0 ? '' : messages['workflow']} {...params} label={messages['workflow']} />}
-                    onChange={(event, newValue) => {
-                      onChange(newValue)
-                    }}
+                <div className='relative'>
+                  {loadingWorkflow && (
+                    <div className='absolute top-[10px] left-0 w-full h-full flex justify-end px-3 items-center'>
+                      <CircularProgress size={20} />
+                    </div>
+                  )}
+
+                  <Controller
+                    name='workflow'
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <CustomAutocomplete
+                        multiple
+                        disabled={loadingWorkflow}
+                        value={value}
+                        options={workflows}
+                        key={open}
+                        filterSelectedOptions
+                        id='autocomplete-multiple-outlined'
+                        getOptionLabel={option => option.name || ''}
+                        renderInput={params => <CustomTextField placeholder={value.length > 0 ? '' : messages['workflow']} {...params} label={messages['workflow']} />}
+                        onChange={(event, newValue) => {
+                          onChange(newValue)
+                        }}
+                      />
+                    )}
                   />
-                )}
-              />
-            </div>
+                </div>
+              </>
+            )}
 
             <Box sx={{ display: 'flex', alignItems: 'center' }} className='gap-4 justify-end py-4 mt-auto'>
               <LoadingButton type='submit' variant='contained' loading={loading}>

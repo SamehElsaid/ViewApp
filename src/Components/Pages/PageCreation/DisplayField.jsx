@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useIntl } from 'react-intl'
 import { isPossiblePhoneNumber } from 'react-phone-number-input'
 import { axiosGet, axiosPost } from 'src/Components/axiosCall'
@@ -20,7 +20,8 @@ import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 export default function DisplayField({
   tabsData,
   onChangeData,
-  advancedEdit, 
+  advancedEdit,
+  saveAsDraft,
   editMode,
   from,
   input,
@@ -31,6 +32,7 @@ export default function DisplayField({
   handleSubmit,
   reload,
   refError,
+  refErrorFromTable,
   dataRef,
   errorView,
   disabledBtn,
@@ -51,8 +53,12 @@ export default function DisplayField({
   loadingBtn,
   disabled,
   allFields = [],
-  sortedLoopWithoutTabs = []
+  sortedLoopWithoutTabs = [],
+  allErrorsRef,
+  columnId,
+  FormType
 }) {
+
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
   const [dirty, setDirty] = useState(dirtyProps)
@@ -172,929 +178,216 @@ export default function DisplayField({
   const [reloadValue, setReloadValue] = useState(0)
 
   useEffect(() => {
-    if (roles?.trigger?.typeOfValidation == 'filter' && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField] != undefined) {
-        const FilterWithKey = roles?.trigger?.currentField == 'id' ? 'Id' : roles?.trigger?.currentField
-        if (input?.kind == 'search' || input?.kind == 'checkbox') {
-          setValue([])
-        }
-        setSelectedOptions(
-          oldSelectedOptions.filter(ele => {
-            if (roles?.trigger?.isEqual == 'equal') {
-              return ele?.[FilterWithKey] == dataRef.current?.[roles?.trigger?.selectedField]
-            } else {
-              return ele?.[FilterWithKey] != dataRef.current?.[roles?.trigger?.selectedField]
-            }
-          })
-        )
-      }
+    if (loading || !roles?.trigger) return
+  
+    const trigger = roles.trigger
+    const currentValue = dataRef?.current?.[trigger.selectedField]
+  
+    if (currentValue === undefined) return
+  
+    const isEqual = trigger.isEqual === 'equal'
+    const isBasic = input.fieldCategory === 'Basic'
+    const shouldResetValue = input?.kind === 'search' || input?.kind === 'checkbox'
+  
+    const resetValueIfNeeded = () => {
+      if (shouldResetValue) setValue([])
     }
-    if (roles?.trigger?.typeOfValidation == 'filterDataFromAPI' && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField] != undefined) {
-        if (input?.kind == 'search' || input?.kind == 'checkbox') {
-          setValue([])
-        }
-
-        const findFilterData = FilterData.find(
-          ele => ele?.[roles?.trigger?.mainValue] == dataRef.current?.[roles?.trigger?.selectedField]
-        )
-
-        setSelectedOptions(findFilterData?.[input?.key] || [])
+  
+    const compare = (a, b) => (isEqual ? a == b : a != b)
+  
+    const getAPIData = async () => {
+      if (!trigger.parentKey || !currentValue) return null
+  
+      const res = await axiosGet(
+        `generic-entities/${trigger.parentKey}/${currentValue}`
+      )
+  
+      if (res?.status) {
+        return res?.data?.entities?.[0] ?? null
       }
+  
+      return null
     }
-
-    // ! Start disable Control
-
-    if (roles?.trigger?.typeOfValidation == 'disable' && !loading) {
-      // If a specific mainValue is provided, disable when condition matches
-      if (roles?.trigger?.mainValue) {
-        if (input.fieldCategory == 'Basic') {
-          if (roles?.trigger?.parentKey) {
-            if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-              axiosGet(
-                `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-              ).then(res => {
-                if (res.status) {
-                  const data = res?.data?.entities?.[0] ?? false
-                  if (data) {
-                    if (roles?.trigger.isEqual == 'equal') {
-                      if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                        setIsDisable('disabled')
-                      } else {
-                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-                      }
-                    } else {
-                      if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                        setIsDisable('disabled')
-                      } else {
-                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-                      }
-                    }
-                  }
-                }
-              })
-            }
-          } else {
-            if (roles?.trigger.isEqual == 'equal') {
-              if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-                setIsDisable('disabled')
-              } else {
-                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-              }
-            } else {
-              if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-                setIsDisable('disabled')
-              } else {
-                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-              }
-            }
-          }
-        } else {
-          if (roles?.trigger?.parentKey) {
-            if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-              axiosGet(
-                `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-              ).then(res => {
-                if (res.status) {
-                  const data = res?.data?.entities?.[0] ?? false
-                  if (data) {
-                    if (roles?.trigger.isEqual == 'equal') {
-                      if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                        setIsDisable('disabled')
-                      } else {
-                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-                      }
-                    } else {
-                      if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                        setIsDisable('disabled')
-                      } else {
-                        setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-                      }
-                    }
-                  }
-                }
-              })
-            }
-          } else {
-            if (roles?.trigger.isEqual == 'equal') {
-              if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-                setIsDisable('disabled')
-              } else {
-                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-              }
-            } else {
-              if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-                setIsDisable('disabled')
-              } else {
-                setIsDisable(prev => (roles?.onMount?.type == 'hide' ? 'hidden' : null))
-              }
-            }
-          }
-        }
+  
+    const handleWithPossibleAPI = async (callback) => {
+      if (trigger.parentKey) {
+        const data = await getAPIData()
+        if (data) callback(data[trigger.triggerKey])
       } else {
-        // No mainValue provided: if selectedField has any value, disable
-        if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-          setIsDisable('disabled')
-        } else {
-          setIsDisable(prev => {
-            if (roles?.onMount?.type == 'hide') {
-              return 'hidden'
-            }
-
-            return null
-          })
-        }
+        callback(currentValue)
       }
     }
-
-    // ! Start enable Control
-    if (roles?.trigger?.typeOfValidation == 'enable' && roles?.trigger?.mainValue && !loading) {
-      if (input.fieldCategory == 'Basic') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(prev => {
-                        if (roles?.onMount?.type == 'disable') {
-                          return 'disabled'
-                        }
-
-                        return null
-                      })
-                    } else {
-                      setIsDisable('enable')
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setIsDisable(prev => {
-                        if (roles?.onMount?.type == 'disable') {
-                          return 'disabled'
-                        }
-
-                        return null
-                      })
-                    } else {
-                      setIsDisable('enable')
-                    }
-                  }
-                }
-              }
-            })
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(prev => {
-                if (roles?.onMount?.type == 'disable') {
-                  return 'disabled'
-                }
-
-                return null
-              })
-            } else {
-              setIsDisable('enable')
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(prev => {
-                if (roles?.onMount?.type == 'disable') {
-                  return 'disabled'
-                }
-
-                return null
-              })
-            } else {
-              setIsDisable('enable')
-            }
-          }
-        }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(prev => {
-                        if (roles?.onMount?.type == 'disable') {
-                          return 'disabled'
-                        }
-
-                        return null
-                      })
-                    } else {
-                      setIsDisable('enable')
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setIsDisable(prev => {
-                        if (roles?.onMount?.type == 'disable') {
-                          return 'disabled'
-                        }
-
-                        return null
-                      })
-                    } else {
-                      setIsDisable('enable')
-                    }
-                  }
-                }
-              }
-            })
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(prev => {
-                if (roles?.onMount?.type == 'disable') {
-                  return 'disabled'
-                }
-
-                return null
-              })
-            } else {
-              setIsDisable('enable')
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(prev => {
-                if (roles?.onMount?.type == 'disable') {
-                  return 'disabled'
-                }
-
-                return null
-              })
-            } else {
-              setIsDisable('enable')
-            }
-          }
-        }
-      }
+  
+    // =========================
+    // FILTER
+    // =========================
+    if (trigger.typeOfValidation === 'filter') {
+      resetValueIfNeeded()
+  
+      const key = trigger.currentField === 'id' ? 'Id' : trigger.currentField
+  
+      setSelectedOptions(prev =>
+        prev.filter(item => compare(item?.[key], currentValue))
+      )
     }
-    if (roles?.trigger?.typeOfValidation == 'enable' && !roles?.trigger?.mainValue && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-        setIsDisable('enable')
-      } else {
-        setIsDisable(prev => {
-          if (roles?.onMount?.type == 'disable') {
-            return 'disabled'
-          }
-
-          return null
-        })
-      }
+  
+    // =========================
+    // FILTER FROM API
+    // =========================
+    if (trigger.typeOfValidation === 'filterDataFromAPI') {
+      resetValueIfNeeded()
+  
+      const found = FilterData.find(
+        ele => ele?.[trigger.mainValue] == currentValue
+      )
+  
+      setSelectedOptions(found?.[input?.key] || [])
     }
-    if (roles?.trigger?.typeOfValidation == 'optional' && roles?.trigger?.mainValue && !loading) {
-      const setOptional = shouldBeOptional => {
-        if (shouldBeOptional) {
-          if (validations?.Required) {
-            setValidations(prev => {
-              const newPrev = { ...prev }
-              delete newPrev.Required
+  
+    // =========================
+    // DISABLE / ENABLE
+    // =========================
+    const handleDisableEnable = async (mode) => {
+      await handleWithPossibleAPI(value => {
+        if (!trigger.mainValue) {
+          const hasValue = Array.isArray(value)
+            ? value.length !== 0
+            : !!value
+  
+          setIsDisable(
+            hasValue
+              ? mode === 'enable'
+                ? 'enable'
+                : 'disabled'
+              : roles?.onMount?.type === mode
+              ? mode === 'enable'
+                ? 'disabled'
+                : 'hidden'
+              : null
+          )
 
-              return newPrev
-            })
-          }
-        } else {
-          if (!validations?.Required) {
-            setValidations(prev => ({ ...prev, Required: true }))
-          }
+          return
         }
-      }
-
-      const compare = (left, right, equalMode) => (equalMode ? left == right : left != right)
-
-      const handleLocal = () => {
-        const equalMode = roles?.trigger.isEqual == 'equal'
-        const left = dataRef?.current?.[roles?.trigger?.selectedField]
-        const optionalNow = compare(left, roles?.trigger?.mainValue, equalMode)
-        setOptional(optionalNow)
-      }
-
-      if (input.fieldCategory == 'Basic') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const ent = res?.data?.entities?.[0] ?? false
-                if (ent) {
-                  const equalMode = roles?.trigger.isEqual == 'equal'
-                  const optionalNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
-                  setOptional(optionalNow)
-                }
-              }
-            })
-          }
+  
+        const result = compare(value, trigger.mainValue)
+  
+        if (mode === 'disable') {
+          setIsDisable(result ? 'disabled' : roles?.onMount?.type === 'hide' ? 'hidden' : null)
         } else {
-          handleLocal()
+          setIsDisable(result ? 'enable' : roles?.onMount?.type === 'disable' ? 'disabled' : null)
         }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const ent = res?.data?.entities?.[0] ?? false
-                if (ent) {
-                  const equalMode = roles?.trigger.isEqual == 'equal'
-                  const optionalNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
-                  setOptional(optionalNow)
-                }
-              }
-            })
-          }
-        } else {
-          handleLocal()
-        }
-      }
+      })
     }
-    if (roles?.trigger?.typeOfValidation == 'optional' && !roles?.trigger?.mainValue && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-        setValidations(prev => {
-          delete prev.Required
-
-          return prev
-        })
-      } else {
-        if (!validations?.Required) {
-          setValidations(prev => ({ ...prev, Required: true }))
-        }
-      }
+  
+    if (trigger.typeOfValidation === 'disable') {
+      handleDisableEnable('disable')
     }
-
-    // ! Start Required Control (mirror of optional)
-    if (roles?.trigger?.typeOfValidation == 'required' && roles?.trigger?.mainValue && !loading) {
-      const setReq = shouldBeRequired => {
-        if (shouldBeRequired) {
-          if (!validations?.Required) setValidations(prev => ({ ...prev, Required: true }))
-        } else {
-          if (validations?.Required) {
-            setValidations(prev => {
-              const newPrev = { ...prev }
-              delete newPrev.Required
-
-              return newPrev
-            })
-          }
-        }
-      }
-
-      const compare = (left, right, equalMode) => (equalMode ? left == right : left != right)
-
-      const handleLocal = () => {
-        const left = dataRef?.current?.[roles?.trigger?.selectedField]
-        if (left === undefined || left === null || left === '') return
-        const equalMode = roles?.trigger.isEqual == 'equal'
-        const requiredNow = compare(left, roles?.trigger?.mainValue, equalMode)
-        setReq(requiredNow)
-      }
-
-      if (input.fieldCategory == 'Basic') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const ent = res?.data?.entities?.[0] ?? false
-                if (ent) {
-                  const equalMode = roles?.trigger.isEqual == 'equal'
-                  const requiredNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
-                  setReq(requiredNow)
-                }
-              }
-            })
-          }
-        } else {
-          handleLocal()
-        }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const ent = res?.data?.entities?.[0] ?? false
-                if (ent) {
-                  const equalMode = roles?.trigger.isEqual == 'equal'
-                  const requiredNow = compare(ent?.[roles?.trigger?.triggerKey], roles?.trigger?.mainValue, equalMode)
-                  setReq(requiredNow)
-                }
-              }
-            })
-          }
-        } else {
-          handleLocal()
-        }
-      }
+  
+    if (trigger.typeOfValidation === 'enable') {
+      handleDisableEnable('enable')
     }
-
-    if (roles?.trigger?.typeOfValidation == 'required' && !roles?.trigger?.mainValue && !loading) {
-      const left = dataRef?.current?.[roles?.trigger?.selectedField]
-      const hasValue = Array.isArray(left) ? left.length != 0 : left !== undefined && left !== null && left !== ''
-      if (hasValue) {
-        if (!validations?.Required) setValidations(prev => ({ ...prev, Required: true }))
-      } else {
-        if (validations?.Required) {
-          setValidations(prev => {
-            const newPrev = { ...prev }
-            delete newPrev.Required
-
-            return newPrev
-          })
-        }
-      }
+  
+    // =========================
+    // OPTIONAL / REQUIRED
+    // =========================
+    const toggleRequired = (shouldBeRequired) => {
+      setValidations(prev => {
+        const newState = { ...prev }
+  
+        if (shouldBeRequired) newState.Required = true
+        else delete newState.Required
+  
+        return newState
+      })
     }
+  
+    const handleValidation = async (type) => {
+      await handleWithPossibleAPI(value => {
+        if (!trigger.mainValue) {
+          const hasValue = Array.isArray(value)
+            ? value.length !== 0
+            : !!value
+  
+          toggleRequired(type === 'required' ? hasValue : !hasValue)
 
-    //  End enable Control
-
-    // ! Start Empty Control
-
-    if (roles?.trigger?.typeOfValidation == 'empty' && roles?.trigger?.mainValue && !loading) {
-      if (input.fieldCategory == 'Basic') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setLastValue(true)
-                      if (!lastValue) {
-                        if (typeof value == 'object') {
-                          setValue([])
-                        } else {
-                          setValue('')
-                        }
-                      }
-                    } else {
-                      setLastValue(false)
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      if (typeof value == 'object') {
-                        setValue([])
-                      } else {
-                        setValue('')
-                      }
-                    }
-                  }
-                }
-              } else {
-                if (roles?.trigger.isEqual != 'equal') {
-                  if (typeof value == 'object') {
-                    setValue([])
-                  } else {
-                    setValue('')
-                  }
-                }
-              }
-            })
-          } else {
-            if (roles?.trigger.isEqual != 'equal') {
-              if (typeof value == 'object') {
-                setValue([])
-              } else {
-                setValue('')
-              }
-            }
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setLastValue(true)
-              if (!lastValue) {
-                if (typeof value == 'object') {
-                  setValue([])
-                } else {
-                  setValue('')
-                }
-              }
-            } else {
-              setLastValue(false)
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              if (typeof value == 'object') {
-                setValue([])
-              } else {
-                setValue('')
-              }
-            }
-          }
+          return
         }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setLastValue(true)
-                      if (!lastValue) {
-                        if (typeof value == 'object') {
-                          setValue([])
-                        } else {
-                          setValue('')
-                        }
-                      }
-                    } else {
-                      setLastValue(false)
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      if (typeof value == 'object') {
-                        setValue([])
-                      } else {
-                        setValue('')
-                      }
-                    }
-                  }
-                }
-              } else {
-                if (roles?.trigger.isEqual != 'equal') {
-                  if (typeof value == 'object') {
-                    setValue([])
-                  } else {
-                    setValue('')
-                  }
-                }
-              }
-            })
-          } else {
-            if (roles?.trigger.isEqual != 'equal') {
-              if (typeof value == 'object') {
-                setValue([])
-              } else {
-                setValue('')
-              }
-            }
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setLastValue(true)
-              if (!lastValue) {
-                if (typeof value == 'object') {
-                  setValue([])
-                } else {
-                  setValue('')
-                }
-              }
-            } else {
-              setLastValue(false)
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              if (typeof value == 'object') {
-                setValue([])
-              } else {
-                setValue('')
-              }
-            }
-          }
-        }
-      }
+  
+        const result = compare(value, trigger.mainValue)
+        toggleRequired(type === 'required' ? result : !result)
+      })
     }
-
-    if (roles?.trigger?.typeOfValidation == 'empty' && !roles?.trigger?.mainValue && !loading) {
-      setLastValue(dataRef?.current?.[roles?.trigger?.selectedField])
-      if (dataRef?.current?.[roles?.trigger?.selectedField] != lastValue) {
-        if (typeof value == 'object') {
-          setValue([])
-        } else {
-          setValue('')
-        }
-      }
+  
+    if (trigger.typeOfValidation === 'optional') {
+      handleValidation('optional')
     }
-
-    //  End Empty Control
-
-    // ! Start hidden Control
-    if (roles?.trigger?.typeOfValidation == 'hidden' && roles?.trigger?.mainValue && !loading) {
-      if (input.fieldCategory == 'Basic' || input.type == 'new_element') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  }
-                }
-              }
-            })
-          } else {
-            if (roles?.trigger?.isEqual != 'equal') {
-              setIsDisable('hidden')
-            }
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable('hidden')
-            } else {
-              setIsDisable(null)
-            }
-          }
-        }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  }
-                }
-              }
-            })
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          }
-        }
-      }
+  
+    if (trigger.typeOfValidation === 'required') {
+      handleValidation('required')
     }
-    if (roles?.trigger?.typeOfValidation == 'hidden' && !roles?.trigger?.mainValue && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-        setIsDisable('hidden')
-      } else {
-        setIsDisable(prev => {
-          if (roles?.onMount?.type == 'hide') {
-            return 'hidden'
-          }
-
-          return null
-        })
-      }
-    }
-
-    //  End hidden Control
-
-    // ! Start Visible Control
-    if (roles?.trigger?.typeOfValidation == 'visible' && roles?.trigger?.mainValue && !loading) {
-      if (input.fieldCategory == 'Basic') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal ') {
-                    if (data?.[roles?.trigger?.triggerKey].toLowerCase() == roles?.trigger?.mainValue.toLowerCase()) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  }
-                }
-              }
-            })
-          }
+  
+    // =========================
+    // EMPTY
+    // =========================
+    if (trigger.typeOfValidation === 'empty') {
+      handleWithPossibleAPI(value => {
+        const result = trigger.mainValue
+          ? compare(value, trigger.mainValue)
+          : value !== lastValue
+  
+        if (result) {
+          setLastValue(true)
+          setValue(typeof value === 'object' ? [] : '')
         } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          }
+          setLastValue(false)
         }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey].toLowerCase() == roles?.trigger?.mainValue.toLowerCase()) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(null)
-                    } else {
-                      setIsDisable('hidden')
-                    }
-                  }
-                }
-              }
-            })
-          }
+      })
+    }
+  
+    // =========================
+    // HIDDEN / VISIBLE
+    // =========================
+    const handleVisibility = async (mode) => {
+      await handleWithPossibleAPI(value => {
+        if (!trigger.mainValue) {
+          const hasValue = Array.isArray(value)
+            ? value.length !== 0
+            : !!value
+  
+          setIsDisable(
+            hasValue
+              ? mode === 'visible'
+                ? null
+                : 'hidden'
+              : mode === 'visible'
+              ? 'hidden'
+              : null
+          )
+
+          return
+        }
+  
+        const result = compare(value, trigger.mainValue)
+  
+        if (mode === 'hidden') {
+          setIsDisable(result ? 'hidden' : null)
         } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(null)
-            } else {
-              setIsDisable('hidden')
-            }
-          }
+          setIsDisable(result ? null : 'hidden')
         }
-      }
+      })
     }
-    if (roles?.trigger?.typeOfValidation == 'visible' && !roles?.trigger?.mainValue && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-        setIsDisable('visible')
-      } else {
-        setIsDisable(prev => {
-          if (roles?.onMount?.type == 'hide') {
-            return 'hidden'
-          }
-
-          return null
-        })
-      }
+  
+    if (trigger.typeOfValidation === 'hidden') {
+      handleVisibility('hidden')
     }
-
-    // End Visible Control
-
-    // ! Start Visible Control for Hidden Fields
-    if (roles?.trigger?.typeOfValidation == 'visible' && roles?.trigger?.mainValue && !loading) {
-      if (input.fieldCategory == 'Basic') {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setIsDisable(null) // Make visible
-                    } else {
-                      setIsDisable('hidden') // Keep hidden
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(null) // Make visible
-                    } else {
-                      setIsDisable('hidden') // Keep hidden
-                    }
-                  }
-                }
-              }
-            })
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(null) // Make visible
-            } else {
-              setIsDisable('hidden') // Keep hidden
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(null) // Make visible
-            } else {
-              setIsDisable('hidden') // Keep hidden
-            }
-          }
-        }
-      } else {
-        if (roles?.trigger?.parentKey) {
-          if (dataRef?.current?.[roles?.trigger?.selectedField]) {
-            axiosGet(
-              `generic-entities/${roles?.trigger?.parentKey}/${dataRef?.current?.[roles?.trigger?.selectedField]}`
-            ).then(res => {
-              if (res.status) {
-                const data = res?.data?.entities?.[0] ?? false
-                if (data) {
-                  if (roles?.trigger.isEqual == 'equal') {
-                    if (data?.[roles?.trigger?.triggerKey] == roles?.trigger?.mainValue) {
-                      setIsDisable(null) // Make visible
-                    } else {
-                      setIsDisable('hidden') // Keep hidden
-                    }
-                  } else {
-                    if (data?.[roles?.trigger?.triggerKey] != roles?.trigger?.mainValue) {
-                      setIsDisable(null) // Make visible
-                    } else {
-                      setIsDisable('hidden') // Keep hidden
-                    }
-                  }
-                }
-              }
-            })
-          }
-        } else {
-          if (roles?.trigger.isEqual == 'equal') {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] == roles?.trigger?.mainValue) {
-              setIsDisable(null) // Make visible
-            } else {
-              setIsDisable('hidden') // Keep hidden
-            }
-          } else {
-            if (dataRef?.current?.[roles?.trigger?.selectedField] != roles?.trigger?.mainValue) {
-              setIsDisable(null) // Make visible
-            } else {
-              setIsDisable('hidden') // Keep hidden
-            }
-          }
-        }
-      }
+  
+    if (trigger.typeOfValidation === 'visible') {
+      handleVisibility('visible')
     }
-    if (roles?.trigger?.typeOfValidation == 'visible' && !roles?.trigger?.mainValue && !loading) {
-      if (dataRef?.current?.[roles?.trigger?.selectedField]?.length != 0) {
-        setIsDisable(null) // Make visible when field has value
-      } else {
-        setIsDisable('hidden') // Keep hidden when field is empty
-      }
-    }
-
-    // End Visible Control for Hidden Fields
+  
   }, [roles, loading, triggerData, reloadValue])
+
+  
 
   useEffect(() => {
     if (!roles?.event?.onUnmount) {
@@ -1131,7 +424,7 @@ export default function DisplayField({
         setValue([])
       }
       if (input?.type == 'Date') {
-        setValue(new Date())
+        setValue()
       }
     }
   }, [input, findValue])
@@ -1165,6 +458,13 @@ export default function DisplayField({
         if (roles?.onMount?.type == 'required') {
           setValidations(prev => ({ ...prev, Required: true }))
         }
+
+        if (roles?.minRow) {
+          setValidations(prev => ({ ...prev, minRow: roles?.minRow }))
+        }
+        if (roles?.maxRow) {
+          setValidations(prev => ({ ...prev, maxRow: roles?.maxRow }))
+        }
         if (roles?.onMount?.type == 'enable') {
           setIsDisable('enable')
         }
@@ -1184,8 +484,13 @@ export default function DisplayField({
             let newValue = roles?.onMount?.value
             const searchParams = new URLSearchParams(window.location.search)
 
+            if (typeof newValue === 'string' && newValue.startsWith('{') && newValue.endsWith('}')) {
+              const key = newValue.slice(1, -1)
+              newValue = searchParams.get(key) || ''
+            }
+
             if (input?.type == 'Date') {
-              const valueDate = new Date(roles?.onMount?.value)
+              const valueDate = new Date(newValue)
 
               if (isNaN(valueDate.getTime())) {
                 // invalid date
@@ -1194,10 +499,6 @@ export default function DisplayField({
                 newValue = valueDate
               }
             }
-            if (newValue.startsWith('{') && newValue.endsWith('}')) {
-              const key = newValue.slice(1, -1)
-              newValue = searchParams.get(key) || ''
-            }
             setValue(newValue)
           }
         }
@@ -1205,6 +506,22 @@ export default function DisplayField({
       }, 0)
     }
   }, [roles?.onMount?.type, roles?.onMount?.value, loading])
+
+  const [page, setPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
+  const appendSearchEntities = useCallback(entities => {
+    if (!Array.isArray(entities) || entities.length === 0) return
+    setSelectedOptions(prev => [...prev, ...entities])
+    setOldSelectedOptions(prev => [...prev, ...entities])
+  }, [])
+
+  const replaceSearchCollectionOptions = useCallback((entities, total) => {
+    setSelectedOptions(entities ?? [])
+    setOldSelectedOptions(entities ?? [])
+    setTotalCount(total ?? 0)
+    setPage(1)
+  }, [])
 
   const onChange = (e, newValue) => {
     if (roles?.onMount?.includeInQuery) {
@@ -1259,6 +576,7 @@ export default function DisplayField({
       if (validations.Required && e?.target?.value?.length == 0 && isTypeNew) {
         return setError(messages.required)
       }
+
       if (regex) {
         // Remove surrounding quotes if present
         const cleanedRegex = regex.replace(/^"(.*)"$/, '$1')
@@ -1292,7 +610,7 @@ export default function DisplayField({
 
       if (
         input.type == 'URL' &&
-        !/^(https?:\/\/)?(www\.)?[a-zA-Z0-9@:%._\+~#?&//=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%._\+~#?&//=]*)$/i.test(
+        !/^(https:\/\/)(www\.)?([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,6}(\/[-a-zA-Z0-9@:%._\+~#?&//=]*)?$/i.test(
           e?.target?.value
         )
       ) {
@@ -1317,6 +635,16 @@ export default function DisplayField({
       setError(false)
     }
   }
+
+
+  useEffect(() => {
+    if (setTriggerData) {
+      setTriggerData(prev => prev + 1)
+    }
+  }, [value])
+
+
+  
   useEffect(() => {
     if (!input) return
     let errorWithoutDirty = []
@@ -1324,6 +652,30 @@ export default function DisplayField({
     if (validations.Required && (value?.length == 0 || value == '')) {
       errorWithoutDirty.push(true)
       errorMessages.push(messages.required)
+    }
+
+    if (validations.minRow || validations.maxRow) {
+      let validationsMinRow = false;
+      let validationsMaxRow = false;
+      const valueLength = value?.length || 0;
+
+
+      if (validations?.minRow) {
+        if (valueLength < validations?.minRow) {
+          validationsMinRow = messages.Min_Length + ' ' + validations?.minRow;
+        }
+      }
+
+      if (validations.maxRow) {
+        if (valueLength > validations?.maxRow) {
+          validationsMaxRow = messages.Max_Length + ' ' + validations?.maxRow;
+        }
+      }
+
+      if (validationsMinRow || validationsMaxRow) {
+        errorWithoutDirty.push(true)
+        errorMessages.push(validationsMinRow || validationsMaxRow)
+      }
     }
 
     if (input.type == 'Email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value != '') {
@@ -1350,7 +702,7 @@ export default function DisplayField({
 
     if (
       input.type == 'URL' &&
-      !/^(https?:\/\/)?(www\.)?[a-zA-Z0-9@:%._\+~#?&//=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%._\+~#?&//=]*)$/i.test(
+      !/^(https:\/\/)(www\.)?([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,6}(\/[-a-zA-Z0-9@:%._\+~#?&//=]*)?$/i.test(
         value
       ) &&
       value != ''
@@ -1400,17 +752,35 @@ export default function DisplayField({
           ] = value
         }
       }
-      if (setTriggerData) {
-        setTriggerData(prev => prev + 1)
-      }
+
+      
     }
     if (refError) {
+
       refError.current = {
         ...refError.current,
         [input.type == 'new_element' ? input.id : input.key]: errorWithoutDirty.includes(true) ? errorMessages : false
       }
+      if (columnId) {
+        allErrorsRef.current = {
+          ...allErrorsRef.current,
+          [input.type == 'new_element' ? input.id : input.key + '_' + columnId]: errorWithoutDirty.includes(true) ? errorMessages : false
+        }
+      }
+      if (refErrorFromTable && columnId) {
+        refErrorFromTable.current = {
+          ...refErrorFromTable.current,
+          [input.type == 'new_element' ? input.id : input.key + '_' + columnId]: errorWithoutDirty.includes(true) ? errorMessages : false
+        }
+      }
     }
-  }, [refError, input, value, validations, setTriggerData])
+
+  }, [refError, input, value, validations])
+
+  const collectionOptionsDeps = `${input?.getDataForm ?? ''}|${input?.options?.source ?? ''}|${input?.kind ?? ''}`
+
+  const staticDataDeps =
+    input?.getDataForm === 'static' ? JSON.stringify(input?.staticData ?? []) : ''
 
   useEffect(() => {
     if (!input?.getDataForm || (!input?.options?.source && !input?.staticData)) {
@@ -1421,11 +791,16 @@ export default function DisplayField({
       return
     }
     if (input?.getDataForm === 'collection' && input?.options?.source) {
-      axiosGet(`generic-entities/${input?.options?.source}`)
+      const isSearchKind = input?.kind === 'search'
+      const collectionListParams = isSearchKind ? { pageNumber: 1, pageSize: 10 } : {}
+
+      axiosGet(`generic-entities/${input?.options?.source}`, locale, undefined, collectionListParams)
         .then(res => {
           if (res.status) {
-            setSelectedOptions(res?.data?.entities)
-            setOldSelectedOptions(res?.data?.entities)
+            setSelectedOptions(res?.data?.entities ?? [])
+            setOldSelectedOptions(res?.data?.entities ?? [])
+            setTotalCount(res?.data?.totalCount ?? 0)
+            setPage(1)
           }
         })
         .finally(() => {
@@ -1434,11 +809,11 @@ export default function DisplayField({
     }
 
     if (input?.getDataForm === 'static') {
-      console.log(input?.staticData,"input?.staticData")
       setSelectedOptions(input?.staticData || [])
       setOldSelectedOptions(input?.staticData || [])
+      setLoading(false)
     }
-  }, [input])
+  }, [collectionOptionsDeps, staticDataDeps, locale])
 
 
   const [queryParams, setQueryParams] = useState(null)
@@ -1532,6 +907,8 @@ export default function DisplayField({
         })
     }
   }, [input?.getDataForm, queryParams])
+
+
 
   useEffect(() => {
     setTimeout(() => {
@@ -1634,7 +1011,7 @@ export default function DisplayField({
   const hoverText = roles?.hover?.hover_ar || roles?.hover?.hover_en
   const hintText = roles?.hint?.hint_ar || roles?.hint?.hint_en
 
- 
+
 
   const requiredMessage =
     errorView === 'This field is required'
@@ -1694,9 +1071,13 @@ export default function DisplayField({
               </div>
             </div>
           )}
+          {FormType && FormType !== "print" &&
+            <div className="absolute z-10 inset-0 "></div>
+          }
 
           {input.type == 'new_element' ? (
             <NewElement
+              saveAsDraft={saveAsDraft}
               tabsData={tabsData}
               allFields={allFields}
               editMode={editMode}
@@ -1723,6 +1104,11 @@ export default function DisplayField({
             />
           ) : (
             <ViewInput
+              refErrorFromTable={refErrorFromTable}
+              totalCount={totalCount}
+              page={page}
+              setPage={setPage}
+              setTotalCount={setTotalCount}
               data={data}
               input={input}
               xComponentProps={xComponentProps}
@@ -1745,6 +1131,7 @@ export default function DisplayField({
               setRedirect={setRedirect}
               fileName={fileName}
               locale={locale}
+              columnId={columnId}
               findError={findError}
               selectedOptions={selectedOptions}
               isDisable={isDisable}
@@ -1755,6 +1142,8 @@ export default function DisplayField({
               setShowPassword={setShowPassword}
               showPassword={showPassword}
               setTriggerData={setTriggerData}
+              appendSearchEntities={appendSearchEntities}
+              replaceSearchCollectionOptions={replaceSearchCollectionOptions}
               FilterData={FilterData}
               isFilterWithAPI={roles?.trigger?.typeOfValidation == 'filterDataFromAPI'}
               filterWithAPIValue={{
@@ -1773,6 +1162,7 @@ export default function DisplayField({
           />
         )}
       </div>
+     
       <div
         className={`${errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
           } w-fit text-[#fb866e]   text-2xl end-[2px]  z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}

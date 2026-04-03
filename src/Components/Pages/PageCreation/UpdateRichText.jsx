@@ -1,14 +1,87 @@
-import React, { useEffect, useState } from 'react'
-import { TextField, InputAdornment, MenuItem, Button, Select } from '@mui/material'
+import React, { useEffect, useRef, useState } from 'react'
+import { TextField, InputAdornment, MenuItem, Button, Select, Box, Typography } from '@mui/material'
 import { useSelector } from 'react-redux'
 import Collapse from '@kunukn/react-collapse'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import CloseNav from './CloseNav'
 import { useIntl } from 'react-intl'
+import Editor from 'src/Components/Editor/Editor'
+import HtmlEditor from 'src/Components/FormCreation/PageCreation/HtmlEditor'
+
+/** محتوى عربي/إنجليزي: تبديل Rich (SunEditor) ↔ HTML خام — نفس فكرة PrintSetting */
+function RichTextDualEditors({ data, onChange, locale, loadingSave, setLoadingSave, titleAr, titleEn }) {
+  const dataRef = useRef(data)
+  dataRef.current = data
+
+  const patch = partial => {
+    const next = { ...dataRef.current, ...partial }
+    dataRef.current = next
+    onChange(next)
+  }
+
+  const isHtmlAr = Boolean(data.ishtml_ar)
+  const isHtmlEn = Boolean(data.ishtml_en)
+  const ui = useIntl()
+  const loc = ui.locale || locale
+
+  const modeLabel = (isHtml, richLabel, htmlLabel) =>
+    isHtml ? richLabel : htmlLabel
+
+  const block = (field, title, isHtml) => (
+    <Box className='!mb-4'>
+      <Box display='flex' justifyContent='space-between' alignItems='center' mb={1} flexWrap='wrap' gap={1}>
+        <Typography variant='subtitle2' color='primary' fontWeight='bold'>
+          {title}
+        </Typography>
+        <Button
+          size='small'
+          variant={isHtml ? 'contained' : 'outlined'}
+          color='primary'
+          onClick={() =>
+            patch({
+              [field === 'content_ar' ? 'ishtml_ar' : 'ishtml_en']: !isHtml
+            })
+          }
+        >
+          {modeLabel(
+            isHtml,
+            loc === 'ar' ? 'محرر منسّق' : 'Rich text',
+            loc === 'ar' ? 'تحرير HTML' : 'HTML editor'
+          )}
+        </Button>
+      </Box>
+      {isHtml ? (
+        <HtmlEditor
+          key={`richtext-${field}-html`}
+          Html={data[field] || ''}
+          onValueChange={value => patch({ [field]: value })}
+          height='360px'
+        />
+      ) : (
+        <Editor
+          key={`richtext-${field}-sun`}
+          loadingSave={loadingSave}
+          setLoadingSave={setLoadingSave}
+          initialTemplateName={data[field] || ''}
+          refresh={0}
+          onChange={html => patch({ [field]: html })}
+        />
+      )}
+    </Box>
+  )
+
+  return (
+    <>
+      {block('content_ar', titleAr, isHtmlAr)}
+      {block('content_en', titleEn, isHtmlEn)}
+    </>
+  )
+}
 
 export default function UpdateRichText({ data, onChange, locale, type, buttonRef }) {
   const [obj, setObj] = useState(false)
+  const [loadingSave, setLoadingSave] = useState(false)
   const getApiData = useSelector(rx => rx.api.data)
   const { messages } = useIntl()
   
@@ -130,8 +203,15 @@ export default function UpdateRichText({ data, onChange, locale, type, buttonRef
             )
           }}
         />
-        {renderTextField(obj ? messages.dialogs.keyInAr : messages.dialogs.titleAr, 'content_ar', 'text')}
-        {renderTextField(obj ? messages.dialogs.keyInEn : messages.dialogs.titleEn, 'content_en', 'text')}
+        <RichTextDualEditors
+          data={data}
+          onChange={onChange}
+          locale={locale}
+          loadingSave={loadingSave}
+          setLoadingSave={setLoadingSave}
+          titleAr={obj ? messages.dialogs.keyInAr : messages.dialogs.titleAr || 'المحتوى بالعربية'}
+          titleEn={obj ? messages.dialogs.keyInEn : messages.dialogs.titleEn || 'المحتوى بالإنجليزية'}
+        />
         {type === 'progressBar' && (
           <>
             {renderTextField(

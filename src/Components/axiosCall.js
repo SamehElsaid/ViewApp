@@ -3,16 +3,16 @@ import Cookies from 'js-cookie'
 import { decryptData } from './encryption'
 import { toast } from 'react-toastify'
 
-const staticToken = `Bearer eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwidHlwIjoiYXQrand0IiwiY3R5IjoiSldUIn0.s5w4sN-Nv-vyhNNfX9wFIaAZW4G5yW_bUoJA9pBW6vnIJ7ppYtin6Se0qO0bAQvZENvMWMVDl3QjSvkJXBLAoAT06tIL3mLf.IXHBcpoQxqecNHcUhS23lQ.kOksuZ4ho_cviKJ_xKWcAif6lbjWRVH6acqkOKWxBL-n5otDDGEhNkmyDVX1ukw05ysWCVQITFJANa2l0f5SubB0nEyd_GSkkZ9COxfmJWNjlDronQJZmW55-LXCe3ZhRa9WI8lvumlw44ylgfysdhJL9whP4jgVV8hUxJUjr2Je4UoPRf-g_NO5DpAA47oCeuxm-i9hXDCe7MAtQLiAhtsFxo7-SKpiNE99EO_JoAEgagEnktgw-wyVXmRTkqe1_gOm80uh0Y0nssV7HZsue2Zfr3kgGA9WYtBB4s1XhCRxK4YQVrxrSJ9nJxjTaxV5lhipKsSseZiY0LvfEhJxTuSteep9CmgRbVZdTtNRwUoG0izk99SzX5M-KfxO8ISq7EMcvM_jcNZRUGP9EwC6xu2f-HfUtiMB8-Ikb3XaWwaGtlHBK7YVxWi1kKKCNV-QBycQB5Hme7xtmMaUImN6dqPju2Turj6-R7E_sDQ0l2gCB8tE-QmtkFoG0OzJ7-b47GtHf-H3gKFBCfk0NSB1zmXH29-Jm5EgUnLMbHcnSFyIfIaaXuoIp13e2wQ7C5jHCvmtH4HFWeCSm8kgiLxTRnYHYeYaX2PElMbd7J9Al60tmtZ6i7HkdLyK1S9uB2tFjT6CfQajzUvkVwJe-5khQyyMHQ0jD1GIuWxAIrhFQigjfcMlwcqArzObwaEvgrAbY0qsO4TXe8j4yBz5EZy0vkMydDkhv8TmDqM8nG4Fx2OZgKTV74xY8cQeEHyXmHCLo7Y9EV7ZTBN151jKusnfiMOQUJ2_xR-vAjSurjL53MZhRuPIk2L1LhqZDgXQ_9WvZX2VIEDjyhspTrcMqCcMatxE1IY4-JCR21JahJQEA4wezZRojSqAC46F9Y1fPK9hXRa2YO3hX6uVMyWFL8nmdBIRvyCOCqv0s2ZZLoVpkVxiZbox_EeEO1C6Sv0JtzE7Myd7biC2PH_t0G0Vl64CtJWYBM7vVW2I9_ui-OgWvEJQMM3seLBaty_f_cJqRxGB7GaDMPyKWV0WWQFdeTJQAP3xzFyyeLI7yA9NMsEhfxRC5xyp71wujWk7lGZ6TIczvYdsj21mOxaJ79_SAvGBOMVHmnlGMe5HsYvV1RTpALMlBLrBoTuDdTjSdEyKdkrZpHz0wEhGytL6zJFhe2tAxIuuH3v4XW-6NibCG8JWkzkl4qmKYio7ihQfrHhcc23d_7GADZHW1eMUNJqjLdGjzxi6JRLm0Hy2x9UW4aCkDaOJ0tSJrxmJSI9xA0aIkCbqNLlAEhae2rcAHwWjOEiMpAXNq3I6UKZIsBkJyPkokn5A5rfkfZ-RUo-dDKybzFYw3KVz4k2rUbv9_9rNW17RrJyu4UOpEltaGIlPHzKdWB7sSvYTdwLN0H2SOfnpa45L7q0oNTpzzYXYo8YGmd_tnaLDiYACC7lOwBvZU-SxIYz3N7fCZLZmmDjxFs7gdlGoV_UrtcigQ0KXQY2FuuidH0og251vQRGs9jvt8kv7NG8C19D3SnWYrSzItlvc38UZ.PYzs3rFVxRQnoB88n5OrjzauchEs2tYkFlaTu-1i9-A`
+const staticToken = false
 
 export const axiosGet = async (url, locale, token, params = {}, close) => {
   const authToken = Cookies.get('sub')
-  
+
 
   try {
     const header = {
       headers: {
-        Authorization: `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
+        Authorization: staticToken || `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
         'Accept-Language': locale
       },
       params
@@ -25,6 +25,35 @@ export const axiosGet = async (url, locale, token, params = {}, close) => {
     // if (!fetchData.data.isSuccess) {
     //   throw new Error(fetchData.data.message)
     // }
+
+    return { ...fetchData.data, status: true }
+  } catch (err) {
+    if (url === 'auth/info') {
+      throw err
+    } else {
+      return { status: false }
+    }
+  }
+}
+
+export const axiosGetIdentity = async (url, locale, token, params = {}, close) => {
+  const authToken = Cookies.get('sub')
+
+
+  try {
+    const header = {
+      headers: {
+        Authorization: `Bearer ${token ? token.trim() : decryptData(authToken).token.trim()}`,
+        'Accept-Language': locale
+      },
+      params
+    }
+    if (close) {
+      delete header.headers.Authorization
+    }
+    const fetchData = await axios.get(`${process.env.IDENTITY_URL}api/${url}`, header)
+
+
 
     return { ...fetchData.data, status: true }
   } catch (err) {
@@ -70,7 +99,7 @@ export const axiosPost = async (url, locale, data, file, close) => {
 
   const headerToken = file
     ? { ...HeaderImg, Authorization: `Bearer ${decryptData(authToken)?.token?.trim()}` }
-    : { Authorization: `Bearer ${decryptData(authToken)?.token?.trim()}` }
+    : { Authorization: staticToken || `Bearer ${decryptData(authToken)?.token?.trim()}` }
 
   if (close) {
     delete headerToken.Authorization
@@ -162,9 +191,9 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
   try {
     const res = await axios.get(
       `${process.env.API_URL}/auth/get_url_patterns/?file_name=${decryptData(authToken).username}/` +
-        fileNew.name +
-        '.' +
-        fileNew.type.split('/')[1],
+      fileNew.name +
+      '.' +
+      fileNew.type.split('/')[1],
       header
     )
 
@@ -176,13 +205,13 @@ export const uploadImage = async (file, onProgress, locale, mult, index) => {
         onUploadProgress: mult
           ? onProgress
           : progressEvent => {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              if (onProgress) {
-                onProgress(percentCompleted)
-              }
-
-              return percentCompleted
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            if (onProgress) {
+              onProgress(percentCompleted)
             }
+
+            return percentCompleted
+          }
       })
 
       return {

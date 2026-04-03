@@ -17,7 +17,6 @@ const Header = styled(Box)(() => ({
   top: 0
 }))
 function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
-
   const { messages } = useIntl()
 
   return (
@@ -234,10 +233,13 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
 
             <TextField
               fullWidth
-              type='number'
-              defaultValue={open.fontWeight}
-              onBlur={e => {
-
+              select
+              value={
+                open.fontWeight === undefined || open.fontWeight === null || open.fontWeight === ''
+                  ? 'bold'
+                  : String(open.fontWeight)
+              }
+              onChange={e => {
                 const newDataView = dataView.map(item => {
                   if (item.id === open.id) {
                     return { ...item, fontWeight: e.target.value }
@@ -249,7 +251,44 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
               }}
               variant='filled'
               label={messages.dialogs.fontWeight}
-            />
+            >
+              <MenuItem value='normal'>{locale === 'ar' ? 'عادي' : 'Normal'}</MenuItem>
+              <MenuItem value='bold'>{locale === 'ar' ? 'غامق' : 'Bold'}</MenuItem>
+              {[100, 200, 300, 400, 500, 600, 700, 800, 900].map(n => (
+                <MenuItem key={n} value={String(n)}>
+                  {n}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              fullWidth
+              select
+              value={
+                open.fontFamily === undefined || open.fontFamily === null || open.fontFamily === ''
+                  ? ''
+                  : String(open.fontFamily)
+              }
+              onChange={e => {
+                const newDataView = dataView.map(item => {
+                  if (item.id === open.id) {
+                    return { ...item, fontFamily: e.target.value }
+                  }
+
+                  return item
+                })
+                setDataView(newDataView)
+              }}
+              variant='filled'
+              label={messages.dialogs.fontFamily}
+            >
+              <MenuItem value=''>{locale === 'ar' ? 'افتراضي' : 'Default'}</MenuItem>
+              <MenuItem value={"'Public Sans', 'cairo', sans-serif"}>Public Sans / Cairo</MenuItem>
+              <MenuItem value='Arial'>{messages.dialogs.arial}</MenuItem>
+              <MenuItem value='Tahoma'>{messages.dialogs.tahoma}</MenuItem>
+              <MenuItem value='Verdana'>{messages.dialogs.verdana}</MenuItem>
+              <MenuItem value='Times New Roman'>{messages.dialogs.timesNewRoman}</MenuItem>
+              <MenuItem value='Courier New'>{messages.dialogs.courierNew}</MenuItem>
+            </TextField>
             <TextField
               fullWidth
               type='text'
@@ -266,7 +305,7 @@ function EditListItem({ open, handleClose, locale, setDataView, dataView }) {
                 setDataView(newDataView)
               }}
               variant='filled'
-              label={messages.dialogs.fontFamily}
+              label={messages.useButton.borderStyle}
               select
             >
               <MenuItem value='solid'>Solid</MenuItem>

@@ -10,7 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import EditListItem from './EditListItem'
 import { useIntl } from 'react-intl'
 
-function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }) {
+function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen, data }) {
   const { messages } = useIntl()
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -18,6 +18,7 @@ function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }
   })
 
   const [hover, setHover] = useState(false)
+
 
   const options = {
     onMouseEnter: () => setHover(true),
@@ -27,20 +28,22 @@ function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }
       backgroundColor: hover
         ? item.hoverBackgroundColor ?? item.backgroundColor ?? 'transparent'
         : item.backgroundColor ?? 'transparent',
-      color: hover ? item.hoverColor ?? item.color ?? 'black' : item.color ?? 'black',
-      paddingBlock: item.paddingBlock + 'px' || '10px',
-      paddingInline: item.paddingInline + 'px' || '20px',
-      borderRadius: item.borderRadius + 'px' || '5px',
-      fontSize: item.fontSize + 'px' || '16px',
-      fontWeight: item.fontWeight || 'bold',
+      color: hover ? data.hoverColor || item.hoverColor || item.color || 'black' : data.color || item.color || 'black',
+      paddingBlock: item.paddingBlock || data.paddingBlock || '10px',
+      paddingInline: (item.paddingInline || data.paddingInline) + 'px' || '20px',
+      borderRadius: (item.borderRadius || data.borderRadius) + 'px' || '5px',
+      fontSize: (item.fontSize || data.fontSize) + 'px' || '16px',
+      fontWeight: item.fontWeight || data.fontWeight || 'bold',
+      fontFamily: ((item.fontFamily || data.fontFamily || "inherit") + "!important"),
       border: item.border || 'none',
-      borderWidth: item.borderWidth + 'px' || '1px',
-      borderColor: hover ? item.hoverBorderColor || 'white' : item.borderColor || 'white',
-      borderStyle: item.borderStyle || 'solid',
+      borderWidth: (item.borderWidth) + 'px' || '0',
+      borderColor: hover ? item.hoverBorderColor || 'none' : item.borderColor || 'none',
+      borderStyle: item.borderStyle || 'none',
       transform: CSS.Transform.toString(transform),
       transition
     }
   }
+
 
   return (
     <li
@@ -58,7 +61,7 @@ function SortableItem({ item, index, locale, type, readOnly, onDelete, setOpen }
         >
           ☰
         </span>
-        <span>
+        <span className='font-family-control'>
           {type === 'order' ? index + 1 + '. ' : <BsDot className='inline-block' />} {item[`text_${locale}`]}
         </span>
       </div>
@@ -115,6 +118,7 @@ function OrderView({ data, locale, onChange, readOnly }) {
       borderRadius: data.borderRadius + 'px' || '5px',
       fontSize: data.fontSize + 'px' || '16px',
       fontWeight: data.fontWeight || 'bold',
+      fontFamily: (data.fontFamily || "inherit") + "!important",
       border: data.border || 'none',
       borderWidth: data.borderWidth + 'px' || '1px',
       borderColor: hover ? data.hoverBorderColor || 'white' : data.borderColor || 'white',
@@ -123,24 +127,10 @@ function OrderView({ data, locale, onChange, readOnly }) {
     }
   }
 
+
   const initialData = {
     text_en: 'Item',
     text_ar: 'عنصر',
-    color: 'black',
-    backgroundColor: 'transparent',
-    fontSize: '16px',
-    fontWeight: 'normal',
-    paddingBlock: '10px',
-    paddingInline: '20px',
-    borderRadius: '5px',
-    border: 'none',
-    borderWidth: '1px',
-    borderColor: 'white',
-    borderStyle: 'solid',
-    transition: 'all 0.1s ease-in-out',
-    hoverBackgroundColor: 'transparent',
-    hoverColor: 'black',
-    hoverBorderColor: 'transparent'
   }
 
   useEffect(() => {
@@ -205,6 +195,13 @@ function OrderView({ data, locale, onChange, readOnly }) {
           </Button>
         </>
       )}
+      <style>
+        {`
+          .font-family-control {
+            font-family: ${(data.fontFamily || "inherit") + "!important"};
+          }
+        `}
+      </style>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={dataView.map(item => item.id)} strategy={verticalListSortingStrategy}>
@@ -219,6 +216,7 @@ function OrderView({ data, locale, onChange, readOnly }) {
                 locale={locale}
                 readOnly={readOnly}
                 onDelete={handleDelete}
+                data={data}
               />
             ))}
           </ul>

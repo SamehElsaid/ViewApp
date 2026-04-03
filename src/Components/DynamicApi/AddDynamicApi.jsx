@@ -80,8 +80,14 @@ const AddDynamicApi = ({ open, toggle, setRefresh }) => {
   const [columnsByTable, setColumnsByTable] = useState({})
   const [queryTypes, setQueryTypes] = useState([])
 
+  const routePattern = /^[a-zA-Z0-9/_-]+$/
+
   const schema = yup.object().shape({
-    route: yup.string().required(messages['required']),
+    route: yup
+      .string()
+      .trim()
+      .required(messages['required'])
+      .matches(routePattern, messages.Api?.routeInvalid),
     queryType: yup.string().required(messages['required']),
     payloadMappings: yup.array(),
     responseMappings: yup.array()
@@ -102,6 +108,7 @@ const AddDynamicApi = ({ open, toggle, setRefresh }) => {
       responseMappings: []
     },
     resolver: yupResolver(schema),
+    mode: 'onChange',
     shouldUnregister: true,
     shouldFocusError: false
   })
@@ -266,7 +273,7 @@ const AddDynamicApi = ({ open, toggle, setRefresh }) => {
           {/* ================= PAYLOAD ================= */}
 
           <Typography variant='h6' sx={{ mt: 6, mb: 3 }}>
-            Payload Mappings
+            Payload Mappings <span className='text-red-500'>*</span>
           </Typography>
 
           {payloadFields.map((item, index) => {
@@ -301,7 +308,7 @@ const AddDynamicApi = ({ open, toggle, setRefresh }) => {
                   />
                 </Grid>
 
-                <Grid item xs={1}>
+                <Grid item xs={1} className='flex items-end'>
                   <IconButton color="error" onClick={() => removePayload(index)}>
                     <Icon icon="tabler:trash" />
                   </IconButton>
@@ -452,7 +459,7 @@ const AddDynamicApi = ({ open, toggle, setRefresh }) => {
                   />
                 </Grid>
 
-                <Grid item xs={1}>
+                <Grid item xs={1} className='flex items-end'>
                   <IconButton color="error" onClick={() => removeResponse(index)}>
                     <Icon icon="tabler:trash" />
                   </IconButton>

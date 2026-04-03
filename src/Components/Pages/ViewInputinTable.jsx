@@ -8,6 +8,7 @@ import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
 
 function ViewInputInTable({
+  refErrorFromTable,
   ele,
   row,
   readOnly,
@@ -19,16 +20,17 @@ function ViewInputInTable({
   getDesign,
   triggerData,
   setOpen,
-  setGetFields,
+  allErrorsRef,
   setChangedValue,
   formTable,
-  columnId
+  columnId,
+  reloadErrors,
+  currentData
 }) {
   const refError = useRef({})
   const [reload, setReload] = useState(0)
   const dispatch = useDispatch()
-  const errorInAllRow = useSelector(state => state.errorInAllRow)
-  const findError = errorInAllRow.data.find(el => el.index === row.index)?.error
+  const [findError, setFindError] = useState(false)
   const { locale } = useIntl()
   useEffect(() => {
     if (document.getElementById(`btn-actions-${data.collectionId}`)) {
@@ -40,6 +42,8 @@ function ViewInputInTable({
   }, [])
 
   let roles = data?.additional_fields?.find(el => el.key === ele.id)?.roles
+  let rowValidation = data?.rowValidation?.find(el => el.key === ele.id && el.rowId === columnId)?.roles
+
   const newRoles = { ...roles }
 
   if (columnId) {
@@ -50,40 +54,79 @@ function ViewInputInTable({
       newRoles.onMount = newRoles?.OnMountTriggerRow
     }
   }
+  useEffect(() => {
+    const error = allErrorsRef.current[ele.type === 'new_element' ? ele.id : ele.key + '_' + columnId]
+    if (error) {
+      setFindError(error)
+    }
+
+  }, [reloadErrors])
 
 
-  
 
 
+
+
+
+  console.log(currentData, "currentData");
 
   return (
     <div
+      key={columnId}
+      onClick={() => {
+        setFindError(false)
+      }}
       className='relative w-full'
       onBlur={() => {
 
+        console.log(dataRef.current[ele.key], "here", dataRef.current);
         setChangedValue(prev => {
           const newPrev = [...prev]
           const findWithId = newPrev.find(e => e.Id === row.Id)
           if (findWithId) {
-            findWithId[ele.key] = dataRef.current[ele.key]
+            findWithId[ele.key] = currentData[ele.key]
           } else {
-            newPrev.push({ ...row, [ele.key]: dataRef.current[ele.key] })
+            newPrev.push({ ...row, [ele.key]: currentData[ele.key] })
           }
 
           return newPrev
         })
         const newPrev = [...(data?.newRows || [])]
-        const index = newPrev.findIndex(e => e.Id === row.Id)
+
+        const index = newPrev.findIndex(
+          e => e.Id === row.Id && row.Id !== undefined
+        )
 
         if (index !== -1) {
-          newPrev[index] = {
-            ...newPrev[index],
-            ...dataRef.current
-          }
+          newPrev[index][ele.key] = currentData[ele.key]
         }
+
+
+        console.log(index);
+
+        const cleanObject = (obj) =>
+          Object.fromEntries(
+            Object.entries(obj).filter(([key]) => !key.startsWith('undefined'))
+          )
+
+        const cleanArray = (arr) =>
+          arr.map(item => cleanObject(item))
+
+        // 👇 بعد ما خلصت التعديلات على newPrev
+        const cleanedNewPrev = cleanArray(newPrev)
+
+
+
+        console.log(
+          {
+            ...data,
+            newRows: cleanedNewPrev
+          }
+        );
+
         onChange({
           ...data,
-          newRows: newPrev
+          newRows: cleanedNewPrev
         })
 
       }}
@@ -103,11 +146,12 @@ function ViewInputInTable({
             type='button'
             title={locale !== 'ar' ? 'Setting' : 'التحكم'}
             onMouseDown={e => {
+              e.preventDefault()
               e.stopPropagation()
             }}
             onClick={e => {
               e.stopPropagation()
-              
+
               setOpen({ ...ele, rowId: columnId })
             }}
             className='w-[30px] || h-[30px] z-20 relative hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
@@ -123,6 +167,9 @@ function ViewInputInTable({
           readOnly={disabled}
           disabledBtn={!data.type_of_sumbit || (data.type_of_sumbit === 'api' && !data.submitApi)}
           refError={refError}
+          refErrorFromTable={refErrorFromTable}
+          allErrorsRef={allErrorsRef}
+          columnId={columnId}
           setLayout={false}
           triggerData={triggerData}
           from='table'
@@ -133,7 +180,7 @@ function ViewInputInTable({
           dataRef={dataRef}
           setTriggerData={setTriggerData}
           roles={
-            newRoles ?? {
+            rowValidation ?? newRoles ?? {
               onMount: { type: '', value: '' },
               placeholder: {
                 placeholder_ar: '',
@@ -174,8 +221,8 @@ function ViewInputInTable({
             }
           }
           reload={reload}
-          errorView={findError?.[ele.type === 'new_element' ? ele.id : ele.key]?.[0]}
-          findError={findError && typeof findError?.[ele.type === 'new_element' ? ele.id : ele.key] === 'object'}
+          errorView={findError}
+          findError={findError && typeof findError === 'object'}
           hiddenLabel={true}
         />
       </div>

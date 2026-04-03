@@ -48,6 +48,39 @@ export default function ButtonControl({ data, onChange, buttonRef, type }) {
             variant='filled'
             label={messages.useButton.href}
           />
+
+          <TextField
+            fullWidth
+            type='text'
+            value={data.popupTargetId || ''}
+            onChange={e => onChange({ ...data, popupTargetId: e.target.value })}
+            variant='filled'
+            label={messages.useButton?.popupTargetId || (locale === 'ar' ? 'Popup ID (اختياري)' : 'Popup ID (optional)')}
+            helperText={
+              messages.useButton?.popupTargetIdHelp ||
+              (locale === 'ar'
+                ? 'لو حطيت هنا ID هيتم استخدام الزر للتحكم في popup بنفس الـ ID'
+                : 'If you set an ID here, this button will control a popup with the same ID')
+            }
+          />
+          <TextField
+            fullWidth
+            select
+            value={data.popupAction || 'toggle'}
+            onChange={e => onChange({ ...data, popupAction: e.target.value })}
+            variant='filled'
+            label={messages.useButton?.popupAction || (locale === 'ar' ? 'نوع التحكم في الـ popup' : 'Popup action')}
+            helperText={
+              messages.useButton?.popupActionHelp ||
+              (locale === 'ar'
+                ? 'اختار تفتح / تقفل / toggle للـ popup'
+                : 'Choose whether to open, close or toggle the popup')
+            }
+          >
+            <MenuItem value='toggle'>{locale === 'ar' ? 'تبديل (فتح/قفل)' : 'Toggle (open/close)'}</MenuItem>
+            <MenuItem value='open'>{locale === 'ar' ? 'فتح' : 'Open'}</MenuItem>
+            <MenuItem value='close'>{locale === 'ar' ? 'قفل' : 'Close'}</MenuItem>
+          </TextField>
         </>
       )}
       <TextField
@@ -106,12 +139,44 @@ export default function ButtonControl({ data, onChange, buttonRef, type }) {
 
       <TextField
         fullWidth
-        type='number'
-        value={data.fontWeight}
+        select
+        value={
+          data.fontWeight === undefined || data.fontWeight === null || data.fontWeight === ''
+            ? 'bold'
+            : String(data.fontWeight)
+        }
         onChange={e => onChange({ ...data, fontWeight: e.target.value })}
         variant='filled'
         label={messages.useButton.fontWeight}
-      />
+      >
+        <MenuItem value='normal'>{locale === 'ar' ? 'عادي' : 'Normal'}</MenuItem>
+        <MenuItem value='bold'>{locale === 'ar' ? 'غامق' : 'Bold'}</MenuItem>
+        {[100, 200, 300, 400, 500, 600, 700, 800, 900].map(n => (
+          <MenuItem key={n} value={String(n)}>
+            {n}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        fullWidth
+        select
+        value={
+          data.fontFamily === undefined || data.fontFamily === null || data.fontFamily === ''
+            ? ''
+            : String(data.fontFamily)
+        }
+        onChange={e => onChange({ ...data, fontFamily: e.target.value })}
+        variant='filled'
+        label={messages.useButton.fontFamily}
+      >
+        <MenuItem value=''>{locale === 'ar' ? 'افتراضي' : 'Default'}</MenuItem>
+        <MenuItem value={"'Public Sans', 'cairo', sans-serif"}>Public Sans / Cairo</MenuItem>
+        <MenuItem value='Arial'>{messages.dialogs.arial}</MenuItem>
+        <MenuItem value='Tahoma'>{messages.dialogs.tahoma}</MenuItem>
+        <MenuItem value='Verdana'>{messages.dialogs.verdana}</MenuItem>
+        <MenuItem value='Times New Roman'>{messages.dialogs.timesNewRoman}</MenuItem>
+        <MenuItem value='Courier New'>{messages.dialogs.courierNew}</MenuItem>
+      </TextField>
       <TextField
         fullWidth
         type='number'

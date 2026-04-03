@@ -29,7 +29,7 @@ export default function WelcomePage() {
             <Button component={Link} href={`/${locale}/setting/data-source/collaction`} variant='outlined'>
               {messages?.getStarted || 'Get Started'}
             </Button>
-            <Button component={Link} href={`/${locale}/`} variant='text'>
+            <Button component={Link} href={`/${locale}/dashboard`} variant='text'>
               {messages?.goToDashboard || 'Go to Dashboard'}
             </Button>
           </Box>

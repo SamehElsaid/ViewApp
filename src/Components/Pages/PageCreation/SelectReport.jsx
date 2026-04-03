@@ -14,7 +14,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Typography
 } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
@@ -405,8 +406,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
       onChange({
         ...data,
         Aggregates: [...existingAggregates, aggregateItem],
-
-        // Reset الـ MeasuresRows بعد الإضافة
+        viewValueInChart: '',
+        viewInputValue: '',
         MeasuresRows: [
           {
             table: '',
@@ -442,7 +443,9 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
     onChange({
       ...data,
       Aggregates: newAggregates,
-      Conditions: newConditions
+      Conditions: newConditions,
+      viewValueInChart: '',
+      viewInputValue: '',
     })
   }
 
@@ -557,8 +560,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
       onChange({
         ...data,
         GlobalConditions: [...existingGlobalConditions, conditionItem],
-
-        // Reset الـ ConditionsRows بعد الإضافة
+        viewValueInChart: '',
+        viewInputValue: '',
         ConditionsRows: [
           {
             table: '',
@@ -584,7 +587,9 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
     const newGlobalConditions = existingGlobalConditions.filter((_, i) => i !== index)
     onChange({
       ...data,
-      GlobalConditions: newGlobalConditions
+      GlobalConditions: newGlobalConditions,
+      viewValueInChart: '',
+      viewInputValue: '',
     })
   }
 
@@ -671,6 +676,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
 
       onChange({
         ...data,
+        viewValueInChart: '',
+        viewInputValue: '',
         GroupBy: [...existingGroupBy, groupByItem],
         GroupByRows: [
           {
@@ -691,7 +698,9 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
     const newGroupBy = existingGroupBy.filter((_, i) => i !== index)
     onChange({
       ...data,
-      GroupBy: newGroupBy
+      GroupBy: newGroupBy,
+      viewValueInChart: '',
+      viewInputValue: '',
     })
   }
 
@@ -904,6 +913,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
               relatedCollections: [],
               SelectedRelatedCollectionsFields: [],
               nestedRelatedCollections: {},
+              viewValueInChart: '',
+              viewInputValue: '',
 
               // Reset Measures
               MeasuresRows: [
@@ -1076,6 +1087,12 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
                   }
                 })}
               </div>
+
+              {getFields.filter(item => item?.options?.isSystemField === false).length === 0 && (
+                <p className='text-red-500 text-center text-sm mt-2'>
+                  {messages.dialogs.noFieldsFound}
+                </p>
+              )}
             </FormControl>
           </div>
           <div className='mt-4 border-2 border-main-color border-dashed p-2 rounded-md'>

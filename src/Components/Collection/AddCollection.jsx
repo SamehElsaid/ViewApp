@@ -11,9 +11,10 @@ import { useForm, Controller } from 'react-hook-form'
 import Icon from 'src/@core/components/icon'
 import { useIntl } from 'react-intl'
 import { Checkbox, FormControlLabel, InputAdornment, Card, CardContent, Grid } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { LoadingButton } from '@mui/lab'
+import ConfirmDialog from 'src/@core/components/confirm-dialog'
 import { UrlTranEn, UrlTranAr, axiosPost, axiosPut } from '../axiosCall'
 
 const Header = styled(Box)(({ theme }) => ({
@@ -51,36 +52,39 @@ const AddCollection = props => {
       .trim()
   })
 
-  const defaultValues = {
-    name_ar: '',
-    name_en: '',
-    description_ar: '',
-    description_en: '',
-    isLookup: false,
-    options: {
-      createdAt: true,
-      createdBy: true,
-      updatedAt: true,
-      updatedBy: true,
-      isReadOnly: false
-    },
-    key: ''
-  }
+  const emptyDefaults = useMemo(
+    () => ({
+      name_ar: '',
+      name_en: '',
+      description_ar: '',
+      description_en: '',
+      isLookup: false,
+      options: {
+        createdAt: true,
+        createdBy: true,
+        updatedAt: true,
+        updatedBy: true,
+        isReadOnly: false
+      },
+      key: ''
+    }),
+    []
+  )
 
   const {
     reset,
     control,
     setValue,
-    getValues,
     handleSubmit,
     trigger,
-    formState: { errors }
+    formState: { errors, isDirty }
   } = useForm({
-    defaultValues,
+    defaultValues: emptyDefaults,
     mode: 'onChange',
     resolver: yupResolver(schema)
   })
   const [loading, setLoading] = useState(false)
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
 
   const onSubmit = data => {
     const sendData = {
@@ -110,7 +114,7 @@ const AddCollection = props => {
         .then(res => {
           if (res.status) {
             toast.success(locale === 'ar' ? 'تم إضافة نموذج البيانات بنجاح' : 'Data Model added successfully')
-            handleClose()
+            performClose()
             setRefresh(prev => prev + 1)
           }
         })
@@ -126,7 +130,7 @@ const AddCollection = props => {
         .then(res => {
           if (res.status) {
             toast.success(locale === 'ar' ? 'تم إضافة نموذج البيانات بنجاح' : 'Data Model added successfully')
-            handleClose()
+            performClose()
             setRefresh(prev => prev + 1)
           }
         })
@@ -140,43 +144,57 @@ const AddCollection = props => {
   }
 
   useEffect(() => {
-    if (typeof open !== 'boolean') {
-      setValue('name_ar', open.nameAr)
-      setValue('name_en', open.nameEn)
-      setValue('description_ar', open.descriptionAr ?? '')
-      setValue('key', open.key.trim())
-      setValue('description_en', open.descriptionEn ?? '')
-      setValue('isLookup', open.isLookup ?? false)
-      setValue('options.isReadOnly', open.options?.isReadOnly ?? false)
-      setValue('options.createdAt', open.options?.createdAt ?? true)
-      setValue('options.createdBy', open.options?.createdBy ?? true)
-      setValue('options.updatedAt', open.options?.updatedAt ?? true)
-      setValue('options.updatedBy', open.options?.updatedBy ?? true)
-      trigger('name_ar')
-      trigger('name_en')
-      trigger('description_ar')
-      trigger('description_en')
-      trigger('isLookup')
-      trigger('options.isReadOnly')
-      trigger('options.createdAt')
-      trigger('options.createdBy')
-      trigger('options.updatedAt')
-      trigger('options.updatedBy')
+    if (typeof open !== 'boolean' && open) {
+      reset({
+        name_ar: open.nameAr,
+        name_en: open.nameEn,
+        description_ar: open.descriptionAr ?? '',
+        description_en: open.descriptionEn ?? '',
+        key: open.key.trim(),
+        isLookup: open.isLookup ?? false,
+        options: {
+          createdAt: open.options?.createdAt ?? true,
+          createdBy: open.options?.createdBy ?? true,
+          updatedAt: open.options?.updatedAt ?? true,
+          updatedBy: open.options?.updatedBy ?? true,
+          isReadOnly: open.options?.isReadOnly ?? false
+        }
+      })
+    } else if (open === true) {
+      reset(emptyDefaults)
     }
-  }, [open, setValue, trigger])
+  }, [open, reset, emptyDefaults])
 
-  const handleClose = () => {
+  useEffect(() => {
+    if (!open) setCloseConfirmOpen(false)
+  }, [open])
+
+  const performClose = () => {
+    setCloseConfirmOpen(false)
     toggle()
     reset()
   }
 
+  const requestClose = () => {
+    setCloseConfirmOpen(true)
+  }
+
   return (
     <>
+      <ConfirmDialog
+        open={closeConfirmOpen}
+        title={messages.dialogs.closePanelTitle}
+        content={messages.dialogs.closePanelMessage}
+        confirmLabel={messages.dialogs.confirm}
+        cancelLabel={messages.cancel}
+        onConfirm={performClose}
+        onCancel={() => setCloseConfirmOpen(false)}
+      />
       <Drawer
         open={open}
         anchor='right'
         variant='temporary'
-        onClose={handleClose}
+        onClose={requestClose}
         ModalProps={{ keepMounted: true }}
         sx={{ '& .MuiDrawer-paper': { width: { xs: '70%', sm: '50%' } } }}
       >
@@ -192,7 +210,7 @@ const AddCollection = props => {
           </Typography>
           <IconButton
             size='small'
-            onClick={handleClose}
+            onClick={requestClose}
             sx={{
               p: '0.438rem',
               borderRadius: 1,
@@ -528,10 +546,15 @@ const AddCollection = props => {
             </Card>
 
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 4 }} className='gap-4 justify-end py-4'>
-              <LoadingButton type='submit' variant='contained' loading={loading}>
+              <LoadingButton
+                type='submit'
+                variant='contained'
+                loading={loading}
+                disabled={typeof open !== 'boolean' && !isDirty}
+              >
                 {typeof open === 'boolean' ? messages.submit : messages.Update}
               </LoadingButton>
-              <Button variant='contained' color='secondary' onClick={handleClose}>
+              <Button variant='contained' color='secondary' onClick={requestClose}>
                 {typeof open === 'boolean' ? messages.cancel : messages.cancel}
               </Button>
             </Box>

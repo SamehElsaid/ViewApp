@@ -8,6 +8,7 @@ import { useReactToPrint } from 'react-to-print'
 import PrintContent from '../PrintContent'
 import { usePDF } from 'react-to-pdf'
 import { toast } from 'react-toastify'
+import { useRouter } from 'next/router'
 
 function NewElement({
   activeTab,
@@ -31,7 +32,8 @@ function NewElement({
   allFields = [],
   setActiveTab,
   allSortData = [],
-  sortedLoopWithoutTabs = []
+  sortedLoopWithoutTabs = [],
+  saveAsDraft
 }) {
   const [open, setOpen] = useState(false)
   const { locale, messages } = useIntl()
@@ -42,25 +44,6 @@ function NewElement({
 
 
 
-  const { toPDF, targetRef } = usePDF({
-    filename: input.name_en + 'form.pdf',
-    page: {
-      orientation: 'portrait',
-      format: 'a4',
-      margin: {
-        top: 10,
-        right: 10,
-        bottom: 10,
-        left: 10
-      }
-    },
-    method: 'save',
-    resolution: 2,
-    canvas: {
-      mimeType: 'image/png',
-      qualityRatio: 1
-    }
-  })
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef, pageStyle: `@media print {
@@ -90,6 +73,7 @@ function NewElement({
     if (roles?.onMount?.href) {
       window.open(roles?.onMount?.href, '_blank')
     }
+
     try {
       if (onChangeEvent) {
         const evaluatedFn = eval('(' + onChangeEvent + ')')
@@ -115,83 +99,111 @@ function NewElement({
     setValue(prev => !prev)
   }
 
-  console.log(allFields);
+
+  const route = useRouter()
+
+  const getQueryString = () => {
+    const url = new URL(route.asPath, window.location.origin)
+
+    return url.search // دي بترجع "?name=ahmed&age=25"
+  }
+
+
 
   const handleClick = e => {
-    setValue('checked')
-    if (roles?.type === 'print') {
-      const inputsWithValues = []
-      console.log(allFields, Object.entries(dataRef.current), "heeeeeeeee");
-      if (roles?.print?.includeInputs) {
 
-        const allSumbitData = {...tabsData, ...dataRef.current}
-
-        allFields.forEach(item => {
-          inputsWithValues.push({
-            ...item,
-            value: allSumbitData[item.key]
-          })
-        })
-      }
-
-      setPrintData({
-        inputsWithValues,
-        pages: roles.print?.pages || [],
-        inputsOrder: roles.print?.inputsOrder || [],
-        inputsVisibility: roles.print?.inputsVisibility || {},
-        customCSS: roles.print?.customCSS || '',
-        selectedBorder: roles.print?.selectedBorder || null,
-        customBorderCSS: roles.print?.customBorderCSS || ''
-      })
-      setTimeout(() => {
-        handlePrint()
-      }, 0)
-      setTimeout(() => {
-        setPrintData({ inputsWithValues: [], pages: [], inputsOrder: [], customCSS: '' })
-      }, 500)
+    if (roles?.type === 'saveAsDraft') {
+      saveAsDraft(e)
 
       return
     }
-    if (roles?.onMount?.print) {
-      window.print()
+
+    if (roles?.type === 'print_page' && roles?.href) {
+
+      saveAsDraft(e, roles?.href)
+
+      return
     }
-    if (roles?.onMount?.file) {
-      const fileUrl = roles?.onMount?.file.replace('/Uploads/', process.env.API_URL + '/file/download/') // Replace with your file URL
+    if (roles?.href) {
+      route.push(`/${locale}/${roles?.href}${getQueryString() ? getQueryString() + "&" : '?'}isPrint=true`);
+    } else {
 
-      // Create an anchor element
-      const link = document.createElement('a')
-      link.href = fileUrl
 
-      // Set the download attribute (optional: specify a custom filename)
-      link.download = 'custom-filename.pdf' // Replace with desired filename
 
-      // Append the anchor to the body (required for Firefox)
-      document.body.appendChild(link)
 
-      // Programmatically click the anchor to trigger the download
-      link.click()
+      setValue('checked')
+      if (roles?.type === 'print') {
+        const inputsWithValues = []
+        if (roles?.print?.includeInputs) {
 
-      // Remove the anchor from the document
-      document.body.removeChild(link)
-    }
+          const allSumbitData = { ...tabsData, ...dataRef.current }
 
-    const handleSubmitEvent = () => {
-      try {
-        if (onChangeEvent) {
-          const evaluatedFn = eval('(' + onChangeEvent + ')')
-          evaluatedFn(e)
+          allFields.forEach(item => {
+            inputsWithValues.push({
+              ...item,
+              value: allSumbitData[item.key]
+            })
+          })
         }
-      } catch (err) {
-        console.log(err)
+
+        setPrintData({
+          inputsWithValues,
+          pages: roles.print?.pages || [],
+          inputsOrder: roles.print?.inputsOrder || [],
+          inputsVisibility: roles.print?.inputsVisibility || {},
+          customCSS: roles.print?.customCSS || '',
+          selectedBorder: roles.print?.selectedBorder || null,
+          customBorderCSS: roles.print?.customBorderCSS || ''
+        })
+        setTimeout(() => {
+          handlePrint()
+        }, 0)
+        setTimeout(() => {
+          setPrintData({ inputsWithValues: [], pages: [], inputsOrder: [], customCSS: '' })
+        }, 500)
+
+        return
+      }
+      if (roles?.onMount?.print) {
+        window.print()
+      }
+      if (roles?.onMount?.file) {
+        const fileUrl = roles?.onMount?.file.replace('/Uploads/', process.env.API_URL + '/file/download/') // Replace with your file URL
+
+        // Create an anchor element
+        const link = document.createElement('a')
+        link.href = fileUrl
+
+        // Set the download attribute (optional: specify a custom filename)
+        link.download = 'custom-filename.pdf' // Replace with desired filename
+
+        // Append the anchor to the body (required for Firefox)
+        document.body.appendChild(link)
+
+        // Programmatically click the anchor to trigger the download
+        link.click()
+
+        // Remove the anchor from the document
+        document.body.removeChild(link)
+      }
+
+      const handleSubmitEvent = () => {
+        try {
+          if (onChangeEvent) {
+            const evaluatedFn = eval('(' + onChangeEvent + ')')
+            evaluatedFn(e)
+          }
+        } catch (err) {
+          console.log(err)
+        }
+      }
+
+      if (input?.kind === 'submit') {
+        handleSubmit(e, handleSubmitEvent)
+      } else {
+        handleSubmitEvent()
       }
     }
-
-    if (input?.kind === 'submit') {
-      handleSubmit(e, handleSubmitEvent)
-    } else {
-      handleSubmitEvent()
-    }
-
   }
 
   function isValidURL(str) {
@@ -265,16 +277,25 @@ function NewElement({
     if (isValidURL(roles?.onMount?.href)) {
       return (
         <>
-          <div className='w-full'>
+
+          <div className='w-full relative'>
+            {isDisable === 'disabled' &&
+              <div className='w-full absolute  inset-0  z-10'>
+              </div>
+            }
+
             <a
-              href={roles?.onMount?.href}
-              className={`btn ${isDisable === 'hide' ? (readOnly ? '' : 'hidden') : ''} block text-center`}
+              href={isDisable === 'disabled' ? '#' : roles?.onMount?.href}
+              className={`btn ${isDisable === 'hide' ? (readOnly ? '' : 'hidden') : ''} block text-center ${isDisable === 'disabled' ? 'opacity-50 !cursor-not-allowed' : ''}`}
               onClick={e => {
+                if (isDisable === 'disabled') {
+                  return
+                }
                 handleClick(e)
               }}
               target='_blank'
               rel='noopener noreferrer'
-              disabled={isDisable === 'disable'}
+              disabled={isDisable === 'disabled'}
             >
               {input[`name_${locale}`]}
             </a>
@@ -285,14 +306,22 @@ function NewElement({
     if (roles?.onMount?.href) {
       return (
         <>
-          <div className='w-full'>
+          <div className='w-full relative'>
+            {isDisable === 'disabled' &&
+              <div className='w-full absolute  inset-0  z-10'>
+              </div>
+            }
             <Link
-              href={`/${locale}${roles?.onMount?.href}`}
-              className={`btn block text-center  ${isDisable === 'hide' ? (readOnly ? '' : 'hidden') : ''} block`}
+
+              href={isDisable === 'disabled' ? '#' : `/${locale}${roles?.onMount?.href}`}
+              className={`btn block text-center  ${isDisable === 'hide' ? (readOnly ? '' : 'hidden') : ''} block ${isDisable === 'disabled' ? 'opacity-50 !cursor-not-allowed' : ''}`}
               onClick={e => {
+                if (isDisable === 'disabled') {
+                  return
+                }
                 handleClick(e)
               }}
-              disabled={isDisable === 'disable'}
+              disabled={isDisable === 'disabled'}
             >
               {input[`name_${locale}`]}
             </Link>
@@ -357,7 +386,7 @@ function NewElement({
               }}
               type={input?.[locale === 'ar' ? 'warningMessageAr' : 'warningMessageEn'] ? 'button' : 'submit'}
               className='btn'
-              disabled={disabledBtn}
+              disabled={disabledBtn || isDisable === 'disabled'}
             >
               {input[`name_${locale}`]}
             </button>

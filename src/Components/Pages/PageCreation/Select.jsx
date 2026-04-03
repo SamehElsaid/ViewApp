@@ -175,7 +175,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
 
   const [addMoreElement] = useState([
     { name_ar: 'مربع الاختيار', name_en: 'CheckBox', key: 'check_box' },
-    { name_ar: 'Button', name_en: 'Button', key: 'button' },
+    { name_ar: 'زر', name_en: 'Button', key: 'button' },
     { name_ar: 'التبويبات', name_en: 'Tabs', key: 'tabs' },
     { name_ar: 'نص', name_en: 'Text', key: 'text' },
     { name_ar: 'السابق', name_en: 'Previous', key: 'prev' },
@@ -442,20 +442,24 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
         />
 
         <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(collection?.nameEn)}>
-          <div className='flex justify-end items-center mt-2'>
-            <Button
-              variant='contained'
-              size='small'
-              onClick={() => {
-                setEditingTabIndex(null)
-                setNewTabNameAr('')
-                setNewTabNameEn('')
-                setAddNewTabDialogOpen(true)
-              }}
-            >
-              Add New Tab
-            </Button>
-          </div>
+
+          {!tableType &&
+
+            <div className='flex justify-end items-center mt-2'>
+              <Button
+                variant='contained'
+                size='small'
+                onClick={() => {
+                  setEditingTabIndex(null)
+                  setNewTabNameAr('')
+                  setNewTabNameEn('')
+                  setAddNewTabDialogOpen(true)
+                }}
+              >
+                Add New Tab
+              </Button>
+            </div>
+          }
           {(() => {
             const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
             const tabsList = Array.isArray(tabsElement?.data) ? tabsElement.data : []
@@ -608,7 +612,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                           <>
                             {(() => {
 
-                              return (
+                              return !tableType ? (
                                 <span className='!ml-2 !flex !items-center !gap-1'>
                                   <select
                                     className='px-1 ms-1 w-full py-0.5 border rounded text-xs bg-white'
@@ -626,7 +630,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                                   </select>
 
                                 </span>
-                              )
+                              ) : null
                             })()}
                             <Checkbox
                               value={value.key}
@@ -659,7 +663,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
               </div>
             </FormControl>
           </div>
-          {!type && (
+          {!type && !tableType && (
             <div className='mt-4 border-2 border-main-color border-dashed p-2 rounded-md'>
               <div className='flex justify-end items-center mb-2'>
                 <Button
@@ -1264,6 +1268,31 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
             </>
           ) : (
             <>
+
+              <TextField
+                fullWidth
+                type='color'
+                defaultValue={data.borderColor || ''}
+                onBlur={e => onChange({ ...data, borderColor: e.target.value })}
+                label={messages.dialogs.borderColor || 'Border Color'}
+                variant='filled'
+              />
+              <TextField
+                fullWidth
+                type='color'
+                defaultValue={data.headerBackgroundColor || ''}
+                onBlur={e => onChange({ ...data, headerBackgroundColor: e.target.value })}
+                label={messages.dialogs.headerBackgroundColor || 'Header Background Color'}
+                variant='filled'
+              />
+              <TextField
+                fullWidth
+                type='color'
+                defaultValue={data.headerTextColor || ''}
+                onBlur={e => onChange({ ...data, headerTextColor: e.target.value })}
+                label={messages.dialogs.headerTextColor || 'Header Text Color'}
+                variant='filled'
+              />
               <TextField
                 select
                 fullWidth
@@ -1306,7 +1335,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                   />
                 }
                 label={locale === 'ar' ? 'إظهار البيانات القديمة' : 'Show Old Data'}
-                />
+              />
               <Collapse
                 transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
                 isOpen={Boolean(data.kind === 'form-table')}

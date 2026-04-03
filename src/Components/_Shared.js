@@ -86,7 +86,6 @@ export const getTypeFromCollection = (type, kind) => {
     return 'multiple_select'
   }
 
-  console.log(kind);
 
   if (kind === 'progress_bar') {
     return 'progress_bar'

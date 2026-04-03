@@ -4,9 +4,15 @@ import DeletePopUp from 'src/Components/DeletePopUp'
 
 function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open, objectToCss, Css, type }) {
   const [openDelete, setOpenDelete] = useState(false)
-  const findWithRowId = roles?.triggerRow?.rowId === open.rowId
+  
+  const findWithRowId =
+    roles?.triggerRow?.rowId &&
+    open.rowId &&
+    roles?.triggerRow?.rowId === open.rowId
   const triggerProperty = type === 'column' ? 'triggerColumn' : findWithRowId ? 'triggerRow' : 'trigger'
   const currentTrigger = type === 'column' ? roles?.triggerColumn : findWithRowId ? roles?.triggerRow : roles?.trigger
+
+
 
   const deleteTrigger = () => {
     const sendData = {
@@ -36,7 +42,8 @@ function TriggerControl({ roles, setOpenTrigger, messages, data, onChange, open,
     setOpenDelete(false)
   }
 
- 
+
+
 
   return (
     <>

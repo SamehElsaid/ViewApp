@@ -65,10 +65,10 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       return toast.error(messages.generateInput.keyMustBeString)
     }
     if (activeStep === 2 && !isOptionsStep && !isFileStep) {
-      if(+validations.maxLength < +validations.minLength && validations.maxLength !== '') {
+      if (+validations.maxLength < +validations.minLength && validations.maxLength !== '') {
         return toast.error(messages.maxLengthMustBeGreaterThanMinLength)
       }
-      
+
       setActiveStep(steps.length - 1) // Skip the setup step if not required
     } else {
       setActiveStep(prevActiveStep => prevActiveStep + 1)
@@ -209,6 +209,13 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
     if (fieldType === 'number' || fieldType === 'progress_bar') {
       validationData.push({ RuleType: 'ColumnDataType', Parameters: { expectedType: 'System.Int64' } })
     }
+    if (fieldType === 'currency' || fieldType === 'decimal' || fieldType === 'datetime' || fieldType === 'timezone' || fieldType === 'boolean' || fieldType === 'percent' || fieldType === 'integer' || fieldType === 'float' || fieldType === 'double') {
+      validationData.push({ RuleType: fieldType, Parameters: {} })
+    }
+
+    if (fieldType === 'rate') {
+      validationData.push({ RuleType: 'decimal', Parameters: {} })
+    }
 
     if (isFileStep && fileExtensions.length === 0) {
       return toast.error(messages.dialogs.fileTypesRequired)
@@ -223,7 +230,7 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
       nameEn: fieldLabelEn.trim(),
       descriptionAr: fieldLabel.trim(),
       descriptionEn: fieldLabelEn.trim(),
-      type: getType(fieldType === 'time' ? 'date' : isNumber ? 'number' : fieldType),
+      type: fieldType === 'rate' ? 'Decimal' : getType(fieldType === 'time' ? 'date' : isNumber ? 'number' : fieldType),
       FieldCategory: FindFieldCategory(fieldType),
 
       options: {
@@ -465,20 +472,20 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
                   fieldType === 'time' ||
                   fieldType === 'tel'
                 ) && (
-                  <TextField
-                    label={messages.Min_Length}
-                    type='number'
-                    fullWidth
-                    margin='normal'
-                    value={validations.minLength}
-                    onChange={e =>
-                      setValidations({
-                        ...validations,
-                        minLength: e.target.value
-                      })
-                    }
-                  />
-                )}
+                    <TextField
+                      label={messages.Min_Length}
+                      type='number'
+                      fullWidth
+                      margin='normal'
+                      value={validations.minLength}
+                      onChange={e =>
+                        setValidations({
+                          ...validations,
+                          minLength: e.target.value
+                        })
+                      }
+                    />
+                  )}
                 {!(
                   fieldType === 'checkbox' ||
                   fieldType === 'email' ||
@@ -489,21 +496,21 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
                   fieldType === 'time' ||
                   fieldType === 'tel'
                 ) && (
-                  <TextField
-                    label={messages.Max_Length}
-                    type='number'
-                    fullWidth
-                    margin='normal'
-                    value={validations.maxLength}
-                    min={validations.minLength}
-                    onChange={e => {
-                      setValidations({
-                        ...validations,
-                        maxLength: e.target.value
-                      })
-                    }}
-                  />
-                )}
+                    <TextField
+                      label={messages.Max_Length}
+                      type='number'
+                      fullWidth
+                      margin='normal'
+                      value={validations.maxLength}
+                      min={validations.minLength}
+                      onChange={e => {
+                        setValidations({
+                          ...validations,
+                          maxLength: e.target.value
+                        })
+                      }}
+                    />
+                  )}
               </div>
             )}
 
@@ -565,8 +572,8 @@ const FormBuilder = ({ open, setOpen, setRefresh }) => {
                       <div className='!flex !flex-row !flex-wrap gap-2'>
                         {getFields.map(field =>
                           field.type === 'OneToOne' ||
-                          field.type === 'ManyToMany' ||
-                          field.type === 'ManyToMany' ? null : (
+                            field.type === 'ManyToMany' ||
+                            field.type === 'ManyToMany' ? null : (
                             <FormControlLabel
                               key={field.key}
                               className='!w-fit capitalize'

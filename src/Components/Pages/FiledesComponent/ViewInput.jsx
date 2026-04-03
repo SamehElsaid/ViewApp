@@ -5,12 +5,57 @@ import ExampleCustomInput from './ExampleCustomInput'
 import DatePicker from 'react-datepicker'
 import ar from 'date-fns/locale/ar-EG'
 import en from 'date-fns/locale/en-US'
-import { Autocomplete, Button, Dialog, IconButton, InputAdornment, Rating, TextField } from '@mui/material'
+import {
+  Autocomplete,
+  Button,
+  CircularProgress,
+  Dialog,
+  IconButton,
+  InputAdornment,
+  Paper,
+  Rating,
+  TextField
+} from '@mui/material'
 import { Icon } from '@iconify/react'
-import { useEffect, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import TableView from '../PageCreation/TableView'
 import { axiosGet } from 'src/Components/axiosCall'
+
+const SEARCH_COLLECTION_PAGE_SIZE = 10
+
+/** Footer lives in Paper, not inside the listbox <ul>, to avoid MUI/React removeChild conflicts. */
+const SearchAutocompletePaper = forwardRef(function SearchAutocompletePaper(props, ref) {
+  const {
+    children,
+    showSeeMore,
+    onSeeMore,
+    loadingMore,
+    locale,
+    ownerState: _ownerState,
+    ...other
+  } = props
+
+  return (
+    <Paper ref={ref} {...other}>
+      {children}
+      {showSeeMore ? (
+        <div role='presentation' onMouseDown={e => e.preventDefault()}>
+          <Button
+            fullWidth
+            size='small'
+            variant='text'
+            disabled={loadingMore}
+            onClick={onSeeMore}
+            sx={{ justifyContent: 'center', borderRadius: 0 }}
+          >
+            {locale === 'ar' ? 'عرض المزيد' : 'See more'}
+          </Button>
+        </div>
+      ) : null}
+    </Paper>
+  )
+})
 
 function convertMomentToDateFnsFormat(format) {
   if (!format || typeof format !== 'string') return 'yyyy-MM-dd'
@@ -25,12 +70,17 @@ function convertMomentToDateFnsFormat(format) {
 }
 
 const ViewInput = ({
+  refErrorFromTable,
   dataRef,
   advancedEdit,
   sortedLoop,
   FilterData,
   isFilterWithAPI,
   filterWithAPIValue,
+  totalCount,
+  page,
+  setPage,
+  setTotalCount,
   input,
   data,
   value,
@@ -43,6 +93,7 @@ const ViewInput = ({
   locale,
   handleDelete,
   errorView,
+  columnId,
   fileName,
   error,
   showPassword,
@@ -54,10 +105,17 @@ const ViewInput = ({
   onBlur,
   isRedirect,
   setRedirect,
-  triggerData
+  triggerData,
+  appendSearchEntities,
+  replaceSearchCollectionOptions
 }) => {
 
   const [isOpen, setIsOpen] = useState(false)
+  const [searchLoadingMore, setSearchLoadingMore] = useState(false)
+  const [searchInputValue, setSearchInputValue] = useState('')
+  const [searchTypingLoading, setSearchTypingLoading] = useState(false)
+  const skipInitialEmptySearchFetch = useRef(true)
+  const committedSearchRef = useRef('')
 
   const handleKeyDown = event => {
     if (input.type != 'Phone') return
@@ -76,7 +134,7 @@ const ViewInput = ({
 
   useEffect(() => {
     if (input?.kind == 'Table') {
-      axiosGet(`/collections/get-by-key?key=${input?.options?.source}`)
+      axiosGet(`collections/get-by-key?key=${input?.options?.source}`)
         .then(res => {
           if (res.status) {
 
@@ -88,8 +146,9 @@ const ViewInput = ({
               collectionId: res.data.id,
               collectionName: res.data.key,
               showOldData: roles?.showOldData,
-              delete: true,
-              edit: true,
+              showBtn: roles?.showBtn ?? true,
+              delete: roles?.delete ?? true,
+              edit: false,
               kind: 'form-table',
               selected: selected
             })
@@ -100,14 +159,62 @@ const ViewInput = ({
         })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input?.key, input?.kind])
+  }, [input?.key, input?.kind, roles?.showBtn, roles?.showOldData, roles?.delete])
+
+  useEffect(() => {
+    setSearchInputValue('')
+    committedSearchRef.current = ''
+    skipInitialEmptySearchFetch.current = true
+  }, [input?.key])
+
+  useEffect(() => {
+    if (input?.kind !== 'search') return
+    if (!input?.options?.source || typeof replaceSearchCollectionOptions !== 'function') return
+
+    let cancelled = false
+
+    const t = setTimeout(() => {
+      const sourceKey = input.options.source
+      const trimmed = searchInputValue.trim()
+
+      if (skipInitialEmptySearchFetch.current && trimmed === '') {
+        skipInitialEmptySearchFetch.current = false
+
+        return
+      }
+      skipInitialEmptySearchFetch.current = false
+
+      setSearchTypingLoading(true)
+
+      const params = {
+        pageNumber: 1,
+        pageSize: SEARCH_COLLECTION_PAGE_SIZE
+      }
+      if (trimmed) {
+        params.search = trimmed
+      }
+      axiosGet(`generic-entities/${sourceKey}`, locale, undefined, params)
+        .then(res => {
+          if (cancelled || !res.status) return
+          committedSearchRef.current = trimmed
+          replaceSearchCollectionOptions(res?.data?.entities ?? [], res?.data?.totalCount ?? 0)
+        })
+        .finally(() => {
+          if (!cancelled) setSearchTypingLoading(false)
+        })
+    }, 400)
+
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [searchInputValue, input?.kind, input?.options?.source, locale, replaceSearchCollectionOptions])
 
   if (input?.kind == 'select') {
     const label = JSON.parse(input?.descriptionEn) || []
     const valueSend = JSON.parse(input?.selectedValueSend) || []
 
 
-    console.log(label, input, selectedOptions, "selectedOptions")
 
     return (
       <div id='custom-select'>
@@ -144,6 +251,7 @@ const ViewInput = ({
     const label = JSON.parse(input?.descriptionEn)
     const valueSend = JSON.parse(input?.selectedValueSend) || []
 
+
     return (
       <div className=''>
         <div className=''>
@@ -157,13 +265,13 @@ const ViewInput = ({
                     <div key={index + 'radio' + valueSendOption || index} className=''>
                       <input
                         value={valueSendOption}
-                        name={input.nameEn}
+                        name={input.nameEn + (columnId ? `_${columnId}` : '')}
                         checked={valueSendOption === value}
                         onChange={e => {
                           onChange(e)
                         }}
                         type='radio'
-                        id={valueSendOption}
+                        id={valueSendOption + (columnId ? `_${columnId}` : '')}
                         disabled={isDisable == 'disabled'}
                         onBlur={e => {
                           if (onBlur) {
@@ -173,7 +281,7 @@ const ViewInput = ({
                           }
                         }}
                       />
-                      <label htmlFor={valueSendOption}>{label.map(ele => option[ele]).join('-')}</label>
+                      <label htmlFor={valueSendOption + (columnId ? `_${columnId}` : '')}>{label.map(ele => option[ele]).join('-')}</label>
                     </div>
                   )
                 })}
@@ -187,11 +295,51 @@ const ViewInput = ({
 
   if (input.kind == 'search') {
     const label = JSON.parse(input?.descriptionEn)
+    const sourceKey = input?.options?.source
+    const loadedCount = selectedOptions?.length ?? 0
+
+    const showSeeMore =
+      Boolean(sourceKey) &&
+      typeof appendSearchEntities === 'function' &&
+      typeof setPage === 'function' &&
+      totalCount > loadedCount
+
+    const handleSearchSeeMore = async e => {
+      e.stopPropagation()
+      e.preventDefault()
+      if (!sourceKey || !appendSearchEntities || !setPage || searchLoadingMore) return
+      const nextPage = (page ?? 1) + 1
+
+      setSearchLoadingMore(true)
+
+      const params = {
+        pageNumber: nextPage,
+        pageSize: SEARCH_COLLECTION_PAGE_SIZE
+      }
+      const committed = committedSearchRef.current?.trim()
+      if (committed) {
+        params.search = committed
+      }
+      const res = await axiosGet(`generic-entities/${sourceKey}`, locale, undefined, params)
+      if (res.status && Array.isArray(res?.data?.entities)) {
+        appendSearchEntities(res.data.entities)
+        setPage(nextPage)
+        if (typeof setTotalCount === 'function' && res?.data?.totalCount != null) {
+          setTotalCount(res.data.totalCount)
+        }
+      }
+      setSearchLoadingMore(false)
+    }
 
     return (
       <Autocomplete
         multiple
+        disablePortal
         value={value}
+        inputValue={searchInputValue}
+        onInputChange={(event, newInputValue) => {
+          setSearchInputValue(newInputValue ?? '')
+        }}
         onChange={(event, newValue) => {
           onChange(event, newValue)
         }}
@@ -199,50 +347,132 @@ const ViewInput = ({
         options={selectedOptions}
         disabled={isDisable == 'disabled'}
         filterSelectedOptions
+        filterOptions={options => options}
         id='autocomplete-multiple-outlined'
-        popupIcon={<IoMdArrowDropdown size={25} color='#3498ff' />}
+        popupIcon={<IoMdArrowDropdown style={{ transform: 'scale(0.7,1.6)' }} size={25} color='#f3f4f6' />}
         getOptionLabel={option => option[label[0]] || ''}
-        renderInput={params => <TextField {...params} style={{ width: '100%' }} placeholder={placeholder} />}
+        PaperComponent={SearchAutocompletePaper}
+        componentsProps={{
+          paper: {
+            showSeeMore,
+            onSeeMore: handleSearchSeeMore,
+            loadingMore: searchLoadingMore,
+            locale
+          }
+        }}
+        renderInput={params => (
+          <TextField
+            {...params}
+            style={{ width: '100%' }}
+            placeholder={placeholder}
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {searchTypingLoading ? (
+                    <CircularProgress color='inherit' size={18} sx={{ mr: 0.5 }} />
+                  ) : null}
+                  {params.InputProps.endAdornment}
+                </>
+              )
+            }}
+          />
+        )}
       />
     )
   }
 
-  if (input.kind == 'checkbox') {
-    const label = JSON.parse(input?.descriptionEn)
+  if (input.kind == 'checkbox' || input.type == 'Boolean') {
+    let label = []
+
+    try {
+      label = input?.descriptionEn ? JSON.parse(input.descriptionEn) : []
+    } catch (e) {
+      label = input.descriptionEn // أو []
+    }
 
     return (
       <div className='w-full'>
         <div className='flex flex-wrap gap-1'>
-          {selectedOptions.map((option, index) => (
-            <div key={option.Id} className='flex gap-1 items-center'>
-              <input
-                value={option.Id}
-                name={input.nameEn}
-                checked={value?.find(v => v == option.Id)}
-                onChange={e => onChange(e)}
-                type='checkbox'
-                id={option.Id}
-                disabled={isDisable == 'disabled'}
-                className={`${isDisable == 'disabled' ? '!color-gray-400' : ''}`}
-                onBlur={e => {
-                  if (onBlur) {
-                    const evaluatedFn = eval('(' + onBlur + ')')
+          {input.type ?
+            <div className=" flex flex-wrap gap-2">
 
-                    evaluatedFn(e)
-                  }
-                }}
-              />
-              <label
-                style={{
-                  color: isDisable == 'disabled' ? 'gray' : '',
-                  cursor: isDisable == 'disabled' ? 'not-allowed' : ''
-                }}
-                htmlFor={option.Id}
-              >
-                {label.map(ele => option[ele]).join('-')}
-              </label>
+              <div className='flex gap-1 items-center'>
+                <input
+                  id={input.key + 'radio-yes' + (columnId ? `_${columnId}` : '')}
+                  name={input.nameEn + (columnId ? `_${columnId}` : '')}
+                  checked={value === true || value === 'true'}
+                  onChange={() => {
+                    onChange({ target: { value: true } })
+                  }}
+                  type='radio'
+                  disabled={isDisable == 'disabled'}
+                />
+                <label
+                  style={{
+                    color: isDisable == 'disabled' ? 'gray' : '',
+                    cursor: isDisable == 'disabled' ? 'not-allowed' : '',
+                    marginBottom: '0'
+                  }}
+                  htmlFor={input.key + 'radio-yes' + (columnId ? `_${columnId}` : '')}
+                >
+                  {locale == 'ar' ? 'نعم' : 'Yes'}
+                </label>
+              </div>
+              <div className='flex gap-1 items-center'>
+                <input
+                  id={input.key + 'radio-no' + (columnId ? `_${columnId}` : '')}
+                  name={input.nameEn + (columnId ? `_${columnId}` : '')}
+                  checked={value === false || value === 'false'}
+                  onChange={() => {
+                    onChange({ target: { value: false } })
+                  }}
+                  type='radio'
+                  disabled={isDisable == 'disabled'}
+                />
+                <label
+                  style={{
+                    color: isDisable == 'disabled' ? 'gray' : '',
+                    cursor: isDisable == 'disabled' ? 'not-allowed' : '',
+                    marginBottom: '0'
+                  }}
+                  htmlFor={input.key + 'radio-no' + (columnId ? `_${columnId}` : '')}
+                >
+                  {locale == 'ar' ? 'لا' : 'No'}
+                </label>
+
+              </div>
             </div>
-          ))}
+            : selectedOptions.map((option, index) => (
+              <div key={option.Id} className='flex gap-1 items-center'>
+                <input
+                  value={option.Id}
+                  name={input.nameEn + (columnId ? `_${columnId}` : '')}
+                  checked={value?.find(v => v == option.Id)}
+                  onChange={e => onChange(e)}
+                  type='checkbox'
+                  id={option.Id + (columnId ? `_${columnId}` : '')}
+                  disabled={isDisable == 'disabled'}
+                  className={`${isDisable == 'disabled' ? '!color-gray-400' : ''}`}
+                  onBlur={e => {
+                    if (onBlur) {
+                      const evaluatedFn = eval('(' + onBlur + ')')
+
+                      evaluatedFn(e)
+                    }
+                  }}
+                />
+                <label
+                  style={{
+                    color: isDisable == 'disabled' ? 'gray' : '',
+                    cursor: isDisable == 'disabled' ? 'not-allowed' : ''
+                  }}
+                  htmlFor={option.Id}
+                >
+                  {label.map(ele => option[ele]).join('-')}
+                </label>
+              </div>
+            ))}
         </div>
       </div>
     )
@@ -262,14 +492,75 @@ const ViewInput = ({
       .filter(segment => progress >= segment.percentage)
       .pop()
 
-    console.log(currentSegment)
 
     return (
       <div className="progress-container" style={{ width: '100%' }}>
         <div className="progress-bar" id="myBar" style={{ width: `${progress}%`, background: currentSegment?.backgroundColor ?? 'linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);' }}>
-          <span className="progress-text">{progress}%</span>
+          <span className="progress-text absolute inset-0 flex items-center justify-center">{placeholder ?? ""} {progress} %</span>
         </div>
       </div>
+    )
+  }
+
+
+
+  if (input.type == 'Currency' || input.type == 'Decimal' || input.type == 'Percent' || input.type == 'Integer' || input.type == 'Float' || input.type == 'Double') {
+
+    if (input.descriptionEn == 'rate') {
+      return (
+        <>
+          <Rating
+            name={input.nameEn}
+            id={input.key}
+            sx={{
+              '& .MuiRating-iconFilled': {
+                color: roles?.color ? roles.color : '#faac00'
+              }
+            }}
+            value={value}
+            precision={0.5}
+            max={placeholder ? +placeholder : 5}
+            onChange={e => {
+              onChange(e)
+            }}
+            onBlur={e => {
+              if (onBlur) {
+                const evaluatedFn = eval('(' + onBlur + ')')
+
+                evaluatedFn(e)
+              }
+            }}
+            disabled={isDisable == 'disabled'}
+            className={`${errorView || error ? 'error' : ''} `}
+            style={{ transition: '0.3s' }}
+          />
+        </>
+      )
+    }
+
+    return (
+      <input
+        id={input.key}
+        type={"number"}
+        value={value}
+        name={input.nameEn}
+        onChange={e => {
+          onChange(e)
+        }}
+        onBlur={e => {
+          if (onBlur) {
+            const evaluatedFn = eval('(' + onBlur + ')')
+
+            evaluatedFn(e)
+          }
+        }}
+        placeholder={placeholder}
+        disabled={isDisable == 'disabled'}
+        onKeyDown={handleKeyDown}
+        onWheel={handleWheel}
+        className={`${errorView || error ? 'error' : ''} `}
+        style={{ transition: '0.3s' }}
+      />
     )
   }
 
@@ -283,83 +574,54 @@ const ViewInput = ({
   ) {
     return (
       <>
-        {input.descriptionEn == 'rate' ? (
-          <>
-            <Rating
-              name={input.nameEn}
-              id={input.key}
-              sx={{
-                '& .MuiRating-iconFilled': {
-                  color: roles?.color ? roles.color : '#faac00'
-                }
-              }}
-              value={value}
-              precision={0.5}
-              max={placeholder ? +placeholder : 5}
-              onChange={e => {
-                onChange(e)
-              }}
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
 
-                  evaluatedFn(e)
-                }
-              }}
-              disabled={isDisable == 'disabled'}
-              className={`${errorView || error ? 'error' : ''} `}
-              style={{ transition: '0.3s' }}
-            />
-          </>
-        ) : (
-          <>
-            <input
-              id={input.key}
-              type={
-                showPassword
+        <>
+          <input
+            id={input.key}
+            type={
+              showPassword
+                ? 'text'
+                : input.type == 'URL'
                   ? 'text'
-                  : input.type == 'URL'
+                  : input.type == 'SingleText'
                     ? 'text'
-                    : input.type == 'SingleText'
-                      ? 'text'
-                      : input.type == 'Phone'
-                        ? 'number'
-                        : input.type
-              }
-              value={value}
-              name={input.nameEn}
-              onChange={e => {
-                onChange(e)
-              }}
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
+                    : input.type == 'Phone'
+                      ? 'number'
+                      : input.type
+            }
+            value={value}
+            name={input.nameEn}
+            onChange={e => {
+              onChange(e)
+            }}
+            onBlur={e => {
+              if (onBlur) {
+                const evaluatedFn = eval('(' + onBlur + ')')
 
-                  evaluatedFn(e)
-                }
-              }}
-              placeholder={placeholder}
-              disabled={isDisable == 'disabled'}
-              onKeyDown={handleKeyDown}
-              onWheel={handleWheel}
-              className={`${errorView || error ? 'error' : ''} `}
-              style={{ transition: '0.3s' }}
-            />
-            {input.type == 'Password' && (
-              <div className='absolute top-1/2 || -translate-y-1/2 || end-[15px]'>
-                <InputAdornment position='end'>
-                  <IconButton
-                    edge='end'
-                    onMouseDown={e => e.preventDefault()}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    <Icon fontSize='1.25rem' icon={showPassword ? 'tabler:eye' : 'tabler:eye-off'} />
-                  </IconButton>
-                </InputAdornment>
-              </div>
-            )}
-          </>
-        )}
+                evaluatedFn(e)
+              }
+            }}
+            placeholder={placeholder}
+            disabled={isDisable == 'disabled'}
+            onKeyDown={handleKeyDown}
+            onWheel={handleWheel}
+            className={`${errorView || error ? 'error' : ''} `}
+            style={{ transition: '0.3s' }}
+          />
+          {input.type == 'Password' && (
+            <div className='absolute top-1/2 || -translate-y-1/2 || end-[15px]'>
+              <InputAdornment position='end'>
+                <IconButton
+                  edge='end'
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <Icon fontSize='1.25rem' icon={showPassword ? 'tabler:eye' : 'tabler:eye-off'} />
+                </IconButton>
+              </InputAdornment>
+            </div>
+          )}
+        </>
       </>
     )
   }
@@ -631,7 +893,7 @@ const ViewInput = ({
     let maxDate = null
 
     if (roles?.beforeDateType == 'days') {
-      minDate = addDays(today, roles?.beforeDateValue)
+      minDate = addDays(today, -roles?.beforeDateValue)
     } else if (roles?.beforeDateType == 'date') {
       minDate = new Date(roles?.beforeDateValue)
     }
@@ -641,6 +903,7 @@ const ViewInput = ({
     } else if (roles?.afterDateType == 'date') {
       maxDate = new Date(roles?.afterDateValue)
     }
+
 
     const datePicker = inline => {
       return (
@@ -681,7 +944,7 @@ const ViewInput = ({
                 setIsOpen(true)
               }
             }}
-            className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
+            className='absolute top-0 z-20  w-full h-full cursor-pointer start-0'
           ></div>
           <DatePickerWrapper className='w-full'>{datePicker()}</DatePickerWrapper>
           <Dialog
@@ -728,14 +991,21 @@ const ViewInput = ({
 
 
 
-    console.log(tableData, "tableData");
 
 
+
+    const tableStyle =
+    {
+      headerBackgroundColor: roles?.backgroundColor ?? '#f5f5f5',
+      headerTextColor: roles?.textColor ?? '#333333',
+      tableBorderColor: roles?.borderColor ?? 'rgba(224, 224, 224, 1)'
+    }
 
 
     return (
       <div className='w-full '>
         <TableView
+          refErrorFromTable={refErrorFromTable}
           setValue={onChange}
           input={input}
           data={tableData}
@@ -750,6 +1020,7 @@ const ViewInput = ({
           FilterData={FilterData}
           isFilterWithAPI={isFilterWithAPI}
           filterWithAPIValue={filterWithAPIValue}
+          tableStyle={tableStyle}
         />
       </div>
     )

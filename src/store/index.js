@@ -8,6 +8,7 @@ import api from './apps/apiSlice/apiSlice'
 import errorInAllRow from './apps/errorInAllRow/errorInAllRow'
 import LoadingPages from './apps/LoadingPages/LoadingPages'
 import inputsData from './apps/inputsData/inputsData'
+import global from './apps/globalSlice/globalSlice'
 
 export const store = configureStore({
   reducer: {
@@ -17,7 +18,8 @@ export const store = configureStore({
     errorInAllRow,
     calendar,
     LoadingPages,
-    inputsData
+    inputsData,
+    global
   },
 
   middleware: getDefaultMiddleware =>

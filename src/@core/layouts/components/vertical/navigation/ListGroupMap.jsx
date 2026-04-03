@@ -42,6 +42,24 @@ const Navigation = () => {
       title_en: 'Pages',
       title_ar: 'الصفحات',
       path: `setting/pages`
+    },
+    {
+      icon: 'mynaui:layout-solid',
+      title_en: 'Layouts',
+      title_ar: 'التخطيطات',
+      path: `setting/layouts`
+    },
+    {
+      icon: 'material-symbols-light:print-rounded',
+      title_en: 'Print',
+      title_ar: 'الطباعة',
+      path: `setting/print`
+    },
+    {
+      icon: 'mdi:code-braces',
+      title_en: 'Dynamic API',
+      title_ar: 'API ديناميكية',
+      path: `setting/dynamic-API`
     }
   ]
 }
@@ -96,9 +114,8 @@ const SidebarItem = ({ item, navHover }) => {
         <div>
           <div
             onClick={handleClick}
-            className={`${!navHover ? 'h_menu' : 's_menu'} menuDe ${
-              item.children.map(e => router?.includes(e.path)).includes(false) ? '' : 'active'
-            }`}
+            className={`${!navHover ? 'h_menu' : 's_menu'} menuDe ${item.children.map(e => router?.includes(e.path)).includes(false) ? '' : 'active'
+              }`}
             style={{ textDecoration: 'none' }}
           >
             <ListItemButton className='menu_LI_Icon'>

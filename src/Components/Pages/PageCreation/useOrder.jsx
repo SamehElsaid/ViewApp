@@ -13,8 +13,8 @@ export default function useOrder({ advancedEdit, locale, readOnly, buttonRef }) 
         return <OrderView data={data} onChange={onChange} locale={locale} readOnly={!advancedEdit} />
       },
       id: 'order',
-      title: messages.dialogs.orderList,
-      description: messages.dialogs.orderList,
+      title: messages.dialogs.order,
+      description: messages.dialogs.orderDescription,
       version: 1,
       controls: {
         type: 'custom',

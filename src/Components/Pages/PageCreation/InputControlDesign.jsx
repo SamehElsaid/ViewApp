@@ -3,6 +3,7 @@ import { Icon } from '@iconify/react'
 import {
   Box,
   Drawer,
+  Dialog,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -36,6 +37,24 @@ import Trigger from '../ControlDesignAndValidation/Trigger'
 import SwitchView from '../ControlDesignAndValidation/SwitchView'
 import TriggerControl from '../ControlDesignAndValidation/TriggerControl'
 import PrintSetting from './PrintSetting'
+import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
+import DatePicker from 'react-datepicker'
+import addDays from 'date-fns/addDays'
+import ar from 'date-fns/locale/ar-EG'
+import en from 'date-fns/locale/en-US'
+import ExampleCustomInput from '../FiledesComponent/ExampleCustomInput'
+
+function convertMomentToDateFnsFormat(format) {
+  if (!format || typeof format !== 'string') return 'yyyy-MM-dd'
+
+  return format
+    .replace(/DD/g, 'dd')
+    .replace(/YYYY/g, 'yyyy')
+    .replace(/YY/g, 'yy')
+    .replace(/HH/g, 'HH')
+    .replace(/mm/g, 'mm')
+    .replace(/ss/g, 'ss')
+}
 
 const Header = styled(Box)(() => ({
   display: 'flex',
@@ -66,6 +85,7 @@ export default function InputControlDesign({
   const { messages } = useIntl()
   const [selected, setSelect] = useState('style')
   const [writeValue, setWriteValue] = useState(roles?.onMount?.value ?? '')
+  const [mountDateDialogOpen, setMountDateDialogOpen] = useState(false)
   const [openTrigger, setOpenTrigger] = useState(false)
   const [currentFields, setCurrentFields] = useState([])
   const [parentFields, setParentFields] = useState([])
@@ -292,6 +312,36 @@ export default function InputControlDesign({
     onChange({ ...data, additional_fields })
   }
 
+  const parseDateValue = val => {
+    if (val == null || val === '') return null
+    const d = val instanceof Date ? val : new Date(val)
+
+    return isNaN(d.getTime()) ? null : d
+  }
+
+  const commitOnMountValue = valueStr => {
+    const additional_fields = data.additional_fields ?? []
+    const findMyInput = additional_fields.find(inp => inp.key === open.id)
+    if (findMyInput) {
+      findMyInput.roles.onMount.value = valueStr
+      if (obj) {
+        findMyInput.roles.apiKeyData = getData(obj, valueStr, '')
+      }
+    } else {
+      const myEdit = {
+        key: open.id,
+        design: objectToCss(Css).replaceAll('NaN', ''),
+        roles: {
+          ...roles,
+          onMount: { type: roles.onMount.type, value: valueStr },
+          apiKeyData: obj ? getData(obj, valueStr, '') : ''
+        }
+      }
+      additional_fields.push(myEdit)
+    }
+    onChange({ ...data, additional_fields: additional_fields })
+  }
+
   return (
     <>
 
@@ -382,7 +432,7 @@ export default function InputControlDesign({
                     {messages.dialogs.progress_bar_control}
                   </Button>
                 )}
-                {type === 'from-collection' && (open.fieldCategory === 'Associations' || open.type === "SingleText") && (
+                {(type === 'from-collection' || open?.key?.includes('[')) && (open.fieldCategory === 'Associations' || open.type === "SingleText") && (
                   <Button
                     onClick={() => {
                       setSelect('associations')
@@ -465,7 +515,7 @@ export default function InputControlDesign({
                     <TextField
                       fullWidth
                       type='text'
-                      defaultValue={roles?.label?.label_en || ''}
+                      defaultValue={roles?.label?.label_en || open?.nameEn || ''}
                       onBlur={e => {
                         const additional_fields = data.additional_fields ?? []
                         const findMyInput = additional_fields.find(inp => inp.key === open.id)
@@ -495,7 +545,7 @@ export default function InputControlDesign({
                     <TextField
                       fullWidth
                       type='text'
-                      defaultValue={roles?.label?.label_ar || ''}
+                      defaultValue={roles?.label?.label_ar || open?.nameAr || ''}
                       onBlur={e => {
                         const additional_fields = data.additional_fields ?? []
                         const findMyInput = additional_fields.find(inp => inp.key === open.id)
@@ -729,6 +779,7 @@ export default function InputControlDesign({
                     />
                     {open.key === 'button' && (
                       <>
+
                         <FormControl fullWidth variant='filled'>
                           <InputLabel>{messages.dialogs.type}</InputLabel>
                           <Select
@@ -755,10 +806,42 @@ export default function InputControlDesign({
                             <MenuItem value='submit'>{messages.dialogs.submit}</MenuItem>
                             <MenuItem value='button'>{messages.dialogs.button}</MenuItem>
                             <MenuItem value='print'>{messages.dialogs.print} </MenuItem>
+                            <MenuItem value='print_page'>{messages.dialogs.printPage} </MenuItem>
+                            <MenuItem value='saveAsDraft'>{messages.dialogs.saveAsDraft} </MenuItem>
                           </Select>
                         </FormControl>
                       </>
                     )}
+                    {roles?.type === "print_page"
+                      ?
+                      <>   <TextField
+                        fullWidth
+                        type='text'
+                        defaultValue={roles?.href || ''}
+                        onBlur={e => {
+                          const additional_fields = data.additional_fields ?? []
+                          const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                          if (findMyInput) {
+                            findMyInput.roles.href = e.target.value
+                          } else {
+                            const myEdit = {
+                              key: open.id,
+                              design: objectToCss(Css).replaceAll('NaN', ''),
+                              roles: {
+                                ...roles,
+                                href: e.target.value
+                              }
+                            }
+                            additional_fields.push(myEdit)
+                          }
+                          onChange({ ...data, additional_fields: additional_fields })
+                        }}
+                        variant='filled'
+                        label={messages.dialogs.href || 'Href'}
+                      /></>
+                      :
+                      <></>
+                    }
 
                     {open.type === 'File' && (
                       <TextField
@@ -799,7 +882,7 @@ export default function InputControlDesign({
                             <Select
                               className='flex-1'
                               variant='filled'
-                              value={roles?.timeFormat || '12hrs'}
+                              value={roles?.timeFormat || '24hrs'}
                               onChange={e => {
                                 const additional_fields = data.additional_fields ?? []
                                 const findMyInput = additional_fields.find(inp => inp.key === open.id)
@@ -1603,38 +1686,235 @@ export default function InputControlDesign({
                       label={messages.dialogs.requiredMessageInArabic || 'Required Message in Arabic'}
                     />
                     {open.kind === "Table" && (
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={Boolean(roles?.showOldData)}
-                            onChange={e => {
-                              const additional_fields = data.additional_fields ?? []
-                              const findMyInput = additional_fields.find(inp => inp.key === open.id)
-                              if (findMyInput) {
-                                findMyInput.roles = findMyInput.roles ?? {}
-                                findMyInput.roles.showOldData = e.target.checked
-                              } else {
-                                const myEdit = {
-                                  key: open.id,
-                                  design: objectToCss(Css).replaceAll('NaN', ''),
-                                  roles: {
-                                    ...roles,
-                                    showOldData: e.target.checked
-                                  }
+                      <>
+                        <TextField
+                          fullWidth
+                          type='color'
+                          defaultValue={roles?.backgroundColor || '#f5f5f5'}
+                          onBlur={e => {
+                            const additional_fields = data.additional_fields ?? []
+                            const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                            if (findMyInput) {
+                              findMyInput.roles.backgroundColor = e.target.value
+                            } else {
+                              const myEdit = {
+                                key: open.id,
+                                design: objectToCss(Css).replaceAll('NaN', ''),
+                                roles: {
+                                  ...roles,
+                                  backgroundColor: e.target.value
                                 }
-                                additional_fields.push(myEdit)
                               }
-                              onChange({ ...data, additional_fields: additional_fields })
-                            }}
-                          />
-                        }
-                        label={locale === 'ar' ? 'إظهار البيانات القديمة' : 'Show Old Data'}
-                      />
+                              additional_fields.push(myEdit)
+                            }
+                            onChange({ ...data, additional_fields: additional_fields })
+                          }}
+                          variant='filled'
+                          label={messages.dialogs.backgroundColor || 'Background Color'}
+                        />
+                        <TextField
+                          fullWidth
+                          type='color'
+                          defaultValue={roles?.textColor || '#333333'}
+                          onBlur={e => {
+                            const additional_fields = data.additional_fields ?? []
+                            const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                            if (findMyInput) {
+                              findMyInput.roles.textColor = e.target.value
+                            } else {
+                              const myEdit = {
+                                key: open.id,
+                                design: objectToCss(Css).replaceAll('NaN', ''),
+                                roles: {
+                                  ...roles,
+                                  textColor: e.target.value
+                                }
+                              }
+                              additional_fields.push(myEdit)
+                            }
+                            onChange({ ...data, additional_fields: additional_fields })
+                          }}
+                          variant='filled'
+                          label={messages.dialogs.textColor || 'Text Color'}
+                        />
+                        <TextField
+                          fullWidth
+                          type='color'
+                          defaultValue={roles?.borderColor || '#e0e0e0'}
+                          onBlur={e => {
+                            const additional_fields = data.additional_fields ?? []
+                            const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                            if (findMyInput) {
+                              findMyInput.roles.borderColor = e.target.value
+                            } else {
+                              const myEdit = {
+                                key: open.id,
+                                design: objectToCss(Css).replaceAll('NaN', ''),
+                                roles: {
+                                  ...roles,
+                                  borderColor: e.target.value
+                                }
+                              }
+                              additional_fields.push(myEdit)
+                            }
+                            onChange({ ...data, additional_fields: additional_fields })
+                          }}
+                          variant='filled'
+                          label={messages.dialogs.borderColor || 'Border Color'}
+                        />
+                        <TextField
+                          fullWidth
+                          type='number'
+                          defaultValue={roles?.minRow || 1}
+                          InputProps={{
+                            inputProps: {
+                              min: 1,
+                              max: 1000
+                            }
+                          }}
+                          onBlur={e => {
+                            const additional_fields = data.additional_fields ?? []
+                            const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                            if (findMyInput) {
+                              findMyInput.roles = findMyInput.roles ?? {}
+                              findMyInput.roles.minRow = parseInt(e.target.value)
+                            } else {
+                              const myEdit = {
+                                key: open.id,
+                                design: objectToCss(Css).replaceAll('NaN', ''),
+                                roles: {
+                                  ...roles,
+                                  minRow: parseInt(e.target.value)
+                                }
+                              }
+                              additional_fields.push(myEdit)
+                            }
+                            onChange({ ...data, additional_fields: additional_fields })
+                          }}
+                          variant='filled'
+                          label={messages.dialogs.minRow || 'Minimum Row'}
+                        />
+                        <TextField
+                          fullWidth
+                          type='number'
+                          defaultValue={roles?.maxRow || 1000}
+                          InputProps={{
+                            inputProps: {
+                              min: 1,
+                              max: 1000
+                            }
+                          }}
+                          onBlur={e => {
+                            const additional_fields = data.additional_fields ?? []
+                            const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                            if (findMyInput) {
+                              findMyInput.roles = findMyInput.roles ?? {}
+                              findMyInput.roles.maxRow = parseInt(e.target.value)
+                            } else {
+                              const myEdit = {
+                                key: open.id,
+                                design: objectToCss(Css).replaceAll('NaN', ''),
+                                roles: {
+                                  ...roles,
+                                  maxRow: parseInt(e.target.value)
+                                }
+                              }
+                              additional_fields.push(myEdit)
+                            }
+                            onChange({ ...data, additional_fields: additional_fields })
+                          }}
+                          variant='filled'
+                          label={messages.dialogs.maxRow || 'Maximum Row'}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={Boolean(roles?.showOldData)}
+                              onChange={e => {
+                                const additional_fields = data.additional_fields ?? []
+                                const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                                if (findMyInput) {
+                                  findMyInput.roles = findMyInput.roles ?? {}
+                                  findMyInput.roles.showOldData = e.target.checked
+                                } else {
+                                  const myEdit = {
+                                    key: open.id,
+                                    design: objectToCss(Css).replaceAll('NaN', ''),
+                                    roles: {
+                                      ...roles,
+                                      showOldData: e.target.checked
+                                    }
+                                  }
+                                  additional_fields.push(myEdit)
+                                }
+                                onChange({ ...data, additional_fields: additional_fields })
+                              }}
+                            />
+                          }
+                          label={locale === 'ar' ? 'إظهار البيانات القديمة' : 'Show Old Data'}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={Boolean(roles?.showBtn ?? true)}
+                              onChange={e => {
+                                const additional_fields = data.additional_fields ?? []
+                                const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                                if (findMyInput) {
+                                  findMyInput.roles = findMyInput.roles ?? {}
+                                  findMyInput.roles.showBtn = e.target.checked
+                                } else {
+                                  const myEdit = {
+                                    key: open.id,
+                                    design: objectToCss(Css).replaceAll('NaN', ''),
+                                    roles: {
+                                      ...roles,
+                                      showBtn: e.target.checked
+                                    }
+                                  }
+                                  additional_fields.push(myEdit)
+                                }
+                                onChange({ ...data, additional_fields: additional_fields })
+                              }}
+                            />
+                          }
+                          label={locale === 'ar' ? 'إظهار زر الحفظ' : 'Show Save Button'}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={Boolean(roles?.delete ?? true)}
+                              onChange={e => {
+                                const additional_fields = data.additional_fields ?? []
+                                const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                                if (findMyInput) {
+                                  findMyInput.roles = findMyInput.roles ?? {}
+                                  findMyInput.roles.delete = e.target.checked
+                                } else {
+                                  const myEdit = {
+                                    key: open.id,
+                                    design: objectToCss(Css).replaceAll('NaN', ''),
+                                    roles: {
+                                      ...roles,
+                                      delete: e.target.checked
+                                    }
+                                  }
+                                  additional_fields.push(myEdit)
+                                }
+                                onChange({ ...data, additional_fields: additional_fields })
+                              }}
+                            />
+                          }
+                          label={locale === 'ar' ? 'إظهار زر الحذف' : 'Show Delete Button'}
+                        />
+                      </>
                     )}
-                    <div className='w-full'>
-                      <h2 className='mt-5 text-[#555] mb-3 font-bold'>{messages.dialogs.cssEditorForInput}</h2>
-                      <CssEditor data={data} onChange={onChange} Css={design} open={open} roles={roles} />
-                    </div>
+                    {open.kind !== "Table" &&
+                      <div className='w-full'>
+                        <h2 className='mt-5 text-[#555] mb-3 font-bold'>{messages.dialogs.cssEditorForInput}</h2>
+                        <CssEditor data={data} onChange={onChange} Css={design} open={open} roles={roles} />
+                      </div>
+                    }
                   </>
                 </UnmountClosed>
                 <UnmountClosed isOpened={Boolean(selected === 'roles')}>
@@ -1697,57 +1977,118 @@ export default function InputControlDesign({
                                 <FormControl fullWidth margin='normal'>
                                   <InputLabel>{messages.State}</InputLabel>
 
-                                  <Select
-                                    variant='filled'
-                                    value={roles?.OnMountTriggerRow?.rowId === open.rowId ? roles?.OnMountTriggerRow?.type : roles?.onMount?.type}
-                                    onChange={e => {
-                                      const additional_fields = data.additional_fields ?? []
-                                      const findMyInput = additional_fields.find(inp => inp.key === open.id)
-                                      if (findMyInput) {
-                                        if (open.rowId) {
-                                          findMyInput.roles.OnMountTriggerRow =
-                                            findMyInput.roles.OnMountTriggerRow ?? {}
-
-                                          findMyInput.roles.OnMountTriggerRow.type = e.target.value
-                                          findMyInput.roles.OnMountTriggerRow.rowId = open.rowId
-                                        } else {
-                                          findMyInput.roles.onMount.type = e.target.value
-
-                                        }
-                                      } else {
-                                        const myEdit = {
-                                          key: open.id,
-                                          design: objectToCss(Css).replaceAll('NaN', ''),
-                                          roles: {
-                                            onMount: { type: e.target.value, value: roles.onMount.value }
-                                          }
-                                        }
-                                        if (open.rowId) {
-                                          myEdit.roles = {
-                                            OnMountTriggerRow: { type: e.target.value, value: roles.OnMountTriggerRow.value, rowId: open.rowId }
-                                          }
-                                        } else {
-                                          myEdit.roles = {
-                                            onMount: { type: e.target.value, value: roles.onMount.value }
-                                          }
-                                        }
-                                        additional_fields.push(myEdit)
+                                  {open.rowId && (
+                                    <Select
+                                      variant="filled"
+                                      value={
+                                        data.rowValidation?.find(
+                                          item => item.key === open.id && item.rowId === open.rowId
+                                        )?.roles?.onMount?.type || ''
                                       }
-                                      onChange({ ...data, additional_fields: additional_fields })
-                                    }}
-                                  >
-                                    <MenuItem selected value={'empty Data'}>
-                                      {messages.select}
-                                    </MenuItem>
+                                      onChange={e => {
+                                        console.log(data);
 
-                                    <MenuItem value={'disable'} disabled={open.type === 'new_element'}>
-                                      {messages.Disable}
-                                    </MenuItem>
-                                    <MenuItem value={'required'} disabled={open.type === 'new_element'}>
-                                      {messages.requiredFiled}
-                                    </MenuItem>
-                                    <MenuItem value={'hide'}>{messages.Hide}</MenuItem>
-                                  </Select>
+                                        const value = e.target.value
+                                        
+                                        const map = new Map(
+                                          (data.rowValidation ?? []).map(item => [
+                                            `${item.key}_${item.rowId}`,
+                                            item
+                                          ])
+                                        )
+
+                                        const uniqueKey = `${open.id}_${open.rowId}`
+
+                                        map.set(uniqueKey, {
+                                          key: open.id,
+                                          rowId: open.rowId,
+                                          roles: {
+                                            onMount: {
+                                              type: value,
+                                              value: roles?.onMount?.value
+                                            }
+                                          }
+                                        })
+
+                                        const rowValidation = Array.from(map.values())
+
+                                        onChange({
+                                          ...data,
+                                          rowValidation
+                                        })
+                                      }}
+                                    >
+                                      <MenuItem value="empty Data">{messages.select}</MenuItem>
+
+                                      <MenuItem value="disable" disabled={open.type === 'new_element'}>
+                                        {messages.Disable}
+                                      </MenuItem>
+
+                                      <MenuItem value="required" disabled={open.type === 'new_element'}>
+                                        {messages.requiredFiled}
+                                      </MenuItem>
+
+                                      <MenuItem value="hide">{messages.Hide}</MenuItem>
+                                    </Select>
+                                  )}
+                                  {!open.rowId && (
+                                    <Select
+                                      variant="filled"
+                                      value={
+                                        data.additional_fields?.find(inp => inp.key === open.id)?.roles?.onMount?.type || ''
+                                      }
+                                      onChange={e => {
+                                        const value = e.target.value
+                                        const additional_fields = [...(data.additional_fields ?? [])]
+
+                                        const index = additional_fields.findIndex(
+                                          inp => inp.key === open.id
+                                        )
+
+                                        if (index !== -1) {
+                                          const item = { ...additional_fields[index] }
+
+                                          item.roles = {
+                                            ...item.roles,
+                                            onMount: {
+                                              ...(item.roles?.onMount ?? {}),
+                                              type: value
+                                            }
+                                          }
+
+                                          additional_fields[index] = item
+                                        } else {
+                                          additional_fields.push({
+                                            key: open.id,
+                                            design: objectToCss(Css).replaceAll('NaN', ''),
+                                            roles: {
+                                              onMount: {
+                                                type: value,
+                                                value: roles?.onMount?.value
+                                              }
+                                            }
+                                          })
+                                        }
+
+                                        onChange({
+                                          ...data,
+                                          additional_fields
+                                        })
+                                      }}
+                                    >
+                                      <MenuItem value="empty Data">{messages.select}</MenuItem>
+
+                                      <MenuItem value="disable" disabled={open.type === 'new_element'}>
+                                        {messages.Disable}
+                                      </MenuItem>
+
+                                      <MenuItem value="required" disabled={open.type === 'new_element'}>
+                                        {messages.requiredFiled}
+                                      </MenuItem>
+
+                                      <MenuItem value="hide">{messages.Hide}</MenuItem>
+                                    </Select>
+                                  )}
                                   {open.type !== 'new_element' && (
                                     <>
                                       {getApiData.length > 0 && (
@@ -1820,38 +2161,223 @@ export default function InputControlDesign({
                                       </SyntaxHighlighter>
                                     </div>
                                   </Collapse>
-                                  <TextField
-                                    fullWidth
-                                    type='text'
-                                    value={writeValue}
-                                    variant='filled'
-                                    label={messages.Value}
-                                    onChange={e => {
-                                      setWriteValue(e.target.value)
-                                    }}
-                                    onBlur={e => {
-                                      const additional_fields = data.additional_fields ?? []
-                                      const findMyInput = additional_fields.find(inp => inp.key === open.id)
-                                      if (findMyInput) {
-                                        findMyInput.roles.onMount.value = e.target.value
-                                        if (obj) {
-                                          findMyInput.roles.apiKeyData = getData(obj, e.target.value, '')
-                                        }
-                                      } else {
-                                        const myEdit = {
-                                          key: open.id,
-                                          design: objectToCss(Css).replaceAll('NaN', ''),
-                                          roles: {
-                                            ...roles,
-                                            onMount: { type: roles.onMount.type, value: e.target.value },
-                                            apiKeyData: obj ? getData(obj, e.target.value, '') : ''
+                                  {open.type === 'Date' ? (
+                                    <div className='w-full mt-2'>
+                                      <Typography variant='body2' className='mb-1 text-gray-600'>
+                                        {messages.Value}
+                                      </Typography>
+                                      {open.descriptionEn == 'timeOnly' ? (
+                                        (() => {
+                                          const today = new Date()
+                                          let minDate = null
+                                          let maxDate = null
+                                          if (roles?.beforeDateType == 'days') {
+                                            minDate = addDays(today, roles?.beforeDateValue)
+                                          } else if (roles?.beforeDateType == 'date') {
+                                            minDate = new Date(roles?.beforeDateValue)
                                           }
+                                          if (roles?.afterDateType == 'days') {
+                                            maxDate = addDays(today, roles?.afterDateValue)
+                                          } else if (roles?.afterDateType == 'date') {
+                                            maxDate = new Date(roles?.afterDateValue)
+                                          }
+                                          const timeFormat = roles?.timeFormat == '12hrs' ? 'h:mm aa' : 'HH:mm'
+                                          const selected = parseDateValue(writeValue)
+
+                                          const datePicker = inline => (
+                                            <DatePicker
+                                              selected={selected}
+                                              onChange={date => {
+                                                const val = date ? date.toISOString() : ''
+                                                setWriteValue(val)
+                                                commitOnMountValue(val)
+                                              }}
+                                              dateFormat={timeFormat}
+                                              showTimeSelect
+                                              showTimeSelectOnly
+                                              locale={locale == 'ar' ? ar : en}
+                                              customInput={
+                                                <ExampleCustomInput
+                                                  input={open}
+                                                  disabled={false}
+                                                  value={selected?.toString()}
+                                                  type='time'
+                                                  className='example-custom-input'
+                                                />
+                                              }
+                                              disabled={false}
+                                              minDate={minDate}
+                                              maxDate={maxDate}
+                                              inline={inline}
+                                            />
+                                          )
+
+                                          return (
+                                            <>
+                                              <div className='relative w-full'>
+                                                <div
+                                                  role='presentation'
+                                                  onClick={() => setMountDateDialogOpen(true)}
+                                                  className='absolute top-0 z-10 w-full h-full cursor-pointer start-0'
+                                                />
+                                                <DatePickerWrapper className='w-full'>{datePicker()}</DatePickerWrapper>
+                                              </div>
+                                              <Dialog
+                                                open={mountDateDialogOpen}
+                                                onClose={() => setMountDateDialogOpen(false)}
+                                                aria-labelledby='alert-dialog-title'
+                                                aria-describedby='alert-dialog-description'
+                                                className='bg-transparent-popup'
+                                              >
+                                                <div className='absolute top-0 end-0 py-0 z-10'>
+                                                  <IconButton
+                                                    size='small'
+                                                    color='error'
+                                                    onClick={() => setMountDateDialogOpen(false)}
+                                                  >
+                                                    <Icon icon='tabler:x' fontSize='1.25rem' />
+                                                  </IconButton>
+                                                </div>
+                                                <DatePickerWrapper className='w-full mx-auto flex justify-center items-center '>
+                                                  {datePicker(true)}
+                                                </DatePickerWrapper>
+                                              </Dialog>
+                                            </>
+                                          )
+                                        })()
+                                      ) : (
+                                        (() => {
+                                          let raw = {}
+                                          try {
+                                            raw = JSON.parse(open?.descriptionEn ?? '{}')
+                                          } catch {
+                                            raw = {}
+                                          }
+
+                                          const format = convertMomentToDateFnsFormat(raw.format)
+
+                                          const label = {
+                                            format,
+                                            showTime: raw.showTime === 'true'
+                                          }
+
+                                          const today = new Date()
+                                          let minDate = null
+                                          let maxDate = null
+                                          if (roles?.beforeDateType == 'days') {
+                                            minDate = addDays(today, roles?.beforeDateValue)
+                                          } else if (roles?.beforeDateType == 'date') {
+                                            minDate = new Date(roles?.beforeDateValue)
+                                          }
+                                          if (roles?.afterDateType == 'days') {
+                                            maxDate = addDays(today, roles?.afterDateValue)
+                                          } else if (roles?.afterDateType == 'date') {
+                                            maxDate = new Date(roles?.afterDateValue)
+                                          }
+                                          const selected = parseDateValue(writeValue)
+
+                                          const datePicker = inline => (
+                                            <DatePicker
+                                              selected={selected}
+                                              onChange={date => {
+                                                const val = date ? date.toISOString() : ''
+                                                setWriteValue(val)
+                                                commitOnMountValue(val)
+                                              }}
+                                              timeInputLabel={
+                                                label.showTime == 'true'
+                                                  ? locale == 'ar'
+                                                    ? 'الوقت:'
+                                                    : 'Time:'
+                                                  : ''
+                                              }
+                                              dateFormat={`${label.format ? label.format : 'MM/dd/yyyy'}`}
+                                              showMonthDropdown
+                                              locale={locale == 'ar' ? ar : en}
+                                              showYearDropdown
+                                              showTimeSelect={label.showTime == 'true'}
+                                              customInput={
+                                                <ExampleCustomInput
+                                                  input={open}
+                                                  disabled={false}
+                                                  className='example-custom-input'
+                                                />
+                                              }
+                                              disabled={false}
+                                              minDate={minDate}
+                                              maxDate={maxDate}
+                                              popperPlacement='bottom-start'
+                                              inline={inline}
+                                            />
+                                          )
+
+                                          return (
+                                            <div className='relative w-full'>
+                                              <div
+                                                role='presentation'
+                                                onClick={() => setMountDateDialogOpen(true)}
+                                                className='absolute top-0 z-20 w-full h-full cursor-pointer start-0'
+                                              />
+                                              <DatePickerWrapper className='w-full'>{datePicker()}</DatePickerWrapper>
+                                              <Dialog
+                                                open={mountDateDialogOpen}
+                                                onClose={() => setMountDateDialogOpen(false)}
+                                                aria-labelledby='alert-dialog-title'
+                                                aria-describedby='alert-dialog-description'
+                                                className='bg-transparent-popup'
+                                              >
+                                                <div className='absolute top-0 end-2 py-2 z-10'>
+                                                  <IconButton
+                                                    size='small'
+                                                    color='error'
+                                                    onClick={() => setMountDateDialogOpen(false)}
+                                                  >
+                                                    <Icon icon='tabler:x' fontSize='1.25rem' />
+                                                  </IconButton>
+                                                </div>
+                                                <DatePickerWrapper className='w-full mx-auto flex  justify-center items-center '>
+                                                  {datePicker(true)}
+                                                </DatePickerWrapper>
+                                              </Dialog>
+                                            </div>
+                                          )
+                                        })()
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <TextField
+                                      fullWidth
+                                      type='text'
+                                      value={writeValue}
+                                      variant='filled'
+                                      label={messages.Value}
+                                      onChange={e => {
+                                        setWriteValue(e.target.value)
+                                      }}
+                                      onBlur={e => {
+                                        const additional_fields = data.additional_fields ?? []
+                                        const findMyInput = additional_fields.find(inp => inp.key === open.id)
+                                        if (findMyInput) {
+                                          findMyInput.roles.onMount.value = e.target.value
+                                          if (obj) {
+                                            findMyInput.roles.apiKeyData = getData(obj, e.target.value, '')
+                                          }
+                                        } else {
+                                          const myEdit = {
+                                            key: open.id,
+                                            design: objectToCss(Css).replaceAll('NaN', ''),
+                                            roles: {
+                                              ...roles,
+                                              onMount: { type: roles.onMount.type, value: e.target.value },
+                                              apiKeyData: obj ? getData(obj, e.target.value, '') : ''
+                                            }
+                                          }
+                                          additional_fields.push(myEdit)
                                         }
-                                        additional_fields.push(myEdit)
-                                      }
-                                      onChange({ ...data, additional_fields: additional_fields })
-                                    }}
-                                  />
+                                        onChange({ ...data, additional_fields: additional_fields })
+                                      }}
+                                    />
+                                  )}
                                 </FormControl>
                               </>
                             )}
@@ -2538,7 +3064,7 @@ export default function InputControlDesign({
                     variant='contained'
                     color='primary'
                     onClick={() => {
-                      setAssociationsOpen({ key: open.id, source: open?.options?.source, field: open })
+                      setAssociationsOpen({ key: open.key.includes('[') ? open.key : open.id, source: open?.options?.source, field: open })
                     }}
                   >
                     Setup Associations

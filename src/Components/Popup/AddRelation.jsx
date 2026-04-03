@@ -98,7 +98,7 @@ function AddRelation({ dataParent, relationOpen, setRelationOpen, setRefresh }) 
     const sendData = {
       nameEn: selectedCollection.first.key,
       nameAr: selectedCollection.first.key,
-      key: `${new Date().getTime()}`,
+      key: selectedCollection.first.key + 'Id',
       FieldCategory: 'Associations',
       collectionId: dataParent.id,
       type: relationType,

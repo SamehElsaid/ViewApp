@@ -13,9 +13,12 @@ import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
 import { CircularProgress } from '@mui/material'
 import { useDispatch } from 'react-redux'
+import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
 
 // Dnd Kit Sortable Item Component
 function SortableGridItem({
+  saveDataAsDraft,
+  refErrorFromTable,
   tabsData,
   filed,
   advancedEdit,
@@ -48,7 +51,10 @@ function SortableGridItem({
   disabled,
   reload,
   messages,
-  sortedLoopWithoutTabs
+  sortedLoopWithoutTabs,
+  FormType,
+  saveAsDraft,
+  reloadValue
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: filed.id,
@@ -103,6 +109,7 @@ function SortableGridItem({
       className={`relative w-full ${className} ${!readOnly ? 'px-2' : ''} ${hoverText || hintText ? '!z-[5555555]' : ''}`}
       {...attributes}
     >
+
       {!readOnly && !stopSort && (
         <div className='absolute inset-0 z-20 flex flex-wrap justify-end items-start gap-1 border-main-color border-dashed border rounded-md p-1'>
           {/* Width Controls */}
@@ -264,26 +271,30 @@ function SortableGridItem({
         tabsData={tabsData}
         loadingBtn={loading}
         input={filed}
+        FormType={FormType}
         design={getDesign(filed.id, filed)}
         setActiveTab={setActiveTab}
         activeTab={activeTab}
         readOnly={disabled}
         disabledBtn={data.type_of_sumbit === 'api' && !data.submitApi}
         refError={refError}
+        refErrorFromTable={refErrorFromTable}
         setLayout={setLayout}
         triggerData={triggerData}
         data={data}
         layout={layout}
         onChangeData={onChange}
+        saveAsDraft={saveAsDraft}
         dataRef={dataRef}
         dataRefWithCollectionId={dataRefWithCollectionId}
         allFields={sortedLoopWithoutTabs}
         setTriggerData={setTriggerData}
-        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key]}
+        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key] || saveDataAsDraft?.[filed?.key]}
         roles={roles}
         advancedEdit={readOnly}
         editMode={advancedEdit}
         reload={reload}
+        reloadValue={reloadValue}
         errorView={errors?.[filed.type === 'new_element' ? filed.id : filed.key]?.[0]}
         findError={
           errors && typeof errors?.[filed.type === 'new_element' ? filed.id : filed.key] === 'object'
@@ -303,7 +314,9 @@ export default function ViewCollection({
   advancedEdit,
   entitiesId,
   collectionName,
-  pageName
+  pageName,
+  FormType,
+  isPrint
 }) {
   const [getFields, setGetFields] = useState([])
   const [loading, setLoading] = useState(true)
@@ -311,6 +324,7 @@ export default function ViewCollection({
   const [reload, setReload] = useState(0)
   const [errors, setErrors] = useState(false)
   const refError = useRef({})
+  const refErrorFromTable = useRef({})
   const dataRef = useRef({})
   const dataRefWithCollectionId = useRef({})
   const [triggerData, setTriggerData] = useState(0)
@@ -328,6 +342,7 @@ export default function ViewCollection({
   useEffect(() => {
     refError.current = {}
     dataRef.current = {}
+    refErrorFromTable.current = {}
   }, [activeTab])
 
 
@@ -335,10 +350,9 @@ export default function ViewCollection({
 
   const findActiveTab = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data?.find((ele, index) => index === activeTab)
 
-  const {
-    query: { requestId },
-    push
-  } = useRouter()
+  const { pathname, query, push, replace } = useRouter()
+  const requestId = query.requestId
+  const collection = query.collection
   const { messages } = useIntl()
 
   const [layout, setLayout] = useState(Array.isArray(data?.layout) ? data.layout : [])
@@ -403,6 +417,8 @@ export default function ViewCollection({
           if (res.status) {
             const selectedFields = res.data.filter(field => item.selected.includes(field.key))
 
+
+
             return selectedFields.map(field => ({ ...field, key: field.key + '[' + item.collection.key + ']' }))
           }
 
@@ -411,29 +427,30 @@ export default function ViewCollection({
 
         axiosGet(`collection-fields/get?CollectionId=${data.collectionId}`, locale).then(res => {
           if (res.status) {
-            const associationsConfig = data.associationsConfig || []
+
 
             const filterData = res.data
               .filter(field => data?.selected?.includes(field?.key))
-              .map(field => {
-                const find = associationsConfig.find(item => item?.key === field?.key)
-                const filedData = { ...field }
-                if (find) {
 
-                  filedData.kind = find.viewType
-                  filedData.descriptionEn = JSON.stringify(find.selectedOptions)
-                  filedData.getDataForm = find.dataSourceType
-                  filedData.externalApi = find.externalApi
-                  filedData.staticData = find.staticData
-                  filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
-                  filedData.apiHeaders = find.apiHeaders
-                  filedData.body = find.body
-                  filedData.method = find.method
-                  filedData.viewAsInput = find.viewAsInput
-                }
+            // .map(field => {
+            //   const find = associationsConfig.find(item => item?.key === field?.key)
+            //   const filedData = { ...field }
+            //   if (find) {
 
-                return filedData
-              })
+            //     filedData.kind = find.viewType
+            //     filedData.descriptionEn = JSON.stringify(find.selectedOptions)
+            //     filedData.getDataForm = find.dataSourceType
+            //     filedData.externalApi = find.externalApi
+            //     filedData.staticData = find.staticData
+            //     filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
+            //     filedData.apiHeaders = find.apiHeaders
+            //     filedData.body = find.body
+            //     filedData.method = find.method
+            //     filedData.viewAsInput = find.viewAsInput
+            //   }
+
+            //   return field
+            // })
 
             return filterData
           }
@@ -444,6 +461,9 @@ export default function ViewCollection({
         .then(results => {
           const validResults = results.filter(Boolean)
           const flatResults = validResults.flat()
+
+
+
           setGetFields(flatResults)
         })
         .finally(() => setLoading(false))
@@ -453,15 +473,74 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
+  // useEffect(() => {
+  //   if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
+  //     axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
+  //       if (res.status) {
+  //         setEntitiesData(res?.data?.entities?.[0])
+  //       }
+  //     })
+  //   }
+  // }, [entitiesId, collectionName, pageName])
+
+
+  const [saveDataAsDraft, setSaveDataAsDraft] = useState({})
+
+  const flattenDynamic = (data) => {
+    const result = {};
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (value.length === 0) {
+          result[key] = "";
+        } else if (value[0] && typeof value[0] === 'object') {
+          if (key.toLowerCase() === 'contact') {
+            // لو array اسمها Contact
+            value.forEach(item => {
+              Object.entries(item).forEach(([subKey, subValue]) => {
+                result[`${subKey}[${key}]`] = subValue ?? "";
+              });
+            });
+          } else {
+            // أي array object تانية تتحول form-table[key]
+            result[`form-table[${key}]`] = value.map(item => {
+              const newItem = {};
+              Object.entries(item).forEach(([subKey, subValue]) => {
+                newItem[subKey] = subValue ?? false;
+              });
+
+              return newItem;
+            });
+          }
+        } else {
+          // array بسيطة
+          result[key] = value.map(v => v ?? false);
+        }
+      } else if (value && typeof value === 'object') {
+        // object عادي
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          result[`${subKey}[${key}]`] = subValue ?? "";
+        });
+      } else {
+        // primitive
+        result[key] = value ?? "";
+      }
+    });
+
+    return result;
+  };
+
   useEffect(() => {
-    if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
-      axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
+    if (collection == data.collectionName && requestId) {
+      axiosGet(`generic-entities/${data.collectionName}/${requestId}`, locale).then(res => {
         if (res.status) {
-          setEntitiesData(res?.data?.entities?.[0])
+          // setEntitiesData()
+          setSaveDataAsDraft(flattenDynamic(res?.data?.entities?.[0]));
+
         }
       })
     }
-  }, [entitiesId, collectionName, pageName])
+  }, [collection, requestId, data.collectionName])
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
@@ -488,6 +567,8 @@ export default function ViewCollection({
     }
 
     const errors = []
+
+
     if (refError.current) {
       for (const key in refError.current) {
         if (refError.current[key]) {
@@ -496,7 +577,21 @@ export default function ViewCollection({
       }
     }
 
+    if (refErrorFromTable.current) {
 
+      for (const key in refErrorFromTable.current) {
+        if (refErrorFromTable.current[key]) {
+          errors.push(refErrorFromTable.current[key])
+        }
+      }
+    }
+
+    const getBtnCheckErrors = document.querySelectorAll('.check-errors')
+
+    getBtnCheckErrors.forEach(ele => {
+
+      ele.click()
+    })
 
     if (errors.find(ele => typeof ele === 'object')) {
 
@@ -662,6 +757,188 @@ export default function ViewCollection({
     }
   }
 
+  const saveAsDraft = async (e, href) => {
+    e?.preventDefault()
+
+
+    const initialSendData = { ...dataRef.current }
+    if (data.submitApi?.includes('/api/Account/Register')) {
+      delete initialSendData.pageWorkflows
+      initialSendData.createdBy = 'system'
+    }
+    const sendData = {}
+    Object.keys(initialSendData).forEach(key => {
+      const keyData = key
+
+      if (initialSendData[keyData] !== null) {
+        sendData[keyData] = initialSendData[keyData]
+      }
+      if (Array.isArray(initialSendData[keyData])) {
+        sendData[keyData] = initialSendData[keyData].map(item => item.Id || item)
+      }
+    })
+    if (data.type_of_sumbit === 'api' && !data.submitApi) {
+      return
+    }
+
+    const errors = []
+
+
+    if (refError.current) {
+      for (const key in refError.current) {
+        if (refError.current[key]) {
+          errors.push(refError.current[key])
+        }
+      }
+    }
+
+    if (refErrorFromTable.current) {
+
+      for (const key in refErrorFromTable.current) {
+        if (refErrorFromTable.current[key]) {
+          errors.push(refErrorFromTable.current[key])
+        }
+      }
+    }
+
+    const getBtnCheckErrors = document.querySelectorAll('.check-errors')
+
+    getBtnCheckErrors.forEach(ele => {
+
+      ele.click()
+    })
+
+    if (errors.find(ele => typeof ele === 'object')) {
+
+      return setErrors(refError.current)
+    }
+
+    let output = {}
+
+    Object.entries(sendData).forEach(([key, value]) => {
+
+      // 👈 لو form-table
+      if (key.startsWith("form-table[")) {
+
+        const match = key.match(/^form-table\[(.+)\]$/)
+
+        if (match) {
+          const arrayName = match[1]
+
+          const tableData = dataRef.current[key]
+
+          if (Array.isArray(tableData)) {
+
+            const cleaned = tableData.map(item => {
+
+              const newItem = {}
+
+              Object.entries(item).forEach(([k, v]) => {
+
+                // ❌ نشيل Id
+                if (k === "Id") return
+
+                // ❌ نشيل s + أرقام
+                if (/^s\d+$/.test(k)) return
+
+                // ❌ نشيل undefined.form-table
+                if (k.startsWith("undefined.form-table")) return
+
+                // ❌ نشيل uuid.Anything
+                if (/^[a-f0-9-]+\./i.test(k)) return
+
+
+                // ✅ لو Date نحوله
+                if (v instanceof Date && !isNaN(v)) {
+                  const localISO = new Date(
+                    v.getTime() - v.getTimezoneOffset() * 60000
+                  )
+                    .toISOString()
+                    .slice(0, 19)
+
+                  newItem[k] = localISO
+                } else {
+                  newItem[k] = v
+                }
+
+              })
+
+              return newItem
+            })
+
+            output[arrayName] = cleaned
+          }
+        }
+
+        return
+      }
+
+      // 👇 باقي المعالجة الطبيعية
+      const match = key.match(/^(.+)\[(.+)\]$/)
+
+      if (match) {
+        const [, mainKey, subKey] = match
+        output[subKey] = output[subKey] || {}
+        output[subKey][mainKey] = value
+      } else {
+        if (value instanceof Date && !isNaN(value)) {
+          const date = new Date(
+            value.getTime() - value.getTimezoneOffset() * 60000
+          )
+            .toISOString()
+            .slice(0, 19)
+
+          output[key] = date
+        } else {
+          output[key] = value
+        }
+      }
+    })
+
+
+
+    const tabsDataArray = data?.addMoreElement.find(ele => ele.key === 'tabs')?.data ?? [];
+
+
+    if (tabsDataArray.length > 0 && activeTab + 1 < tabsDataArray.length) {
+      setActiveTab(prev => prev + 1)
+      setTabsData(prev => ({ ...prev, ...output }))
+
+
+      return
+    } else {
+      output = { ...tabsData, ...output }
+    }
+
+
+
+
+    axiosPost(`generic-entities/${data.collectionName}/draft`, locale, output).then(res => {
+      if (res.status) {
+
+
+        if (href) {
+          push(`/${locale}/${href}?collection=${data.collectionName}&requestId=${res?.data?.Id}&isPrint=true`);
+        } else {
+          const newRequestId =
+            res?.data?.Id ?? res?.id ?? (typeof res?.data === 'string' || typeof res?.data === 'number' ? res.data : null)
+          if (newRequestId != null && String(newRequestId) !== '') {
+            replace(
+              { pathname, query: { ...query, collection: data.collectionName, requestId: String(newRequestId) } },
+              undefined,
+              { shallow: true }
+            )
+          }
+        }
+      }
+    })
+
+
+
+  }
+
+
+
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -765,90 +1042,106 @@ export default function ViewCollection({
   const sortedLoop = useMemo(() => {
     const items = [...filterSelect, ...addMoreElement]
     const fixedKeys = ["tabs", "submit", "back"]
+    const sortedIndexMap = new Map(sortedData.map((field, index) => [field.i, index]))
 
-    const sorted = items.sort((a, b) => {
-      const indexA = sortedData.findIndex(f => f.i === a.id)
-      const indexB = sortedData.findIndex(f => f.i === b.id)
+    const sorted = [...items].sort((a, b) => {
+      const indexA = sortedIndexMap.get(a.id)
+      const indexB = sortedIndexMap.get(b.id)
 
-      return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB)
+      return (indexA ?? Infinity) - (indexB ?? Infinity)
     })
 
     if (stopSortLayout) {
-      const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+      const tabsElement = addMoreElement.find(ele => ele.key === 'tabs')
       const tabs = tabsElement?.data || []
 
       if (tabs.length === 0) return sorted
 
-      const assignedFieldIds = tabs.flatMap(t => Array.isArray(t.fields) ? t.fields : [])
+      const layoutYMap = new Map(layout.map(item => [item.i, item.y]))
+      const getY = id => layoutYMap.get(id) ?? 9999
 
-      // ابني map من item.id => y من الـ layout
-      const getY = (id) => layout.find(l => l.i === id)?.y ?? 9999
-
-      // كل الـ real items مع y بتاعهم
-      const allRealItems = sorted.map(ele => ({
-        ...ele,
-        __y: getY(ele.id),
-        __isFixed: fixedKeys.includes(ele.kind || ele.key),
-        __fieldId: ele.type === 'new_element' ? ele.id : ele.key
+      const allRealItemsMeta = sorted.map(ele => ({
+        item: ele,
+        y: getY(ele.id),
+        isFixed: fixedKeys.includes(ele.kind || ele.key),
+        fieldId: ele.type === 'new_element' ? ele.id : ele.key
       }))
 
       // حسب لكل tab أصغر y بين fields بتاعته
-      const tabHeaderItems = tabs.map((tab, tabIndex) => {
+      const tabHeaderEntries = tabs.map((tab, tabIndex) => {
         const tabFieldIds = Array.isArray(tab.fields) ? tab.fields : []
 
-        const tabFieldsYValues = allRealItems
-          .filter(ele => !ele.__isFixed && tabFieldIds.includes(ele.__fieldId))
-          .map(ele => ele.__y)
+        const tabFieldsYValues = allRealItemsMeta
+          .filter(ele => !ele.isFixed && tabFieldIds.includes(ele.fieldId))
+          .map(ele => ele.y)
 
         const minY = tabFieldsYValues.length > 0
           ? Math.min(...tabFieldsYValues) - 0.5
           : tabIndex * 1000  // fallback لو tab فاضي
 
         return {
-          id: `__tab_header_${tabIndex}`,
-          type: '__tab_header__',
-          tabName: tab?.[`name_${locale}`] || tab?.name_en || tab?.name_ar || `Tab ${tabIndex + 1}`,
-          tabIndex,
-          __y: minY
+          item: {
+            id: `__tab_header_${tabIndex}`,
+            type: '__tab_header__',
+            tabName: tab?.[`name_${locale}`] || tab?.name_en || tab?.name_ar || `Tab ${tabIndex + 1}`,
+            tabIndex
+          },
+          y: minY
         }
       })
 
-      // دمج كل حاجة مع بعض
       const combined = [
-        ...allRealItems,
-        ...tabHeaderItems
+        ...allRealItemsMeta.map(ele => ({ item: ele.item, y: ele.y })),
+        ...tabHeaderEntries
       ]
 
-      // sort بالـ y
-      combined.sort((a, b) => a.__y - b.__y)
+      combined.sort((a, b) => a.y - b.y)
 
-      return combined
+      return combined.map(entry => entry.item)
     }
 
-    return sorted.filter(ele =>
-      findActiveTab
-        ? fixedKeys.includes(ele.kind || ele.key)
-          ? true
-          : findActiveTab?.fields?.includes(ele.type === 'new_element' ? ele.id : ele.key)
-        : true
-    )
 
-  }, [filterSelect, addMoreElement, sortedData, findActiveTab, stopSortLayout, data?.addMoreElement, locale, layout])
+    let lastSort = sorted
+    if (isPrint) {
+      lastSort = sorted.filter(ele => ele.key !== 'button')
+    } else {
+      lastSort = sorted.filter(ele =>
+        findActiveTab
+          ? fixedKeys.includes(ele.kind || ele.key)
+            ? true
+            : findActiveTab?.fields?.includes(ele.type === 'new_element' ? ele.id : ele.key)
+          : true
+      )
+    }
+
+    return lastSort
+
+
+
+
+
+  }, [filterSelect, addMoreElement, stopSortLayout, sortedData, layout, locale, isPrint, findActiveTab])
 
   const sortedLoopWithoutTabs = useMemo(() => {
     const items = [...filterSelect, ...addMoreElement]
+    const sortedIndexMap = new Map(sortedData.map((field, index) => [field.i, index]))
 
-    const sorted = items.sort((a, b) => {
-      const indexA = sortedData.findIndex(f => f.i === a.id)
-      const indexB = sortedData.findIndex(f => f.i === b.id)
+    const sorted = [...items].sort((a, b) => {
+      const indexA = sortedIndexMap.get(a.id)
+      const indexB = sortedIndexMap.get(b.id)
 
-      return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB)
+      return (indexA ?? Infinity) - (indexB ?? Infinity)
     })
 
 
 
-    return sorted
-  }, [filterSelect, addMoreElement, sortedData, findActiveTab, stopSortLayout])
+    if (isPrint) {
+      return sorted.filter(sortItem => sortItem.key !== 'button')
+    } else {
+      return sorted
+    }
+
+  }, [filterSelect, addMoreElement, sortedData, isPrint])
 
   // Dnd Kit sensors
   const sensors = useSensors(
@@ -915,6 +1208,44 @@ export default function ViewCollection({
     onChange({ ...data, addMoreElement: addMore })
   }
 
+  const [associationsOpen, setAssociationsOpen] = useState(false)
+  const [associationsConfig] = useState(data?.associationsConfig ?? [])
+
+
+
+  const handleChange = (event, fieldCategory, skipCheck, field) => {
+    // const
+    const { value, checked } = event.target
+    const isChecked = skipCheck || checked
+
+
+    const oldAdditionalFields = data?.additional_fields ?? []
+    const filteredAdditionalFields = oldAdditionalFields.filter(inp => inp.key !== field?.id)
+
+    // Tabs assignment logic removed from here; use the inline dropdowns instead
+    const addMoreElementLocal = [...(data?.addMoreElement ?? [])]
+
+    //     additional_fields: filteredAdditionalFields,
+    //     addMoreElement: addMoreElementLocal);
+
+    if (skipCheck) {
+      onChange({
+        ...data,
+        associationsConfig: skipCheck,
+        additional_fields: filteredAdditionalFields,
+        addMoreElement: addMoreElementLocal
+      })
+    } else {
+      onChange({
+        ...data,
+        additional_fields: filteredAdditionalFields,
+        addMoreElement: addMoreElementLocal
+      })
+    }
+  }
+
+
+
   return (
     <div className={`${disabled ? 'text-main' : ''}`}>
       {loading && (
@@ -923,11 +1254,35 @@ export default function ViewCollection({
           <CircularProgress />
         </div>
       )}
+
+      <AssociationsSetup
+        open={associationsOpen}
+        onClose={() => {
+          setAssociationsOpen(false)
+        }}
+        initialConfig={associationsConfig}
+        onSave={config => {
+
+          let newConfig = data?.associationsConfig ?? []
+
+          const found = newConfig.find(item => item.key === config.key)
+          if (found) {
+            newConfig = newConfig.map(item => (item.key === config.key ? config : item))
+          } else {
+            newConfig = [...newConfig, config]
+          }
+
+
+          handleChange({ target: { value: config.key } }, '', newConfig)
+        }}
+      />
       <InputControlDesign
         open={open}
         handleClose={handleClose}
         design={design}
         locale={locale}
+        setAssociationsOpen={setAssociationsOpen}
+
         roles={roles}
         data={data}
         onChange={onChange}
@@ -978,11 +1333,27 @@ export default function ViewCollection({
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(12, 1fr)',
-                  gap: '10px',
+                  gap: isPrint ? '0px' : '10px',
                   width: '100%'
                 }}
               >
                 {sortedLoop.map((filed, i) => {
+                  const associationsConfigData = data?.associationsConfig ?? []
+                  const find = associationsConfigData.find(item => item?.key === filed?.key)
+                  const filedData = { ...filed }
+                  if (find) {
+
+                    filedData.kind = find.viewType
+                    filedData.descriptionEn = JSON.stringify(find.selectedOptions)
+                    filedData.getDataForm = find.dataSourceType
+                    filedData.externalApi = find.externalApi
+                    filedData.staticData = find.staticData
+                    filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
+                    filedData.apiHeaders = find.apiHeaders
+                    filedData.body = find.body
+                    filedData.method = find.method
+                    filedData.viewAsInput = find.viewAsInput
+                  }
 
 
                   if (filed.type === '__tab_header__') {
@@ -1079,14 +1450,13 @@ export default function ViewCollection({
                   const layoutItem = layout.find(l => l.i === filed.id)
                   const gridColumnSpan = layoutItem?.w || 12
 
-                  console.log(dataRef, tabsData, "dataRef");
 
                   return (
                     <SortableGridItem
                       tabsData={tabsData}
                       key={filed.id}
                       advancedEdit={advancedEdit}
-                      filed={filed}
+                      filed={filedData}
                       index={i}
                       readOnly={readOnly}
                       stopSort={stopSort}
@@ -1095,6 +1465,8 @@ export default function ViewCollection({
                       getDesign={getDesign}
                       setOpen={setOpen}
                       refError={refError}
+                      refErrorFromTable={refErrorFromTable}
+                      saveAsDraft={saveAsDraft}
                       setLayout={setLayout}
                       triggerData={triggerData}
                       onChange={onChange}
@@ -1112,6 +1484,7 @@ export default function ViewCollection({
                       hintText={hintText}
                       roles={roles}
                       setActiveTab={setActiveTab}
+                      FormType={FormType}
                       activeTab={activeTab}
                       handleSubmit={handleSubmit}
                       sortedLoopWithoutTabs={sortedLoopWithoutTabs}
@@ -1119,6 +1492,7 @@ export default function ViewCollection({
                       disabled={disabled}
                       reload={reload}
                       messages={messages}
+                      saveDataAsDraft={saveDataAsDraft}
                     />
                   )
                 })}

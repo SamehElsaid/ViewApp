@@ -13,8 +13,10 @@ import { useDispatch } from 'react-redux'
 import TableComponent from './TableComponent'
 import { IoMdSettings } from 'react-icons/io'
 import TableColumnControl from './tableColumnControl'
+import { DEFAULT_TABLE_STYLE } from './tableColumnControl'
 
 function TableView({
+  refErrorFromTable,
   data,
   locale,
   onChange,
@@ -28,7 +30,8 @@ function TableView({
   formTable,
   FilterData,
   filterWithAPIValue,
-  setValue
+  setValue,
+  tableStyle
 }) {
   const [getFields, setGetFields] = useState([])
   const [changedValue, setChangedValue] = useState([])
@@ -42,6 +45,11 @@ function TableView({
   const [newDataInsert, setNewDataInsert] = useState([])
   const [open, setOpen] = useState(false)
   const [columnControl, setColumnControl] = useState(false)
+  const allErrorsRef = useRef([])
+  const [rowSettingOpen, setRowSettingOpen] = useState(false)
+
+
+
 
 
   useEffect(() => {
@@ -143,7 +151,7 @@ function TableView({
           if (res.status) {
             const associationsConfig = data.associationsConfig || []
 
-            
+
             const filterData = res.data.map(field => {
               const filterWith = type !== 'from-collection' ? field?.key : field?.id
               const find = associationsConfig.find(item => item?.key === filterWith)
@@ -209,14 +217,25 @@ function TableView({
     setTriggerData(reloadRef)
   }, [reloadRef])
 
+
   useEffect(() => {
     if (collectionFields.length === 0) return
     let filteredFields = collectionFields.filter(ele => data.selected.includes(ele.key))
+  
     if (filteredFields.length !== data.sortWithId?.length) {
       onChange({ ...data, sortWithId: filteredFields.map(ele => ele.id) })
     } else {
-      filteredFields = data.sortWithId.map(ele => filteredFields.find(e => e?.id === ele))
+      const mapped = data.sortWithId
+        ?.map(id => filteredFields.find(e => e?.id === id))
+        .filter(Boolean) 
+
+      const newItems = filteredFields.filter(
+        ele => !data.sortWithId?.includes(ele.id)
+      )
+
+      filteredFields = [...mapped, ...newItems]
     }
+
 
     const getMoreData = data.additional_fields
 
@@ -232,45 +251,52 @@ function TableView({
 
     const lastData = []
     filteredFields.forEach(ele => {
-      const findData = getMoreData?.find(e => e.key === ele.id)
+      const findData = getMoreData?.find(e => e?.key === ele?.id)
       if (findData) {
         const rolesFindData = findData?.roles?.triggerColumn
         if (rolesFindData) {
-          const rolesData = cleanedCurrent?.[rolesFindData?.selectedField] === rolesFindData?.mainValue
-          if (!rolesData) {
-            lastData.push(ele)
+          const cv = cleanedCurrent?.[rolesFindData?.selectedField]
+          const mv = rolesFindData?.mainValue
+          const isEqualMode = rolesFindData?.isEqual === 'equal'
+          const conditionMet = isEqualMode ? cv == mv : cv != mv
 
-            return
-          }
-
-          if (rolesFindData.isEqual === 'equal') {
-            if (rolesData) {
-              lastData.filter(el => el.id !== ele.id)
+          if (rolesFindData.typeOfValidation === 'visible') {
+            // يبدأ مخفياً؛ يظهر العمود فقط عند تحقق الشرط (مثل DisplayField)
+            if (mv !== undefined && mv !== null && mv !== '') {
+              if (conditionMet) lastData.push(ele)
+            } else {
+              lastData.push(ele)
+            }
+          } else if (rolesFindData.typeOfValidation === 'hidden') {
+            // يظهر افتراضياً؛ يُخفى عند تحقق الشرط
+            if (mv !== undefined && mv !== null && mv !== '') {
+              if (!conditionMet) lastData.push(ele)
+            } else {
+              lastData.push(ele)
             }
           } else {
-            if (!rolesData) {
-              lastData.filter(el => el.id !== ele.id)
-            }
+            lastData.push(ele)
           }
         } else {
           lastData.push(ele)
         }
       } else {
+
         lastData.push(ele)
       }
     })
 
-    setFilterWithSelect(!readOnly ? filteredFields : lastData)
+
+    setFilterWithSelect(!readOnly ? filteredFields?.filter(Boolean) : lastData?.filter(Boolean))
 
     onChange({
       ...data,
-      inputsVisibility: !readOnly ? filteredFields : lastData
+      inputsVisibility: !readOnly ? filteredFields?.filter(Boolean) : lastData?.filter(Boolean)
     })
   }, [collectionFields.length, data?.selected?.length, data.sortWithId, reloadRef])
 
-  
-  console.log(data);
-  
+
+
 
   const SortableButton = SortableElement(({ value }) => (
     <>
@@ -307,7 +333,7 @@ function TableView({
 
   const onSortEnd = ({ oldIndex, newIndex }) => {
     const newSelectedOptions = arrayMove(filterWithSelect, oldIndex, newIndex)
-    setFilterWithSelect(newSelectedOptions)
+    setFilterWithSelect(newSelectedOptions?.filter(Boolean))
 
     onChange({
       ...data,
@@ -370,11 +396,27 @@ function TableView({
   }
 
   const dispatch = useDispatch()
+  const [reloadErrors, setReloadErrors] = useState(0)
 
   return (
     <div>
+
+      <button className='hidden absolute top-0 left-0 check-errors' type='button' onClick={() => {
+        const errors = []
+        if (allErrorsRef.current) {
+          for (const key in allErrorsRef.current) {
+            if (allErrorsRef.current[key]) {
+              errors.push(allErrorsRef.current[key])
+            }
+          }
+        }
+
+        setReloadErrors(prev => prev + 1)
+      }}></button>
+
       <TableColumnControl
-        open={columnControl && open}
+        open={(columnControl || rowSettingOpen) && open}
+        isRowSetting={rowSettingOpen}
         handleClose={handleClosePop}
         design={design}
         locale={locale}
@@ -473,9 +515,11 @@ function TableView({
           }}
         >
           <TableComponent
+            refErrorFromTable={refErrorFromTable}
             setTotalCount={setTotalCount}
             allData={allData}
-            filterWithSelect={filterWithSelect}
+            allErrorsRef={allErrorsRef}
+            filterWithSelect={filterWithSelect?.filter(Boolean)}
             columns={getFields}
             paginationModel={paginationModel}
             setPaginationModel={setPaginationModel}
@@ -490,6 +534,10 @@ function TableView({
             getDesign={getDesign}
             triggerData={triggerData}
             errorAllRef={errorAllRef}
+            handleRowSettingOpen={(id) => {
+              setRowSettingOpen(id)
+              setOpen(id)
+            }}
             setGetFields={setGetFields}
             editAction={data.edit}
             deleteAction={data.delete}
@@ -501,8 +549,9 @@ function TableView({
             reloadHight={reloadHight}
             type={type}
             formTable={formTable}
+            reloadErrors={reloadErrors}
+            tableStyle={tableStyle ?? data?.tableStyle ?? DEFAULT_TABLE_STYLE}
           />
-          {console.log(data,"data.details")}
           {data.kind === 'form-table' && type !== 'from-collection' && paginationModel.page === 0 && (
             <div className='flex justify-end px-5 mt-3'>
               <Button

@@ -33,7 +33,8 @@ function Trigger({
   design,
   roles,
   parentKey,
-  type
+  type,
+  isRowSetting
 }) {
   const steps = [messages.Input_Field, messages.Type_Of_Validation]
   const [activeStep, setActiveStep] = useState(0)
@@ -59,6 +60,7 @@ function Trigger({
     setActiveStep(prev => prev + 1)
   }
 
+
   const handleFinish = () => {
     const Css = cssToObject(design)
 
@@ -77,9 +79,30 @@ function Trigger({
       sendData.rowId = open.rowId
     }
 
-    const additional_fields = data.additional_fields ?? []
-    const findMyInput = additional_fields.find(inp => inp.key === open.id)
-    const triggerProperty = type === 'column' ? 'triggerColumn' : open.rowId ? 'triggerRow' : 'trigger'
+    const additional_fields = isRowSetting ? data.triggerRowTable ?? [] : data.additional_fields ?? []
+    const findMyInput = additional_fields.find(inp => inp.key === (open.id ?? open))
+
+    let triggerProperty = null
+    if (isRowSetting) {
+      triggerProperty = 'triggerRowTable'
+    } else {
+      triggerProperty = type === 'column' ? 'triggerColumn' : open.rowId ? 'triggerRow' : 'trigger'
+    }
+
+    if (isRowSetting) {
+      if (findMyInput) {
+        findMyInput.triggerRowTable = sendData
+      } else {
+        additional_fields.push({ key: open, triggerRowTable: sendData })
+      }
+
+      onChange({ ...data, triggerRowTable: additional_fields })
+      setOpenTrigger(false)
+      resetForm()
+
+      return
+    }
+
     if (findMyInput) {
       findMyInput.roles = findMyInput.roles ?? {}
       findMyInput.roles[triggerProperty] = sendData
@@ -139,17 +162,18 @@ function Trigger({
                       if (field.type === 'OneToOne') {
                         setTriggerKey(field.options.source)
                       } else {
-                        setTriggerKey(field.options.target)
+                        setTriggerKey(field.options.source)
                       }
-                      setParentKey(field.type === 'OneToOne' ? field.options.source : field.options.target)
+                      setParentKey(field.options.source)
                     }
                     setSelectedField(e.target.value)
+
                   }}
                 >
                   {fields
-                    ?.filter(fil => fil.id !== open.id)
-                    .filter(fil => fil.kind !== 'Table')
-                    .filter(fil => fil.key !== 'button')
+                    ?.filter(fil => fil?.id !== open?.id)
+                    .filter(fil => fil?.kind !== 'Table')
+                    .filter(fil => fil?.key !== 'button')
                     ?.map(field => (
                       <MenuItem key={field.key} value={field.key}>
                         {field?.[`name${locale === 'ar' ? 'Ar' : 'En'}`]}
@@ -260,7 +284,7 @@ function Trigger({
                           }}
                         >
                           <MenuItem value={'Id'}>ID</MenuItem>
-                          {currentFields.map(field => (
+                          {isRowSetting ? null : parentFields.map(field => (
                             <MenuItem className='capitalize' key={field.key} value={field.key}>
                               {field?.[`name${locale === 'ar' ? 'Ar' : 'En'}`]}
                             </MenuItem>
@@ -289,7 +313,7 @@ function Trigger({
                             }}
                           >
                             <MenuItem value={'Id'}>ID</MenuItem>
-                            {parentFields.map(field => (
+                            {isRowSetting ? null : parentFields.map(field => (
                               <MenuItem className='capitalize' value={field.key} key={field.key}>
                                 {field?.[`name${locale === 'ar' ? 'Ar' : 'En'}`]}
                               </MenuItem>

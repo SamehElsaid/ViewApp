@@ -13,7 +13,8 @@ export default function useCollection({
   pageId,
   entitiesId,
   collectionName,
-  pageName
+  pageName,
+  FormType, isPrint
 }) {
   const { messages } = useIntl()
 
@@ -33,6 +34,8 @@ export default function useCollection({
             entitiesId={entitiesId}
             collectionName={collectionName}
             pageName={pageName}
+            FormType={FormType}
+            isPrint={isPrint}
           />
         )
       },

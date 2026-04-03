@@ -3,7 +3,6 @@ import { FaTableCells } from 'react-icons/fa6'
 import TableView from '../TableView'
 import Select from '../Select'
 import { useIntl } from 'react-intl'
-import TableControl from '../TableControl'
 
 export default function useTable({ advancedEdit, locale, readOnly, buttonRef }) {
   const { messages } = useIntl()
@@ -19,6 +18,12 @@ export default function useTable({ advancedEdit, locale, readOnly, buttonRef }) 
             disabled={!readOnly}
             data={data}
             formTable='table'
+            tableStyle={{
+              headerBackgroundColor: data?.headerBackgroundColor ?? '#f5f5f5',
+              headerTextColor: data?.headerTextColor ?? '#333333',
+              tableBorderColor: data?.borderColor ?? 'rgba(224, 224, 224, 1)'
+            }
+            }
           />
         )
       },

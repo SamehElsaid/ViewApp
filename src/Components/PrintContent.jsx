@@ -161,7 +161,6 @@ function PrintSortableItem({ input, layoutItem, locale, data }) {
 
 function PrintContent({ printData, data }) {
   const { locale } = useIntl()
-  console.log(printData);
   
   const tabs = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data || []
 
@@ -252,7 +251,6 @@ input:focus {
                   const tabFields = tab.fields || []
                   const tabLayoutItems = visibleLayout.filter(item => tabFields.includes(item.i))
 
-                  console.log(tabLayoutItems);
                   if (!tabLayoutItems.length) return null
 
                   return (

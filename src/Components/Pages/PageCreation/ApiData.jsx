@@ -51,29 +51,30 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
   }
 
   useEffect(() => {
-    const linksToFetch = links.filter(link => link.loading)
+    if (!links) return
+    const linksToFetch =  links?.filter(link => link.loading)
 
     const authToken = Cookies.get('sub')
     const apiHeaders = {}
     if (authToken) {
       apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
     }
-    
+
     if (linksToFetch.length > 0) {
       Promise.all(
         linksToFetch.map(linkObj => {
           const resolvedLink = replacePlaceholders(linkObj.link, window.location)
           const body = replaceVars(linkObj.headers)
           let headers = {}
-    
+
           try {
             headers = JSON.parse(body)
           } catch (error) {
             headers = {}
           }
-    
+
           let request
-    
+
           if (linkObj.method === 'GET') {
             request = axios.get(resolvedLink, { headers: apiHeaders })
           } else {
@@ -83,7 +84,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
               { headers: apiHeaders }
             )
           }
-    
+
           return request
             .then(response => ({
               ...linkObj,
@@ -105,7 +106,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
         dispatch(setApiData(updatedLinks))
       })
     }
-    
+
   }, [links, dispatch])
 
   const [apiHeaders, setApiHeaders] = useState('{}')
@@ -153,7 +154,7 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
           />
         </div>
         <div className='flex flex-col gap-2 mt-4'>
-          {links.map((link, index) => (
+          {links && links?.map((link, index) => (
             <div className='p-2 rounded-md border border-dashed border-main-color' key={index}>
               <div className='flex justify-between items-center'>
                 <div className='text-main-color break-all'>{link.link}</div>

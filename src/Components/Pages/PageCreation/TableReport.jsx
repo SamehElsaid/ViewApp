@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { Button, Dialog, DialogContent, Typography, TextField, Box, Grid } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useReactToPrint } from 'react-to-print'
 import { axiosDelete, axiosGet, axiosPost } from 'src/Components/axiosCall'
 import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-hoc'
 import { useIntl } from 'react-intl'
@@ -14,6 +15,81 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { saveAs } from 'file-saver'
 import { toast } from 'react-toastify'
+
+const ARABIC_FONT_FILE = 'NotoNaskhArabic-Regular.ttf'
+const ARABIC_FONT_FAMILY = 'NotoNaskhArabic'
+
+/** Arabic script in Unicode (includes Persian digits etc.) */
+const ARABIC_SCRIPT_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/
+
+function pdfNeedsArabicFont(headers, rows, localeIsArabic) {
+  if (localeIsArabic) return true
+  if (headers.some(h => ARABIC_SCRIPT_RE.test(String(h)))) return true
+
+  return rows.some(row => row.some(cell => ARABIC_SCRIPT_RE.test(String(cell))))
+}
+
+/** Text used for mixed Arabic/English alignment in PDF (Noto Naskh covers both scripts) */
+function pdfCellTextForAlign(cell) {
+  if (cell == null) return ''
+  if (cell.raw != null) return String(cell.raw)
+  if (Array.isArray(cell.text)) return cell.text.join('')
+
+  return String(cell.text ?? '')
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  const chunkSize = 8192
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize)
+    binary += String.fromCharCode.apply(null, chunk)
+  }
+
+  return btoa(binary)
+}
+
+function getFontFetchUrl() {
+  if (typeof window === 'undefined') return `/fonts/${ARABIC_FONT_FILE}`
+
+  return new URL(`/fonts/${ARABIC_FONT_FILE}`, window.location.origin).href
+}
+
+async function registerArabicPdfFont(doc) {
+  const res = await fetch(getFontFetchUrl())
+  if (!res.ok) throw new Error('Failed to load Arabic font')
+  const buf = await res.arrayBuffer()
+  const base64 = arrayBufferToBase64(buf)
+  doc.addFileToVFS(ARABIC_FONT_FILE, base64)
+  doc.addFont(ARABIC_FONT_FILE, ARABIC_FONT_FAMILY, 'normal')
+  doc.setFont(ARABIC_FONT_FAMILY, 'normal')
+}
+
+const TABLE_PRINT_PAGE_STYLE = `
+  @media print {
+    @page { margin: 12mm; size: auto; }
+    .table-report-print-area {
+      font-family: 'Noto Naskh Arabic', 'Public Sans', 'cairo', sans-serif !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .table-report-print-area .MuiPaper-root,
+    .table-report-print-area .MuiTableCell-root,
+    .table-report-print-area .MuiTypography-root {
+      font-family: inherit !important;
+    }
+    .table-report-print-area .MuiTableCell-root {
+      unicode-bidi: plaintext;
+    }
+    .table-report-print-area .no-print {
+      display: none !important;
+    }
+    .table-report-print-area .MuiTablePagination-root {
+      display: none !important;
+    }
+  }
+`
 
 function TableReport({ data, locale, onChange, readOnly, disabled }) {
   const [getFields, setGetFields] = useState([])
@@ -34,6 +110,31 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
   const [filterWithSelect, setFilterWithSelect] = useState([])
   const [filterValues, setFilterValues] = useState({})
   const [isFiltered, setIsFiltered] = useState(false)
+
+  const printTableRef = useRef(null)
+
+  const printFonts = useMemo(() => {
+    if (typeof window === 'undefined') return undefined
+
+    return [
+      {
+        family: 'Noto Naskh Arabic',
+        source: new URL(`/fonts/${ARABIC_FONT_FILE}`, window.location.origin).href
+      }
+    ]
+  }, [])
+
+  const handlePrintTable = useReactToPrint({
+    contentRef: printTableRef,
+    documentTitle: `${data.collectionName || 'Table'}_report`,
+    pageStyle: TABLE_PRINT_PAGE_STYLE,
+    fonts: printFonts,
+    onBeforePrint: async () => {
+      if (typeof document !== 'undefined' && document.fonts?.ready) {
+        await document.fonts.ready
+      }
+    }
+  })
 
   // Fetch data without filters
   useEffect(() => {
@@ -85,15 +186,63 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
     }
   }, [locale, data.is_api_generated, data.userReportName, data.reload, paginationModel, isFiltered])
 
-  // Export to PDF function
-  const exportToPDF = () => {
-    const doc = new jsPDF()
+  /** PDF from visible table (browser renders Arabic + English correctly); autoTable is fallback only */
+  const exportToPDF = async () => {
     const tableName = data.collectionName || 'Table'
+    const isArabic = locale === 'ar'
+    const el = printTableRef.current
 
-    // Prepare headers
-    const headers = filterWithSelect.map(field => (locale === 'ar' ? field.nameAr : field.nameEn))
+    if (el && getFields.length > 0) {
+      try {
+        if (typeof document !== 'undefined' && document.fonts?.ready) {
+          await document.fonts.ready
+        }
+        await new Promise(r => setTimeout(r, 150))
 
-    // Prepare data rows
+        const mod = await import('html2pdf.js')
+        const html2pdf = mod.default || mod
+
+        await html2pdf()
+          .set({
+            margin: [8, 8, 8, 8],
+            filename: `${tableName}_export.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              logging: false,
+              backgroundColor: '#ffffff',
+              onclone: documentClone => {
+                const root = documentClone.querySelector('.table-report-print-area')
+                if (root) {
+                  root.style.fontFamily = "'Noto Naskh Arabic', 'Public Sans', sans-serif"
+                  root.style.overflow = 'visible'
+                }
+                documentClone.querySelectorAll('.MuiPaper-root').forEach(node => {
+                  node.style.overflow = 'visible'
+                })
+                documentClone.querySelectorAll('.MuiTableContainer-root').forEach(node => {
+                  node.style.overflow = 'visible'
+                })
+              }
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          })
+          .from(el)
+          .save()
+
+        return
+      } catch (e) {
+        console.error('html2pdf export failed', e)
+      }
+    }
+
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+    const headers = filterWithSelect.map(field => (isArabic ? field.nameAr : field.nameEn))
+
     const rows = getFields.map(row => {
       return filterWithSelect.map(field => {
         const value = row[field.key]
@@ -105,17 +254,43 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       })
     })
 
-    // Add table to PDF
-    autoTable(doc, {
-      head: [headers],
-      body: rows,
-      startY: 20,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [66, 139, 202] }
-    })
+    let arabicFontReady = false
+    if (pdfNeedsArabicFont(headers, rows, isArabic)) {
+      try {
+        await registerArabicPdfFont(doc)
+        arabicFontReady = true
+      } catch (e) {
+        console.error(e)
+        toast.error(
+          isArabic ? 'تعذّر تحميل خط العربية لتصدير PDF' : 'Could not load Arabic font for PDF export'
+        )
+      }
+    }
 
-    // Save PDF
-    doc.save(`${tableName}_export.pdf`)
+    const tableFont = arabicFontReady ? ARABIC_FONT_FAMILY : 'helvetica'
+
+    try {
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 20,
+        styles: {
+          font: tableFont,
+          fontSize: 8,
+          halign: 'left',
+          overflow: 'linebreak'
+        },
+        headStyles: { font: tableFont, fillColor: [66, 139, 202], halign: 'left' },
+        didParseCell: data => {
+          const text = pdfCellTextForAlign(data.cell)
+          data.cell.styles.halign = ARABIC_SCRIPT_RE.test(text) ? 'right' : 'left'
+        }
+      })
+      doc.save(`${tableName}_export.pdf`)
+    } catch (e) {
+      console.error(e)
+      toast.error(isArabic ? 'فشل تصدير PDF' : 'PDF export failed')
+    }
   }
 
   // Export to XLSX function
@@ -161,7 +336,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
     } else {
       filteredFields = data.sortWithId.map(ele => filteredFields.find(e => e?.id === ele))
     }
-    setFilterWithSelect(filteredFields)
+    setFilterWithSelect(filteredFields?.filter(Boolean))
   }, [collectionFields.length, data?.selected?.length, data.sortWithId])
 
   const SortableButton = SortableElement(({ value }) => (
@@ -182,7 +357,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
 
   const onSortEnd = ({ oldIndex, newIndex }) => {
     const newSelectedOptions = arrayMove(filterWithSelect, oldIndex, newIndex)
-    setFilterWithSelect(newSelectedOptions)
+    setFilterWithSelect(newSelectedOptions?.filter(Boolean))
 
     onChange({
       ...data,
@@ -290,7 +465,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       </Dialog>
 
       <>
-        {!readOnly && <SortableList items={filterWithSelect} onSortEnd={onSortEnd} axis='xy' />}
+        {!readOnly && <SortableList items={filterWithSelect?.filter(Boolean)} onSortEnd={onSortEnd} axis='xy' />}
 
         {/* Filter Section */}
         {collectionFields.length > 0 && (
@@ -331,17 +506,23 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
           </Box>
         )}
 
-        <div className='flex justify-end gap-3 px-5 mb-3'>
-          <Button variant='contained' color='error' onClick={exportToPDF} disabled={loading || getFields.length === 0}>
-            Export PDF
+        <div className='flex justify-end gap-3 px-5 mb-3 flex-wrap'>
+          <Button
+            variant='outlined'
+            color='primary'
+            onClick={handlePrintTable}
+            disabled={loading || getFields.length === 0}
+          >
+            {locale === 'ar' ? 'تصدير PDF' : 'Export PDF'}
           </Button>
+        
           <Button
             variant='contained'
             color='success'
             onClick={exportToXLSX}
             disabled={loading || getFields.length === 0}
           >
-            Export XLSX
+            {locale === 'ar' ? 'تصدير Excel' : 'Export XLSX'}
           </Button>
           {data.kind === 'form-table' && paginationModel.page === 0 && (
             <Button
@@ -372,31 +553,37 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
             dispatch(removeerrorInAllRowData())
           }}
         >
-          <TableComponent
-            filterWithSelect={filterWithSelect}
-            columns={getFields.slice(
-              paginationModel.page * paginationModel.pageSize,
-              (paginationModel.page + 1) * paginationModel.pageSize
-            )}
-            paginationModel={paginationModel}
-            setPaginationModel={setPaginationModel}
-            totalCount={totalCount / Number(paginationModel.pageSize)}
-            loadingEntity={loading}
-            loadingHeader={loadingHeader}
-            data={data}
-            readOnly={readOnly}
-            disabled={disabled}
-            onChange={onChange}
-            setTriggerData={setTriggerData}
-            getDesign={getDesign}
-            triggerData={triggerData}
-            errorAllRef={errorAllRef}
-            setGetFields={setGetFields}
-            editAction={data.edit}
-            deleteAction={data.delete}
-            setDeleteOpen={setDeleteOpen}
-            setChangedValue={setChangedValue}
-          />
+          <div
+            ref={printTableRef}
+            className='table-report-print-area'
+            style={{ fontFamily: "'Noto Naskh Arabic', 'Public Sans', sans-serif" }}
+          >
+            <TableComponent
+              filterWithSelect={filterWithSelect?.filter(Boolean)}
+              columns={getFields.slice(
+                paginationModel.page * paginationModel.pageSize,
+                (paginationModel.page + 1) * paginationModel.pageSize
+              )}
+              paginationModel={paginationModel}
+              setPaginationModel={setPaginationModel}
+              totalCount={totalCount / Number(paginationModel.pageSize)}
+              loadingEntity={loading}
+              loadingHeader={loadingHeader}
+              data={data}
+              readOnly={readOnly}
+              disabled={disabled}
+              onChange={onChange}
+              setTriggerData={setTriggerData}
+              getDesign={getDesign}
+              triggerData={triggerData}
+              errorAllRef={errorAllRef}
+              setGetFields={setGetFields}
+              editAction={data.edit}
+              deleteAction={data.delete}
+              setDeleteOpen={setDeleteOpen}
+              setChangedValue={setChangedValue}
+            />
+          </div>
           <div className='flex justify-end px-5 mt-3'>
             {data.kind === 'form-table' && paginationModel.page === 0 && (
               <Button

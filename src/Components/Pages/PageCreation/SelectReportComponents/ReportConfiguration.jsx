@@ -48,6 +48,7 @@ export default function ReportConfiguration({ data, onChange }) {
         transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
         isOpen={data.typeOfReport === 'chart'}
       >
+        <div className="mt-2"></div>
         <TextField
           select
           fullWidth

@@ -1,15 +1,15 @@
-import { InputAdornment, TextField } from '@mui/material'
-import React, { useState, useRef } from 'react'
+import { Checkbox, FormControlLabel, InputAdornment, TextField } from '@mui/material'
+import React, { useState } from 'react'
 import { ChromePicker } from 'react-color'
-import { FaPlus, FaMinus, FaTimes, FaUpload } from 'react-icons/fa'
+import { FaPlus, FaTimes } from 'react-icons/fa'
 import { useIntl } from 'react-intl'
 import CloseNav from '../CloseNav'
+import UpdateImage from '../UpdateImage'
 
 const HeaderControl = ({ data = {}, onChange, locale, buttonRef }) => {
   const { messages } = useIntl()
   const [showColorPicker, setShowColorPicker] = useState(null)
   const [tempColors, setTempColors] = useState({})
-  const fileInputRef = useRef(null)
 
   // Initialize default data if not provided
   const headerData = {
@@ -25,14 +25,10 @@ const HeaderControl = ({ data = {}, onChange, locale, buttonRef }) => {
     selectorFontWeight: 'normal',
     options: [],
     defaultOption: '',
-    logoUrl: 'https://www.gahar.gov.eg/Front/images/logo.svg',
-    logoHeight: '40px',
+    showLogo: false,
+    logoUrl: '',
     logoAlt: 'Logo',
-    logoText_en: 'Logo Here',
-    logoText_ar: 'الشعار هنا',
-    logoTextColor: '#000000',
-    logoFile: null,
-    logoFilePreview: '',
+    logoMedia: {},
     showMobileMenu: false,
     mobileMenuColor: '#000000',
     mobileMenuBgColor: '#ffffff',
@@ -67,37 +63,6 @@ const HeaderControl = ({ data = {}, onChange, locale, buttonRef }) => {
   // Handle checkbox changes
   const handleCheckboxChange = field => {
     handleChange(field, !headerData[field])
-  }
-
-  // Handle file upload for logo
-  const handleLogoFileChange = e => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      const reader = new FileReader()
-      reader.onload = event => {
-        onChange({
-          ...headerData,
-          logoFile: file,
-          logoFilePreview: event.target.result,
-          logoUrl: '' // Clear the URL when uploading a file
-        })
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current.click()
-  }
-
-  // Remove uploaded logo
-  const removeUploadedLogo = () => {
-    onChange({
-      ...headerData,
-      logoFile: null,
-      logoFilePreview: ''
-    })
   }
 
   // Handle color picker
@@ -231,7 +196,7 @@ const HeaderControl = ({ data = {}, onChange, locale, buttonRef }) => {
   )
 
   return (
-    <div className='p-4 max-h-[60vh] overflow-y-auto'>
+    <div className='p-4 '>
       <CloseNav text={messages.dialogs.header} buttonRef={buttonRef} />
       <h3 className='mb-4 font-bold'>{messages.dialogs.headerConfiguration}</h3>
 
@@ -399,8 +364,62 @@ const HeaderControl = ({ data = {}, onChange, locale, buttonRef }) => {
       </div>
 
       {/* Logo Settings */}
-      <div className='mb-6'>
-        <h4 className='mb-2 font-semibold'>{messages.dialogs.logoSettings}</h4>
+      <div className='mb-6 p-4 rounded-xl border border-gray-200 bg-gray-50/80 dark:bg-gray-900/20'>
+        <div className='flex flex-wrap justify-between items-center gap-2 mb-3'>
+          <h4 className='font-semibold text-main-color'>{messages.dialogs.logoSettings}</h4>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={headerData.showLogo !== false}
+                onChange={e => handleChange('showLogo', e.target.checked)}
+              />
+            }
+            label={locale === 'ar' ? 'إظهار الشعار' : 'Show logo'}
+          />
+        </div>
+
+        {headerData.showLogo !== false && (
+          <div className='space-y-4'>
+            <TextField
+              fullWidth
+              variant='filled'
+              value={headerData.logoUrl || ''}
+              onChange={e => handleChange('logoUrl', e.target.value)}
+              label={locale === 'ar' ? 'رابط الصورة (احتياطي إن لم يُرفَع ملف)' : 'Image URL (fallback if no upload)'}
+              helperText={
+                locale === 'ar'
+                  ? 'يُستخدم عندما لا يوجد مسار من الرفع أو API. اتركه فارغاً لإخفاء الشعار إن لم يُرفَع شيء.'
+                  : 'Used when there is no uploaded/API path. Leave empty to hide logo when no file is set.'
+              }
+            />
+            <TextField
+              fullWidth
+              variant='filled'
+              value={headerData.logoAlt || ''}
+              onChange={e => handleChange('logoAlt', e.target.value)}
+              label={locale === 'ar' ? 'النص البديل (alt)' : 'Alt text'}
+            />
+            <div className='pt-2 border-t border-dashed border-gray-300'>
+              <p className='text-sm text-gray-600 mb-2'>
+                {locale === 'ar'
+                  ? 'رفع الصورة، ربط API، الحجم، المحاذاة، وشرط الظهور — نفس إعدادات عنصر الصورة.'
+                  : 'Upload, API binding, size, alignment, and visibility — same as the Image block.'}
+              </p>
+              <UpdateImage
+                embedded
+                data={headerData.logoMedia || {}}
+                onChange={patch =>
+                  onChange({
+                    ...headerData,
+                    logoMedia: { ...(headerData.logoMedia || {}), ...patch }
+                  })
+                }
+                locale={locale}
+                buttonRef={buttonRef}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile Menu Settings */}

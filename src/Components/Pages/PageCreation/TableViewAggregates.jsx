@@ -7,7 +7,7 @@ import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-ho
 import { useIntl } from 'react-intl'
 import { LoadingButton } from '@mui/lab'
 import OpenEditDialog from './OpenEditDialog'
-import { DefaultStyle } from 'src/Components/_Shared'
+import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
 import InputControlDesign from './InputControlDesign'
 import { removeerrorInAllRowData } from 'src/store/apps/errorInAllRow/errorInAllRow'
 import { useDispatch } from 'react-redux'
@@ -188,7 +188,7 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
     } else {
       filteredFields = data.sortWithId.map(ele => filteredFields.find(e => e?.id === ele))
     }
-    setFilterWithSelect(filteredFields)
+    setFilterWithSelect(filteredFields?.filter(Boolean))
   }, [collectionFields.length, data?.selected?.length, data.sortWithId])
 
   const SortableButton = SortableElement(({ value }) => (
@@ -209,7 +209,7 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
 
   const onSortEnd = ({ oldIndex, newIndex }) => {
     const newSelectedOptions = arrayMove(filterWithSelect, oldIndex, newIndex)
-    setFilterWithSelect(newSelectedOptions)
+    setFilterWithSelect(newSelectedOptions?.filter(Boolean))
 
     onChange({
       ...data,
@@ -222,7 +222,7 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
   }
   const [loadingButton, setLoadingButton] = useState(false)
 
-  open?.type === 'new_element'
+  const defaultDesign = open?.type === 'new_element'
     ? DefaultStyle(open?.key)
     : DefaultStyle(getTypeFromCollection(open?.type ?? 'SingleText', open?.descriptionAr === 'progress_bar' ? 'progress_bar' : open?.kind))
 
@@ -387,7 +387,7 @@ function TableViewAggregates({ data, locale, onChange, readOnly, disabled }) {
           }}
         >
           <TableComponent
-            filterWithSelect={filterWithSelect}
+            filterWithSelect={filterWithSelect?.filter(Boolean)}
             columns={getFields.slice(
               paginationModel.page * paginationModel.pageSize,
               (paginationModel.page + 1) * paginationModel.pageSize

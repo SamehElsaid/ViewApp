@@ -22,9 +22,11 @@ import useSection from './UseSection'
 import useDynamicTable from './useDynamicTable'
 import useGoogleMap from './useMap'
 import useChart from './useChart'
-import useAggregates from './useAggregates'
 import useReport from './useReport'
 import useIFrame from './useIframe'
+import useMenuItem from './useMenuItem'
+import usePopup from './usePopup'
+import useRenderPage from './useRenderPage'
 
 export default function useCellPlugins({
   advancedEdit,
@@ -35,7 +37,10 @@ export default function useCellPlugins({
   pageId,
   entitiesId,
   collectionName,
-  pageName
+  pageName,
+  FormType,
+  layoutComponent,
+  isPrint
 }) {
   // Hooks Drag Drop Components
   const { collection } = useCollection({
@@ -47,22 +52,14 @@ export default function useCellPlugins({
     pageId,
     entitiesId,
     collectionName,
-    pageName
+    pageName,
+    FormType, FormType, isPrint
   })
   const { order } = useOrder({ advancedEdit, locale, readOnly, buttonRef })
   const { chart } = useChart({ advancedEdit, locale, readOnly, buttonRef })
   const { backgroundPlugin } = useBackground({ locale, buttonRef })
   const { table } = useTable({ advancedEdit, locale, buttonRef, pageId, entitiesId, collectionName, pageName })
-  
-  const { aggregates } = useAggregates({
-    advancedEdit,
-    locale,
-    buttonRef,
-    pageId,
-    entitiesId,
-    collectionName,
-    pageName
-  })
+
   const { report } = useReport({ advancedEdit, locale, buttonRef, pageId, entitiesId, collectionName, pageName })
   const { ContainerPlugin } = useContainer({ locale, buttonRef })
   const { BoxControl } = useBox({ locale, buttonRef })
@@ -81,6 +78,9 @@ export default function useCellPlugins({
   const { GoogleMap } = useGoogleMap({ locale, buttonRef })
   const { spacer } = useSpacer({ locale, buttonRef })
   const { iFrame } = useIFrame({ advancedEdit, locale, readOnly, buttonRef })
+  const { menuItem } = useMenuItem({ locale, buttonRef })
+  const { popup } = usePopup({ locale, buttonRef, readOnly })
+  const { renderPage } = useRenderPage({ locale, buttonRef, layoutComponent, FormType })
 
   const cellPlugins = useMemo(
     () => [
@@ -103,12 +103,14 @@ export default function useCellPlugins({
       cartCell,
       IconView,
       Header,
-      aggregates,
       report,
       SectionControl,
       dynamicTable,
       GoogleMap,
-      iFrame
+      iFrame,
+      menuItem,
+      popup,
+      renderPage,
     ],
     [
       backgroundPlugin,
@@ -118,7 +120,6 @@ export default function useCellPlugins({
       UploadVideo,
       spacer,
       collection,
-      aggregates,
       chart,
       order,
       table,
@@ -134,7 +135,10 @@ export default function useCellPlugins({
       SectionControl,
       dynamicTable,
       GoogleMap,
-      iFrame
+      iFrame,
+      menuItem,
+      popup,
+      renderPage,
     ]
   )
 

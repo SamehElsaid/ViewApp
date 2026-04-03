@@ -395,7 +395,6 @@ input:focus {
 
   const tabs = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data || []
 
-  console.log(tabs);
 
 
 
@@ -927,7 +926,6 @@ input:focus {
               {messages.dialogs.printDesignTitle}
             </Typography>
 
-            {/* اختيار القالب */}
             <Box mb={3}>
               <Typography variant='body2' color='text.secondary' mb={1.5}>
                 {messages.dialogs.printSelectTemplate}
@@ -1027,7 +1025,6 @@ input:focus {
               </Grid>
             </Box>
 
-            {/* Preview مشترك - يطبق عليه CSS القالب المختار */}
             {printConfig.selectedTemplate && (
               <Box mb={3} p={2.5} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
                 <Typography variant='body2' color='text.secondary' mb={2} fontWeight='medium'>
@@ -1061,7 +1058,6 @@ input:focus {
               </Box>
             )}
 
-            {/* CSS مخصص */}
             <Box>
               <Typography variant='body2' color='text.secondary' mb={1.5}>
                 {messages.dialogs.printCustomCSS}
@@ -1084,12 +1080,11 @@ input:focus {
         )}
 
         {/* PDF Borders Section */}
-        <Box mt={4} p={2} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
+        {/* <Box mt={4} p={2} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
           <Typography variant='subtitle1' color='primary' fontWeight='bold' mb={2}>
             حدود PDF (PDF Borders)
           </Typography>
 
-          {/* اختيار قالب الحدود */}
           <Box mb={3}>
             <Typography variant='body2' color='text.secondary' mb={1.5}>
               اختر قالب الحدود:
@@ -1185,7 +1180,6 @@ input:focus {
             </Grid>
           </Box>
 
-          {/* Preview للحدود */}
           {printConfig.selectedBorder && (
             <Box mb={3} p={2.5} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
               <Typography variant='body2' color='text.secondary' mb={2} fontWeight='medium'>
@@ -1214,7 +1208,6 @@ input:focus {
             </Box>
           )}
 
-          {/* CSS مخصص للحدود */}
           {printConfig.selectedBorder === 'border_custom' && (
             <Box>
               <Typography variant='body2' color='text.secondary' mb={1.5}>
@@ -1235,7 +1228,7 @@ input:focus {
               </Typography>
             </Box>
           )}
-        </Box>
+        </Box> */}
 
         {/* Extra PDF pages */}
         <Stack direction='row' alignItems='center' justifyContent='space-between' gap={2} mt={4}>

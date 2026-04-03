@@ -203,7 +203,18 @@ const UserDropdown = props => {
               </Box>
             </Box>
             <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />
-         
+            <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
+              <Box component={Link} href={`/${locale}/setting/profile`} sx={styles}>
+                <Icon icon='tabler:user-check' />
+                {messages.myProfile}
+              </Box>
+            </MenuItemStyled>
+            <MenuItemStyled sx={{ p: 0 }} onClick={() => handleDropdownClose()}>
+              <Box component={Link} href={`/${locale}/setting`} sx={styles}>
+                <Icon icon='tabler:settings' />
+                {messages.settings}
+              </Box>
+            </MenuItemStyled>
 
 
             <Divider sx={{ my: theme => `${theme.spacing(2)} !important` }} />

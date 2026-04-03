@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react'
-import { FaBars, FaChevronDown } from 'react-icons/fa'
+import React, { useEffect, useMemo, useState } from 'react'
+import { FaBars } from 'react-icons/fa'
 import { MdMenu } from 'react-icons/md'
 import HeaderControl from './HeaderControl'
 import { useIntl } from 'react-intl'
 import { Autocomplete, TextField } from '@mui/material'
+import { useSelector } from 'react-redux'
 
 export default function useHeader({ locale, buttonRef }) {
   const { messages } = useIntl()
@@ -13,13 +14,11 @@ export default function useHeader({ locale, buttonRef }) {
       Renderer: ({ data, onChange }) => {
         const [isOpen, setIsOpen] = useState(false)
         const [selectedOption, setSelectedOption] = useState(data?.defaultOption || '')
+        const apiData = useSelector(state => state.api.data)
 
-        const handleSelectChange = event => {
-          setSelectedOption(event.target.value)
-          if (data?.onSelectChange && typeof data.onSelectChange === 'function') {
-            data.onSelectChange(event.target.value)
-          }
-        }
+        useEffect(() => {
+          setSelectedOption(data?.defaultOption || '')
+        }, [data?.defaultOption])
 
         const handleRightButtonClick = () => {
           switch (data?.rightButtonAction) {
@@ -51,19 +50,114 @@ export default function useHeader({ locale, buttonRef }) {
           setIsOpen(!isOpen)
         }
 
+        const padY =
+          data?.paddingY !== undefined && data?.paddingY !== null && String(data.paddingY).trim() !== ''
+            ? `${data.paddingY}px`
+            : '12px'
+
+        const padX =
+          data?.paddingX !== undefined && data?.paddingX !== null && String(data.paddingX).trim() !== ''
+            ? `${data.paddingX}px`
+            : '16px'
+
+        const lm = data?.logoMedia || {}
+        const showLogo = data?.showLogo !== false
+
+        const resolveLogoConditionValue = () => {
+          const cond = lm?.visibilityCondition
+          if (!cond || cond?.enabled !== true) return null
+          if (cond.source === 'api') {
+            const link = lm?.api_url || cond.api_url
+            if (!link) return null
+            const found = Array.isArray(apiData) ? apiData.find(item => item.link === link) : null
+            const obj = found?.data
+            if (!obj || !cond.key) return null
+            try {
+              return cond.key.split('.').reduce((acc, k) => (acc != null ? acc[k] : undefined), obj)
+            } catch {
+              return null
+            }
+          }
+          if (cond.source === 'query') {
+            if (typeof window === 'undefined') return null
+            const params = new URLSearchParams(window.location.search)
+
+            return params.get(cond.key || '')
+          }
+
+          return null
+        }
+
+        const evaluateCondition = (left, operator, right) => {
+          const numLeft = Number(left)
+          const numRight = Number(right)
+          const canNum = !Number.isNaN(numLeft) && !Number.isNaN(numRight)
+          const l = canNum ? numLeft : (left ?? '').toString()
+          const r = canNum ? numRight : (right ?? '').toString()
+
+          switch (operator) {
+            case '==':
+              return l == r
+            case '!=':
+              return l != r
+            case '>':
+              return canNum ? numLeft > numRight : l > r
+            case '<':
+              return canNum ? numLeft < numRight : l < r
+            case '>=':
+              return canNum ? numLeft >= numRight : l >= r
+            case '<=':
+              return canNum ? numLeft <= numRight : l <= r
+            case 'contains':
+              return (l || '').toString().includes((r || '').toString())
+            default:
+              return false
+          }
+        }
+
+        const logoConditionTrue = (() => {
+          const cond = lm?.visibilityCondition
+          if (!cond || cond?.enabled !== true) return null
+          const left = resolveLogoConditionValue()
+
+          return evaluateCondition(left, cond.operator || '==', cond.value ?? '')
+        })()
+
+        const logoHiddenByCondition = (() => {
+          const cond = lm?.visibilityCondition
+          if (!cond || cond?.enabled !== true || logoConditionTrue === null) return false
+          const behavior = cond.behavior || 'showWhenTrue'
+          if (behavior === 'hideWhenTrue') return logoConditionTrue === true
+
+          return logoConditionTrue === false
+        })()
+
+        const logoFilePath = lm?.image
+
+        const logoUrlFallback =
+          data?.logoUrl !== undefined && data?.logoUrl !== null ? String(data.logoUrl).trim() : ''
+
+        const logoSrc = logoFilePath
+          ? logoFilePath.startsWith('http://') || logoFilePath.startsWith('https://')
+            ? logoFilePath
+            : `${process.env.API_URL}/file/download/${logoFilePath}`
+          : logoUrlFallback || ''
+
+        const logoDisplayStyle = logoHiddenByCondition ? 'none' : 'block'
+
         return (
           <header
             className='relative w-full'
             style={{
               backgroundColor: data?.backgroundColor || '#ffffff',
               borderBottom: `1px solid ${data?.borderColor || '#e5e7eb'}`,
-              padding: `${data?.paddingY + 'px' || '12px'} ${data?.paddingX + 'px' || '16px'}`,
-              boxShadow: data?.showShadow ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+              padding: `${padY} ${padX}`,
+              boxShadow: data?.showShadow ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
             }}
           >
-            <div className='flex justify-between items-center'>
+            <div className='flex relative justify-between items-center min-h-[48px] gap-3'>
               {/* Left Section with Selector */}
-              <div className='flex items-center'>
+              <div className='flex relative z-[1] items-center min-w-0 flex-1 md:flex-none'>
                 {data?.showMobileMenu && (
                   <button
                     className='mr-3 text-xl md:hidden'
@@ -75,7 +169,7 @@ export default function useHeader({ locale, buttonRef }) {
                 )}
 
                 {data?.showSelector && (
-                  <div className='relative min-w-[200px]'>
+                  <div className='relative z-[1] min-w-[200px] max-w-[min(100%,280px)]'>
                     <Autocomplete
                       options={(data?.options || []).map(o => ({ label: o?.[`label_${locale}`], value: o.value }))}
                       getOptionLabel={o => o?.label || ''}
@@ -105,23 +199,35 @@ export default function useHeader({ locale, buttonRef }) {
                 {data?.customLeftContent && <div className='ml-4'>{data?.customLeftContent}</div>}
               </div>
 
-              {/* Center Logo */}
-              <div className='flex absolute left-1/2 justify-center items-center transform -translate-x-1/2'>
-                {/* {data?.logoUrl ? ( */}
-                <img
-                  src={'https://www.gahar.gov.eg/Front/images/logo.svg'}
-                  alt={data?.logoAlt || 'Logo'}
-                  className='max-h-12'
-                  style={{
-                    height: data?.logoHeight || '40px',
-                    width: 'auto'
-                  }}
-                />
-           
+              {/* Center Logo — uses logoMedia.image (upload/API) then logoUrl fallback */}
+              <div
+                className='flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 justify-center items-center max-w-[40%] pointer-events-none'
+                aria-hidden={!showLogo || !logoSrc}
+              >
+                {showLogo && logoSrc ? (
+                  <img
+                    src={logoSrc}
+                    alt={data?.logoAlt || 'Logo'}
+                    className='max-w-full object-contain select-none'
+                    style={{
+                      display: logoDisplayStyle,
+                      width: lm.imageWidth ? `${lm.imageWidth}${lm.imageWidthUnit || 'px'}` : 'auto',
+                      height: lm.imageHeight ? `${lm.imageHeight}${lm.imageHeightUnit || 'px'}` : '40px',
+                      maxHeight: lm.imageHeight ? undefined : '48px',
+                      objectFit: lm.objectFit || 'contain',
+                      margin:
+                        lm.textAlign === 'right'
+                          ? '0 0 0 auto'
+                          : lm.textAlign === 'left'
+                            ? '0 auto 0 0'
+                            : '0 auto'
+                    }}
+                  />
+                ) : null}
               </div>
 
               {/* Right Section */}
-              <div className='flex items-center'>
+              <div className='flex relative z-[1] items-center shrink-0'>
                 {/* Custom Right Content */}
                 {data?.customRightContent ? (
                   data?.customRightContent

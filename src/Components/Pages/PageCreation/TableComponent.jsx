@@ -26,6 +26,13 @@ import { useRouter } from 'next/router'
 
 // Constants
 const BORDER_COLOR = 'rgba(224, 224, 224, 1)'
+
+const DEFAULT_TABLE_STYLE = {
+  headerBackgroundColor: '#f5f5f5',
+  headerTextColor: '#333333',
+  tableBorderColor: 'rgba(224, 224, 224, 1)'
+}
+
 const ACTIONS_COLUMN_WIDTH = { maxWidth: '150px', width: '150px' }
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 15]
 const FILE_NAME_MAX_LENGTH = 30
@@ -79,10 +86,11 @@ CellValueRenderer.displayName = 'CellValueRenderer'
  * Renders action buttons for table rows
  */
 const ActionButtons = memo(
-  ({ isFormTable, column, editAction, deleteAction, detailsAction, messages, onEdit, onDelete, onFormTableDelete, onDetails   }) => {
-    if (isFormTable) {
+  ({ isFormTable, column, editAction, deleteAction, detailsAction, messages, onEdit, onDelete, onFormTableDelete, onDetails, borderColor }) => {
+    const bc = borderColor ?? BORDER_COLOR
+    if (isFormTable && deleteAction) {
       return (
-        <TableCell className='flex justify-center items-center' sx={{ borderBlockEnd: `1px solid ${BORDER_COLOR}` }}>
+        <TableCell className='flex justify-center items-center' sx={{ borderBlockEnd: `1px solid ${bc}` }}>
           <Tooltip title={messages.delete}>
             <IconButton size='small' onClick={onFormTableDelete} aria-label={messages.delete}>
               <IconifyIcon icon='tabler:trash' />
@@ -97,7 +105,7 @@ const ActionButtons = memo(
     }
 
     return (
-      <TableCell sx={ACTIONS_COLUMN_WIDTH} className='flex justify-center items-center'>
+      <TableCell sx={{ ...ACTIONS_COLUMN_WIDTH, borderBottom: `1px solid ${bc}` }} className='flex justify-center items-center'>
         {editAction && (
           <Tooltip title={messages.edit}>
             <IconButton size='small' onClick={() => {
@@ -133,64 +141,78 @@ ActionButtons.displayName = 'ActionButtons'
 /**
  * Renders table header cells
  */
-const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, messages, setOpen, readOnly, data }) => {
-  
-  return <TableRow
-  sx={{
-      '&:not(:last-child) td, &:not(:last-child) th': {
-        borderBottom: `1px solid ${BORDER_COLOR}`
-      }
-    }}
-  >
-    {filterWithSelect.map(column => {
-      let roles = data?.additional_fields?.find(el => el.key === column.id)?.roles
-      console.log(roles);
+const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, messages, setOpen, readOnly, data, tableStyle }) => {
+  const ts = tableStyle ?? DEFAULT_TABLE_STYLE
+  const borderColor = ts.tableBorderColor ?? BORDER_COLOR
+  const isFormTable = data.kind === 'form-table'
 
-      // const columnRole =
-      return (
-        <TableCell
-          className='uppercase'
-          key={column.id}
-          sx={{
-            borderInlineEnd: `1px solid ${BORDER_COLOR}`,
-            '&:last-child': { borderInlineEnd: 0 }
-          }}
-        >
-          {console.log(data)
-          }
-          {locale === 'ar' ? roles?.label?.label_ar ?? column.nameAr : roles?.label?.label_en ?? column.nameEn}
-          {!readOnly && (
-            <div className='absolute inset-0 z-20 flex || justify-end border-main-color border-dashed border rounded-md'>
-              <button
-                type='button'
-                title={locale !== 'ar' ? 'Setting' : 'التحكم'}
-                onMouseDown={e => {
-                  e.stopPropagation()
-                }}
-                onClick={e => {
-                  e.stopPropagation()
-                  const newColumn = { ...column }
-                  if (newColumn.fieldCategory === 'ManyToMany' || newColumn.fieldCategory === 'OneToMany' || newColumn.fieldCategory === 'OneToOne') {
-                    newColumn.fieldCategory = 'Associations'
-                  }
 
-                  setOpen(newColumn)
-                }}
-                className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
-              >
-                <IoMdSettings />
-              </button>
-            </div>
-          )}
+  return (
+    <TableRow
+      sx={{
+        backgroundColor: ts.headerBackgroundColor,
+        color: ts.headerTextColor,
+        '&:not(:last-child) td, &:not(:last-child) th': {
+          borderBottom: `1px solid ${borderColor}`
+        }
+      }}
+    >
+      {isFormTable && !readOnly && (
+        <TableCell sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
+          {locale !== 'ar' ? 'Control' : 'التحكم'}
         </TableCell>
-      )
-    })}
-    {showActionsColumn && (
-      <TableCell className='uppercase' sx={ACTIONS_COLUMN_WIDTH}>
-        {messages.actions}
-      </TableCell>
-    )}
-  </TableRow>
+      )}
+      {filterWithSelect.map(column => {
+        let roles = data?.additional_fields?.find(el => el?.key === column?.id)?.roles
+
+        return (
+          <TableCell
+            className='uppercase'
+            key={column?.id}
+            sx={{
+              backgroundColor: ts.headerBackgroundColor,
+              color: ts.headerTextColor,
+              borderInlineEnd: `1px solid ${borderColor}`,
+              '&:last-child': { borderInlineEnd: 0 }
+            }}
+          >
+            <span dir='auto'>
+              {locale === 'ar' ? roles?.label?.label_ar ?? column?.nameAr : roles?.label?.label_en ?? column?.nameEn}
+
+            </span>
+            {!readOnly && (
+              <div className='no-print absolute inset-0 z-20 flex || justify-end border-main-color border-dashed border rounded-md'>
+                <button
+                  type='button'
+                  title={locale !== 'ar' ? 'Setting' : 'التحكم'}
+                  onMouseDown={e => {
+                    e.stopPropagation()
+                  }}
+                  onClick={e => {
+                    e.stopPropagation()
+                    const newColumn = { ...column }
+                    if (newColumn.fieldCategory === 'ManyToMany' || newColumn.fieldCategory === 'OneToMany' || newColumn.fieldCategory === 'OneToOne') {
+                      newColumn.fieldCategory = 'Associations'
+                    }
+
+                    setOpen(newColumn)
+                  }}
+                  className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
+                >
+                  <IoMdSettings />
+                </button>
+              </div>
+            )}
+          </TableCell>
+        )
+      })}
+      {showActionsColumn && (
+        <TableCell className='uppercase' sx={{ ...ACTIONS_COLUMN_WIDTH, backgroundColor: ts.headerBackgroundColor, color: ts.headerTextColor, borderInlineEnd: `1px solid ${borderColor}` }}>
+          {messages.actions}
+        </TableCell>
+      )}
+    </TableRow>
+  )
 })
 
 TableHeader.displayName = 'TableHeader'
@@ -200,6 +222,7 @@ TableHeader.displayName = 'TableHeader'
  */
 const TableRowComponent = memo(
   ({
+    refErrorFromTable,
     setTotalCount,
     allData,
     column,
@@ -224,7 +247,11 @@ const TableRowComponent = memo(
     reloadHight,
     formTable,
     setOpen,
-    columnId
+    columnId,
+    allErrorsRef,
+    reloadErrors,
+    tableBorderColor,
+    handleRowSettingOpen
   }) => {
     const isFormTable = data.kind === 'form-table'
 
@@ -249,13 +276,38 @@ const TableRowComponent = memo(
 
 
 
+
+
+
+    const borderColor = tableBorderColor ?? data?.tableStyle?.tableBorderColor ?? BORDER_COLOR
+    const { locale } = useIntl()
+
+    console.log(findData, allData, "data.newRows");
+
     return (
-      <TableRow key={column.id}>
+      <TableRow key={column?.id} className='relative'>
+        {isFormTable && !readOnly && (
+          <TableCell key={column.id + 'delete'} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
+            <button
+              type='button'
+              className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
+              title={locale !== 'ar' ? 'Setting' : 'التحكم'}
+              onClick={() => {
+                handleRowSettingOpen(column.Id)
+
+              }}
+            >
+              <IoMdSettings />
+            </button>
+          </TableCell>
+        )}
         {filterWithSelect.map(parentKey => (
-          <TableCell key={parentKey.id} sx={{ borderInlineEnd: `1px solid ${BORDER_COLOR}` }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+          parentKey?.id &&
+          <TableCell key={parentKey?.id} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
+            <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }} dir='auto'>
               {isFormTable ? (
                 <ViewInputInTable
+                  refErrorFromTable={refErrorFromTable}
                   ele={parentKey}
                   columnId={columnId}
                   row={column}
@@ -263,6 +315,7 @@ const TableRowComponent = memo(
                   disabled={disabled}
                   data={data}
                   dataRef={{ ...dataRef, ...allData }}
+                  currentData={dataRef}
                   setGetFields={setGetFields}
                   onChange={onChange}
                   setTriggerData={setTriggerData}
@@ -273,6 +326,8 @@ const TableRowComponent = memo(
                   setChangedValue={setChangedValue}
                   formTable={formTable}
                   setOpen={setOpen}
+                  allErrorsRef={allErrorsRef}
+                  reloadErrors={reloadErrors}
                 />
               ) : (
                 <CellValueRenderer parentKey={parentKey} column={column} />
@@ -291,6 +346,7 @@ const TableRowComponent = memo(
           onDelete={onDelete}
           onFormTableDelete={handleFormTableDelete}
           onDetails={onDetails}
+          borderColor={borderColor}
         />
       </TableRow>
     )
@@ -300,6 +356,7 @@ const TableRowComponent = memo(
 TableRowComponent.displayName = 'TableRowComponent'
 
 function TableComponent({
+  refErrorFromTable,
   setTotalCount,
   filterWithSelect = [],
   columns = [],
@@ -327,13 +384,20 @@ function TableComponent({
   allData,
   reloadHight,
   type,
-  formTable
+  formTable,
+  allErrorsRef,
+  reloadErrors,
+  tableStyle: tableStyleFromParent,
+  handleRowSettingOpen
 }) {
   const { locale, messages } = useIntl()
   const [open, setOpen] = useState(false)
   const [associationsOpen, setAssociationsOpen] = useState(false)
   const [associationsConfig, setAssociationsConfig] = useState(data?.associationsConfig ?? [])
   const router = useRouter()
+
+  // استخدام الـ style القادم من الأب فقط مع قيمة افتراضية آمنة
+  const tableStyle = tableStyleFromParent ?? DEFAULT_TABLE_STYLE
 
   const handleChange = (event, fieldCategory, skipCheck, field) => {
     // const
@@ -421,7 +485,7 @@ function TableComponent({
   }
 
   const showActionsColumn = useMemo(
-    () => data.kind === 'form-table' || editAction || deleteAction,
+    () => (data.kind === 'form-table' && deleteAction) || editAction || deleteAction,
     [data.kind, editAction, deleteAction]
   )
 
@@ -461,6 +525,42 @@ function TableComponent({
     [setDeleteOpen, setTotalCount]
   )
 
+
+  const filteredColumns = useMemo(() => {
+    const cleanedCurrent = allData?.current
+      ? Object.fromEntries(
+        Object.entries(allData.current).map(([key, value]) => {
+          const newKey = key.includes('.') ? key.split('.').pop() : key
+
+          return [newKey, value]
+        })
+      )
+      : {}
+
+    const filteredColumns = data.triggerRowTable ?? []
+
+    if (filteredColumns.length === 0) {
+      return columns
+    }
+
+    const newColumns = columns.filter(column => {
+      const findData = filteredColumns.find(ele => ele.key === column.Id)
+
+      if (findData) {
+        const getValue = cleanedCurrent?.[findData?.triggerRowTable?.selectedField]
+        if (getValue === findData?.triggerRowTable?.mainValue) {
+          return column
+        } else {
+          return null
+        }
+      }
+
+      return column
+    })
+
+    return newColumns
+  }, [columns, data.triggerRowTable, triggerData, allData])
+
   if (loadingHeader) {
     return (
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -470,6 +570,8 @@ function TableComponent({
       </Paper>
     )
   }
+
+
 
 
   return (
@@ -502,11 +604,21 @@ function TableComponent({
         <Table
           stickyHeader
           sx={{
-            border: `1px solid ${BORDER_COLOR}`
+            border: `1px solid ${tableStyle.tableBorderColor}`,
+            '& .MuiTableCell-root': {
+              borderColor: tableStyle.tableBorderColor
+            },
+            '& .MuiTableRow-root .MuiTableCell-root': {
+              borderBottom: `1px solid ${tableStyle.tableBorderColor}`,
+              borderInlineEnd: `1px solid ${tableStyle.tableBorderColor}`
+            },
+            '& .MuiTableRow-root .MuiTableCell-root:last-child': {
+              borderInlineEnd: 'none'
+            }
           }}
           aria-label={data.kind === 'form-table' ? 'Form table' : 'Data table'}
         >
-          <TableHead>
+          <TableHead sx={{ backgroundColor: tableStyle.headerBackgroundColor }}>
             <TableHeader
               setOpen={setOpen}
               filterWithSelect={filterWithSelect}
@@ -515,12 +627,13 @@ function TableComponent({
               messages={messages}
               readOnly={readOnly}
               data={data}
+              tableStyle={tableStyle}
             />
           </TableHead>
           <TableBody>
             {loadingEntity ? (
-              <TableRow>
-                <TableCell colSpan={colSpan} className='flex justify-center items-center'>
+              <TableRow sx={{ '& .MuiTableCell-root': { borderBottom: `1px solid ${tableStyle.tableBorderColor}` } }}>
+                <TableCell colSpan={colSpan} className='flex justify-center items-center' sx={{ borderBottom: `1px solid ${tableStyle.tableBorderColor}` }}>
                   <div
                     className='flex justify-center items-center p-4 rounded-md'
                     role='status'
@@ -531,20 +644,22 @@ function TableComponent({
                 </TableCell>
               </TableRow>
             ) : columns.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={colSpan} className='text-center p-4'>
+              <TableRow sx={{ '& .MuiTableCell-root': { borderBottom: `1px solid ${tableStyle.tableBorderColor}` } }}>
+                <TableCell colSpan={colSpan} className='text-center p-4' sx={{ borderBottom: `1px solid ${tableStyle.tableBorderColor}` }}>
                   <Typography variant='body2' color='text.secondary'>
                     {messages.notFound || 'No data available'}
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              columns.map(column => (
+              filteredColumns.map(column => (
                 <TableRowComponent
+                  refErrorFromTable={refErrorFromTable}
                   setTotalCount={setTotalCount}
                   key={column.id || column.Id}
                   columnId={column.id || column.Id}
                   allData={allData}
+                  handleRowSettingOpen={handleRowSettingOpen}
                   formTable={formTable}
                   column={column}
                   filterWithSelect={filterWithSelect}
@@ -578,6 +693,9 @@ function TableComponent({
                   reloadHight={reloadHight}
                   type={type}
                   setOpen={setOpen}
+                  allErrorsRef={allErrorsRef}
+                  reloadErrors={reloadErrors}
+                  tableBorderColor={tableStyle.tableBorderColor}
                 />
               ))
             )}

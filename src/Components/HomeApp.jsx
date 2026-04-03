@@ -8,12 +8,14 @@ import useInitialization from 'src/@core/hooks/useInitialization'
 import useTriggerError from 'src/@core/hooks/useTriggerError'
 import { toast } from 'react-toastify'
 import { useSettings } from 'src/@core/hooks/useSettings'
+import useFetchGlobalData from 'src/@core/hooks/useFetchGlobalData'
 
 function HomeApp({ children }) {
   const router = useRouter()
   const { locale } = useRouter()
   const patch = usePathname()
   const user = useSelector(rx => rx.auth.loading)
+  const fetchGlobalData = useFetchGlobalData()
 
 
   const { login } = useInitialization()

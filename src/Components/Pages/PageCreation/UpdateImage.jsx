@@ -20,7 +20,7 @@ const imageFileTypes = [
   { value: 'svg', label: 'SVG', mimeType: 'image/svg+xml' }
 ]
 
-export default function UpdateImage({ data, onChange, locale, type, buttonRef }) {
+export default function UpdateImage({ data, onChange, locale, type, buttonRef, embedded }) {
   const getApiData = useSelector(rx => rx.api.data)
   const { messages } = useIntl()
 
@@ -60,6 +60,16 @@ export default function UpdateImage({ data, onChange, locale, type, buttonRef })
       event.target.value = ''
 
       return
+    }
+
+    if (type !== 'video') {
+      const maxKb = Number(data?.maxImageSize)
+      if (!Number.isNaN(maxKb) && maxKb > 0 && file.size > maxKb * 1024) {
+        toast.error(messages.useUploadImage.imageSizeError.replace('{maxKb}', String(maxKb)))
+        event.target.value = ''
+
+        return
+      }
     }
 
     const loading = toast.loading(messages.useUploadImage.uploading)
@@ -106,10 +116,12 @@ export default function UpdateImage({ data, onChange, locale, type, buttonRef })
 
   return (
     <div>
-      <CloseNav
-        text={type === 'video' ? messages.useUploadImage.video : messages.useUploadImage.image}
-        buttonRef={buttonRef}
-      />
+      {!embedded && (
+        <CloseNav
+          text={type === 'video' ? messages.useUploadImage.video : messages.useUploadImage.image}
+          buttonRef={buttonRef}
+        />
+      )}
 
       <TextField
         select

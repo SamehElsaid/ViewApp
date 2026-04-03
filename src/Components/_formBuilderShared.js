@@ -12,7 +12,14 @@ export const fieldTypes = [
   'textarea',
   'time',
   'url',
-  "progress_bar"
+  "progress_bar",
+  "currency",
+  "decimal",
+  "boolean",
+  "percent",
+  "integer",
+  "float",
+  "double",
 ]
 
 export const fileTypes = [
@@ -57,11 +64,11 @@ export const fileTypes = [
   '.rar',
 
   // Code
-  
 
- 
 
- 
+
+
+
 ]
 
 export const OptionsStep = ['checkbox', 'radio', 'select', 'multiple_select']

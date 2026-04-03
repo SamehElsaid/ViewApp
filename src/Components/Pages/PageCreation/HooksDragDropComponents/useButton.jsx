@@ -12,9 +12,28 @@ export default function useButton({ locale, buttonRef }) {
       Renderer: ({ data }) => {
         const [hover, setHover] = useState(false)
 
+        const handleClick = e => {
+          if (data?.popupTargetId) {
+            try {
+              const action = data?.popupAction || 'toggle'
+              window.dispatchEvent(
+                new CustomEvent('popup-toggle', {
+                  detail: {
+                    id: data.popupTargetId,
+                    action
+                  }
+                })
+              )
+            } catch (err) {
+              // ignore
+            }
+          }
+        }
+
         const options = {
           onMouseEnter: () => setHover(true),
           onMouseLeave: () => setHover(false),
+          onClick: handleClick,
           style: {
             width: data.width || 'fit-content',
             backgroundColor: hover
@@ -26,6 +45,7 @@ export default function useButton({ locale, buttonRef }) {
             borderRadius: data.borderRadius + 'px' || '5px',
             fontSize: data.fontSize + 'px' || '16px',
             fontWeight: data.fontWeight || 'bold',
+            fontFamily: data.fontFamily || undefined,
             border: data.border || 'none',
             borderWidth: data.borderWidth + 'px' || '1px',
             borderColor: hover ? data.hoverBorderColor || 'white' : data.borderColor || 'white',
@@ -57,7 +77,9 @@ export default function useButton({ locale, buttonRef }) {
             {(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'}
           </Link>
         ) : (
-          <button {...options}>{(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'} </button>
+          <button {...options}>
+            {(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'}
+          </button>
         )
       },
       id: 'button',

@@ -8,6 +8,7 @@ import { useIntl } from 'react-intl'
 import { SET_ACTIVE_LOADING } from 'src/store/apps/LoadingMainSlice/LoadingMainSlice'
 import { REMOVE_USER, SET_ACTIVE_USER } from 'src/store/apps/authSlice/authSlice'
 import { getUser } from 'src/services/AuthService'
+import axios from 'axios'
 
 function useInitialization() {
   const theme = useTheme()
@@ -16,7 +17,7 @@ function useInitialization() {
   const dispatch = useDispatch()
   const [login, setLogin] = useState(true)
   const { locale } = useIntl()
-
+  
   useEffect(() => {
     const userFind = async () => {
       const user = await getUser()
@@ -28,7 +29,7 @@ function useInitialization() {
         return
       }
 
-      dispatch(SET_ACTIVE_USER({ ...user.profile }))
+      dispatch(SET_ACTIVE_USER({ ...user.profile, }))
       setTimeout(() => {
         dispatch(SET_ACTIVE_LOADING())
         setLogin(false)

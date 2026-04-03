@@ -94,6 +94,7 @@ function CartControl({ data, onChange, type, buttonRef }) {
       onBlur={e => onChange({ ...data, [valueKey]: e.target.value })}
       label={locale === 'ar' ? options.labelAr || label : label}
       variant='filled'
+    
       {...options}
     />
   )
@@ -277,8 +278,12 @@ function CartControl({ data, onChange, type, buttonRef }) {
           {/* Title Section */}
           <div className='p-4 mt-4 rounded border border-dashed border-main-color'>
             <h2 className='mb-4 text-2xl text-main-color'>{messages.card.title}</h2>
-            {renderTextField(obj ? messages.card.title_ar_key : messages.card.title_ar, 'title_ar', 'text')}
-            {renderTextField(obj ? messages.card.title_en_key : messages.card.title_en, 'title_en', 'text')}
+            {renderTextField(obj ? messages.card.title_ar_key : messages.card.title_ar, 'title_ar', 'text', {
+              inputProps: { maxLength: 1000 }
+            })}
+            {renderTextField(obj ? messages.card.title_en_key : messages.card.title_en, 'title_en', 'text', {
+              inputProps: { maxLength: 1000 }
+            })}
             {(data.cart_type === 'product' || !data.cart_type) && (
               <>
                 {renderTextField(messages.dialogs.color, 'titleColor', 'color')}
@@ -457,12 +462,14 @@ function CartControl({ data, onChange, type, buttonRef }) {
                 {renderTextField(
                   obj ? messages.card.description_ar_key : messages.card.description_ar,
                   'description_ar',
-                  'text'
+                  'text',
+                  { inputProps: { maxLength: 1000 } }
                 )}
                 {renderTextField(
                   obj ? messages.card.description_en_key : messages.card.description_en,
                   'description_en',
-                  'text'
+                  'text',
+                  { inputProps: { maxLength: 1000 } }
                 )}
                 {renderTextField(messages.card.color, 'descriptionColor', 'color')}
                 {renderTextField(messages.card.fontSize, 'descriptionFontSize', 'number', {
@@ -486,13 +493,14 @@ function CartControl({ data, onChange, type, buttonRef }) {
                   { value: 'Courier New', label: 'Courier New' }
                 ])}
                 {renderSelect(messages.card.descriptionTextAlign, 'descriptionTextAlign', [
-                  { value: 'start', label: 'Start' },
-                  { value: 'center', label: 'Center' },
-                  { value: 'end', label: 'End' }
+                  { value: 'start', label: locale === 'ar' ? 'البداية' : 'Start' },
+                  { value: 'center', label: locale === 'ar' ? 'المركز' : 'Center' },
+                  { value: 'end', label: locale === 'ar' ? 'النهاية' : 'End' }
                 ])}
                 {renderSelect(messages.card.descriptionDisplay, 'descriptionDisplay', [
-                  { value: 'block', label: 'Show' },
-                  { value: 'none', label: 'Hide' }
+                  { value: 'block', label: locale === 'ar' ? 'عرض' : 'Show' },
+                  { value: 'block', label: locale === 'ar' ? 'عرض' : 'Show' },
+                  { value: 'none', label: locale === 'ar' ? 'إخفاء' : 'Hide' }
                 ])}
                 {renderTextField(messages.card.maxLength, 'descriptionMaxLength', 'number')}
               </div>
