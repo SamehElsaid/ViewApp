@@ -19,6 +19,7 @@ import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 
 export default function DisplayField({
   tabsData,
+  loadingSaveAsDraft,
   onChangeData,
   advancedEdit,
   saveAsDraft,
@@ -179,36 +180,36 @@ export default function DisplayField({
 
   useEffect(() => {
     if (loading || !roles?.trigger) return
-  
+
     const trigger = roles.trigger
     const currentValue = dataRef?.current?.[trigger.selectedField]
-  
+
     if (currentValue === undefined) return
-  
+
     const isEqual = trigger.isEqual === 'equal'
     const isBasic = input.fieldCategory === 'Basic'
     const shouldResetValue = input?.kind === 'search' || input?.kind === 'checkbox'
-  
+
     const resetValueIfNeeded = () => {
       if (shouldResetValue) setValue([])
     }
-  
+
     const compare = (a, b) => (isEqual ? a == b : a != b)
-  
+
     const getAPIData = async () => {
       if (!trigger.parentKey || !currentValue) return null
-  
+
       const res = await axiosGet(
         `generic-entities/${trigger.parentKey}/${currentValue}`
       )
-  
+
       if (res?.status) {
         return res?.data?.entities?.[0] ?? null
       }
-  
+
       return null
     }
-  
+
     const handleWithPossibleAPI = async (callback) => {
       if (trigger.parentKey) {
         const data = await getAPIData()
@@ -217,33 +218,33 @@ export default function DisplayField({
         callback(currentValue)
       }
     }
-  
+
     // =========================
     // FILTER
     // =========================
     if (trigger.typeOfValidation === 'filter') {
       resetValueIfNeeded()
-  
+
       const key = trigger.currentField === 'id' ? 'Id' : trigger.currentField
-  
+
       setSelectedOptions(prev =>
         prev.filter(item => compare(item?.[key], currentValue))
       )
     }
-  
+
     // =========================
     // FILTER FROM API
     // =========================
     if (trigger.typeOfValidation === 'filterDataFromAPI') {
       resetValueIfNeeded()
-  
+
       const found = FilterData.find(
         ele => ele?.[trigger.mainValue] == currentValue
       )
-  
+
       setSelectedOptions(found?.[input?.key] || [])
     }
-  
+
     // =========================
     // DISABLE / ENABLE
     // =========================
@@ -253,24 +254,24 @@ export default function DisplayField({
           const hasValue = Array.isArray(value)
             ? value.length !== 0
             : !!value
-  
+
           setIsDisable(
             hasValue
               ? mode === 'enable'
                 ? 'enable'
                 : 'disabled'
               : roles?.onMount?.type === mode
-              ? mode === 'enable'
-                ? 'disabled'
-                : 'hidden'
-              : null
+                ? mode === 'enable'
+                  ? 'disabled'
+                  : 'hidden'
+                : null
           )
 
           return
         }
-  
+
         const result = compare(value, trigger.mainValue)
-  
+
         if (mode === 'disable') {
           setIsDisable(result ? 'disabled' : roles?.onMount?.type === 'hide' ? 'hidden' : null)
         } else {
@@ -278,54 +279,54 @@ export default function DisplayField({
         }
       })
     }
-  
+
     if (trigger.typeOfValidation === 'disable') {
       handleDisableEnable('disable')
     }
-  
+
     if (trigger.typeOfValidation === 'enable') {
       handleDisableEnable('enable')
     }
-  
+
     // =========================
     // OPTIONAL / REQUIRED
     // =========================
     const toggleRequired = (shouldBeRequired) => {
       setValidations(prev => {
         const newState = { ...prev }
-  
+
         if (shouldBeRequired) newState.Required = true
         else delete newState.Required
-  
+
         return newState
       })
     }
-  
+
     const handleValidation = async (type) => {
       await handleWithPossibleAPI(value => {
         if (!trigger.mainValue) {
           const hasValue = Array.isArray(value)
             ? value.length !== 0
             : !!value
-  
+
           toggleRequired(type === 'required' ? hasValue : !hasValue)
 
           return
         }
-  
+
         const result = compare(value, trigger.mainValue)
         toggleRequired(type === 'required' ? result : !result)
       })
     }
-  
+
     if (trigger.typeOfValidation === 'optional') {
       handleValidation('optional')
     }
-  
+
     if (trigger.typeOfValidation === 'required') {
       handleValidation('required')
     }
-  
+
     // =========================
     // EMPTY
     // =========================
@@ -334,7 +335,7 @@ export default function DisplayField({
         const result = trigger.mainValue
           ? compare(value, trigger.mainValue)
           : value !== lastValue
-  
+
         if (result) {
           setLastValue(true)
           setValue(typeof value === 'object' ? [] : '')
@@ -343,7 +344,7 @@ export default function DisplayField({
         }
       })
     }
-  
+
     // =========================
     // HIDDEN / VISIBLE
     // =========================
@@ -353,22 +354,22 @@ export default function DisplayField({
           const hasValue = Array.isArray(value)
             ? value.length !== 0
             : !!value
-  
+
           setIsDisable(
             hasValue
               ? mode === 'visible'
                 ? null
                 : 'hidden'
               : mode === 'visible'
-              ? 'hidden'
-              : null
+                ? 'hidden'
+                : null
           )
 
           return
         }
-  
+
         const result = compare(value, trigger.mainValue)
-  
+
         if (mode === 'hidden') {
           setIsDisable(result ? 'hidden' : null)
         } else {
@@ -376,18 +377,18 @@ export default function DisplayField({
         }
       })
     }
-  
+
     if (trigger.typeOfValidation === 'hidden') {
       handleVisibility('hidden')
     }
-  
+
     if (trigger.typeOfValidation === 'visible') {
       handleVisibility('visible')
     }
-  
+
   }, [roles, loading, triggerData, reloadValue])
 
-  
+
 
   useEffect(() => {
     if (!roles?.event?.onUnmount) {
@@ -412,8 +413,12 @@ export default function DisplayField({
     }
   }, [roles])
 
+
+  const inputMemo = useMemo(() => input, [input.type, input.kind]);
+  
   useEffect(() => {
-    if (findValue || findValue == '') {
+    console.log(findValue, "findValue");
+    if (findValue !== undefined && findValue !== null && findValue !== '') {
       if (input?.type == 'Date') {
         setValue(new Date(findValue))
       } else {
@@ -427,7 +432,7 @@ export default function DisplayField({
         setValue()
       }
     }
-  }, [input, findValue])
+  }, [inputMemo, findValue])
 
   useEffect(() => {
     if (reload != 0) {
@@ -644,7 +649,7 @@ export default function DisplayField({
   }, [value])
 
 
-  
+
   useEffect(() => {
     if (!input) return
     let errorWithoutDirty = []
@@ -753,7 +758,7 @@ export default function DisplayField({
         }
       }
 
-      
+
     }
     if (refError) {
 
@@ -1093,6 +1098,7 @@ export default function DisplayField({
               data={data}
               dataRef={dataRef}
               refError={refError}
+              loadingSaveAsDraft={loadingSaveAsDraft}
               disabledBtn={disabledBtn}
               input={input}
               roles={roles}
@@ -1162,7 +1168,7 @@ export default function DisplayField({
           />
         )}
       </div>
-     
+
       <div
         className={`${errorView || error ? 'opacity-100 visible' : 'opacity-0 invisible'
           } w-fit text-[#fb866e]   text-2xl end-[2px]  z-10 mt-1 px-2 absolute top-[calc(50%+13px)] -translate-y-1/2 rounded-md transition-all duration-300`}

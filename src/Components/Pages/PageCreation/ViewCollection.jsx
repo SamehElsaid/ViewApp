@@ -15,9 +15,90 @@ import { CircularProgress } from '@mui/material'
 import { useDispatch } from 'react-redux'
 import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
 
+
+
+function isTable(collectionsArray) {
+  const includeTable = []
+
+  collectionsArray.forEach(item => {
+    if (item.isTable) {
+      includeTable.push(item.collection.key)
+    }
+  })
+
+  return includeTable
+}
+
+const flattenDynamic = (data, SelectedRelatedCollectionsFields) => {
+  const collectionsArray = isTable(SelectedRelatedCollectionsFields || [])
+
+  const result = {};
+
+
+  console.log(data, "data",);
+  console.log(SelectedRelatedCollectionsFields, "SelectedRelatedCollectionsFields");
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        result[key] = "";
+      } else if (value[0] && typeof value[0] === 'object') {
+        if (key.toLowerCase() === 'contact') {
+          // لو array اسمها Contact
+          value.forEach(item => {
+            Object.entries(item).forEach(([subKey, subValue]) => {
+              result[`${subKey}[${key}]`] = subValue ?? "";
+            });
+          });
+        } else {
+          // أي array object تانية تتحول form-table[key]
+          if (collectionsArray.includes(key)) {
+            result[`form-table[${key}]`] = value.map(item => {
+              const newItem = {};
+              Object.entries(item).forEach(([subKey, subValue]) => {
+                newItem[subKey] = subValue ?? false;
+              });
+
+              return newItem;
+            });
+          } else {
+
+            const firstItem = value[0]; // أول عنصر
+            if (firstItem) {
+              Object.entries(firstItem).forEach(([subKey, subValue]) => {
+                // هنا يطلع كل حقل على شكل Field[key]: value
+
+                result[`${subKey}[${key}]`] = subValue ?? "";
+
+              });
+            }
+          }
+        }
+      } else {
+        // array بسيطة
+        result[key] = value.map(v => v ?? false);
+      }
+    } else if (value && typeof value === 'object') {
+      // object عادي
+      Object.entries(value).forEach(([subKey, subValue]) => {
+        result[`${subKey}[${key}]`] = subValue ?? "";
+      });
+    } else {
+      // primitive
+      result[key] = value ?? "";
+    }
+  });
+
+
+  console.log(result, "result");
+
+  return result;
+};
+
 // Dnd Kit Sortable Item Component
 function SortableGridItem({
   saveDataAsDraft,
+  loadingSaveAsDraft,
   refErrorFromTable,
   tabsData,
   filed,
@@ -101,6 +182,14 @@ function SortableGridItem({
   }
 
 
+  const findValue = useMemo(() => {
+    console.log(entitiesData?.[filed?.key], "entitiesData?.[filed?.key]");
+
+    return tabsData?.[filed?.key] || entitiesData?.[filed?.key]
+  }, [entitiesData, filed])
+
+
+  console.log(tabsData);
 
   return (
     <div
@@ -266,6 +355,8 @@ function SortableGridItem({
       )}
 
 
+
+
       <DisplayField
         handleSubmit={handleSubmit}
         tabsData={tabsData}
@@ -275,6 +366,7 @@ function SortableGridItem({
         design={getDesign(filed.id, filed)}
         setActiveTab={setActiveTab}
         activeTab={activeTab}
+        loadingSaveAsDraft={loadingSaveAsDraft}
         readOnly={disabled}
         disabledBtn={data.type_of_sumbit === 'api' && !data.submitApi}
         refError={refError}
@@ -289,7 +381,7 @@ function SortableGridItem({
         dataRefWithCollectionId={dataRefWithCollectionId}
         allFields={sortedLoopWithoutTabs}
         setTriggerData={setTriggerData}
-        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key] || saveDataAsDraft?.[filed?.key]}
+        findValue={findValue}
         roles={roles}
         advancedEdit={readOnly}
         editMode={advancedEdit}
@@ -328,10 +420,11 @@ export default function ViewCollection({
   const dataRef = useRef({})
   const dataRefWithCollectionId = useRef({})
   const [triggerData, setTriggerData] = useState(0)
-  const [entitiesData, setEntitiesData] = useState(null)
+
+  const [entitiesData, setEntitiesData] = useState()
   const dispatch = useDispatch()
   const [activeTab, setActiveTab] = useState(0)
-  const [tabsData, setTabsData] = useState({})
+  const [tabsData, setTabsData] = useState(null)
   const [stopSortLayout, setStopSortLayout] = useState(false)
 
 
@@ -346,11 +439,16 @@ export default function ViewCollection({
   }, [activeTab])
 
 
+  console.log(entitiesData, "entitiesDataentitiesData")
+
+
 
 
   const findActiveTab = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data?.find((ele, index) => index === activeTab)
 
   const { pathname, query, push, replace } = useRouter()
+
+
   const requestId = query.requestId
   const collection = query.collection
   const { messages } = useIntl()
@@ -369,6 +467,9 @@ export default function ViewCollection({
   const filterSelect = getFields
 
 
+
+
+  console.log(entitiesData, "entitiesData")
 
   useEffect(() => {
     if (!loading) {
@@ -477,7 +578,7 @@ export default function ViewCollection({
     if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
-          setEntitiesData(res?.data?.entities?.[0])
+          setEntitiesData(flattenDynamic(res?.data?.entities?.[0], data?.SelectedRelatedCollectionsFields))
         }
       })
     }
@@ -486,61 +587,9 @@ export default function ViewCollection({
 
   const [saveDataAsDraft, setSaveDataAsDraft] = useState({})
 
-  const flattenDynamic = (data) => {
-    const result = {};
 
-    Object.entries(data).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        if (value.length === 0) {
-          result[key] = "";
-        } else if (value[0] && typeof value[0] === 'object') {
-          if (key.toLowerCase() === 'contact') {
-            // لو array اسمها Contact
-            value.forEach(item => {
-              Object.entries(item).forEach(([subKey, subValue]) => {
-                result[`${subKey}[${key}]`] = subValue ?? "";
-              });
-            });
-          } else {
-            // أي array object تانية تتحول form-table[key]
-            result[`form-table[${key}]`] = value.map(item => {
-              const newItem = {};
-              Object.entries(item).forEach(([subKey, subValue]) => {
-                newItem[subKey] = subValue ?? false;
-              });
 
-              return newItem;
-            });
-          }
-        } else {
-          // array بسيطة
-          result[key] = value.map(v => v ?? false);
-        }
-      } else if (value && typeof value === 'object') {
-        // object عادي
-        Object.entries(value).forEach(([subKey, subValue]) => {
-          result[`${subKey}[${key}]`] = subValue ?? "";
-        });
-      } else {
-        // primitive
-        result[key] = value ?? "";
-      }
-    });
 
-    return result;
-  };
-
-  useEffect(() => {
-    if (collection == data.collectionName && requestId) {
-      axiosGet(`generic-entities/${data.collectionName}/${requestId}`, locale).then(res => {
-        if (res.status) {
-          // setEntitiesData()
-          setSaveDataAsDraft(flattenDynamic(res?.data?.entities?.[0]));
-
-        }
-      })
-    }
-  }, [collection, requestId, data.collectionName])
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
@@ -687,12 +736,12 @@ export default function ViewCollection({
 
     if (tabsDataArray.length > 0 && activeTab + 1 < tabsDataArray.length) {
       setActiveTab(prev => prev + 1)
-      setTabsData(prev => ({ ...prev, ...output }))
+      setTabsData(prev => ({ ...prev, ...dataRef.current }))
 
 
       return
     } else {
-      output = { ...tabsData, ...output }
+      output = { ...(tabsData || {}), ...output }
     }
 
 
@@ -757,6 +806,8 @@ export default function ViewCollection({
     }
   }
 
+  const [loadingSaveAsDraft, setLoadingSaveAsDraft] = useState(false)
+
   const saveAsDraft = async (e, href) => {
     e?.preventDefault()
 
@@ -777,45 +828,11 @@ export default function ViewCollection({
         sendData[keyData] = initialSendData[keyData].map(item => item.Id || item)
       }
     })
-    if (data.type_of_sumbit === 'api' && !data.submitApi) {
-      return
-    }
-
-    const errors = []
-
-
-    if (refError.current) {
-      for (const key in refError.current) {
-        if (refError.current[key]) {
-          errors.push(refError.current[key])
-        }
-      }
-    }
-
-    if (refErrorFromTable.current) {
-
-      for (const key in refErrorFromTable.current) {
-        if (refErrorFromTable.current[key]) {
-          errors.push(refErrorFromTable.current[key])
-        }
-      }
-    }
-
-    const getBtnCheckErrors = document.querySelectorAll('.check-errors')
-
-    getBtnCheckErrors.forEach(ele => {
-
-      ele.click()
-    })
-
-    if (errors.find(ele => typeof ele === 'object')) {
-
-      return setErrors(refError.current)
-    }
 
     let output = {}
 
-    Object.entries(sendData).forEach(([key, value]) => {
+
+    Object.entries({ ...(tabsData || {}), ...sendData }).forEach(([key, value]) => {
 
       // 👈 لو form-table
       if (key.startsWith("form-table[")) {
@@ -897,41 +914,35 @@ export default function ViewCollection({
 
 
 
-    const tabsDataArray = data?.addMoreElement.find(ele => ele.key === 'tabs')?.data ?? [];
-
-
-    if (tabsDataArray.length > 0 && activeTab + 1 < tabsDataArray.length) {
-      setActiveTab(prev => prev + 1)
-      setTabsData(prev => ({ ...prev, ...output }))
-
-
-      return
-    } else {
-      output = { ...tabsData, ...output }
-    }
 
 
 
 
-    axiosPost(`generic-entities/${data.collectionName}/draft`, locale, output).then(res => {
+
+    setLoadingSaveAsDraft(true)
+    axiosPost(`generic-entities/${data.collectionName}/draft?pageId=${pageId}`, locale, output).then(res => {
       if (res.status) {
 
 
         if (href) {
           push(`/${locale}/${href}?collection=${data.collectionName}&requestId=${res?.data?.Id}&isPrint=true`);
         } else {
+
           const newRequestId =
             res?.data?.Id ?? res?.id ?? (typeof res?.data === 'string' || typeof res?.data === 'number' ? res.data : null)
           if (newRequestId != null && String(newRequestId) !== '') {
-            replace(
-              { pathname, query: { ...query, collection: data.collectionName, requestId: String(newRequestId) } },
-              undefined,
-              { shallow: true }
-            )
+            const newUrl = `/${locale}/${query.page.join('/')}?${new URLSearchParams({
+              ...query,
+              collection: data.collectionName,
+              entityId: String(newRequestId),
+            })}`;
+
+            window.history.replaceState(null, '', newUrl);
           }
+          toast.success(messages.dialogs.dataSentSuccessfully)
         }
       }
-    })
+    }).finally(() => setLoadingSaveAsDraft(false))
 
 
 
@@ -1041,8 +1052,10 @@ export default function ViewCollection({
 
   const sortedLoop = useMemo(() => {
     const items = [...filterSelect, ...addMoreElement]
-    const fixedKeys = ["tabs", "submit", "back"]
+    const fixedKeys = ["tabs", "submit", "back", "saveAsDraft"]
     const sortedIndexMap = new Map(sortedData.map((field, index) => [field.i, index]))
+
+    console.log(items, "items");
 
     const sorted = [...items].sort((a, b) => {
       const indexA = sortedIndexMap.get(a.id)
@@ -1059,6 +1072,8 @@ export default function ViewCollection({
 
       const layoutYMap = new Map(layout.map(item => [item.i, item.y]))
       const getY = id => layoutYMap.get(id) ?? 9999
+
+      console.log(sorted, "sorted");
 
       const allRealItemsMeta = sorted.map(ele => ({
         item: ele,
@@ -1467,6 +1482,8 @@ export default function ViewCollection({
                       refError={refError}
                       refErrorFromTable={refErrorFromTable}
                       saveAsDraft={saveAsDraft}
+                      loadingSaveAsDraft={loadingSaveAsDraft}
+                      saveDataAsDraft={saveDataAsDraft}
                       setLayout={setLayout}
                       triggerData={triggerData}
                       onChange={onChange}
@@ -1492,7 +1509,6 @@ export default function ViewCollection({
                       disabled={disabled}
                       reload={reload}
                       messages={messages}
-                      saveDataAsDraft={saveDataAsDraft}
                     />
                   )
                 })}

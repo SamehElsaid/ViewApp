@@ -33,7 +33,8 @@ function NewElement({
   setActiveTab,
   allSortData = [],
   sortedLoopWithoutTabs = [],
-  saveAsDraft
+  saveAsDraft,
+  loadingSaveAsDraft
 }) {
   const [open, setOpen] = useState(false)
   const { locale, messages } = useIntl()
@@ -409,7 +410,7 @@ function NewElement({
           )}
         </div>
         <button
-          disabled={isDisable === 'disable' || (input.kind === 'back' && activeTab === 0)}
+          disabled={isDisable === 'disable' || (input.kind === 'back' && activeTab === 0) || (loadingSaveAsDraft && roles?.type === 'saveAsDraft')}
           onClick={e => {
             if (input.kind === 'back') {
               setActiveTab(prev => prev - 1);
