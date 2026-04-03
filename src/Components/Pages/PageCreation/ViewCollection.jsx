@@ -473,15 +473,15 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
-  // useEffect(() => {
-  //   if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
-  //     axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
-  //       if (res.status) {
-  //         setEntitiesData(res?.data?.entities?.[0])
-  //       }
-  //     })
-  //   }
-  // }, [entitiesId, collectionName, pageName])
+  useEffect(() => {
+    if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
+      axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
+        if (res.status) {
+          setEntitiesData(res?.data?.entities?.[0])
+        }
+      })
+    }
+  }, [entitiesId, collectionName, pageName])
 
 
   const [saveDataAsDraft, setSaveDataAsDraft] = useState({})
