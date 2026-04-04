@@ -347,8 +347,8 @@ function SortableGridItem({
 
 
 
-      
-      
+
+
 
 
 
@@ -647,7 +647,9 @@ export default function ViewCollection({
 
     let output = {}
 
-    Object.entries({ ...(tabsData || {}), ...sendData }).forEach(([key, value]) => {
+    const allData = { ...(tabsData || {}), ...sendData }
+
+    Object.entries(allData).forEach(([key, value]) => {
 
       // 👈 لو form-table
       if (key.startsWith("form-table[")) {
@@ -655,9 +657,11 @@ export default function ViewCollection({
         const match = key.match(/^form-table\[(.+)\]$/)
 
         if (match) {
+          console.log(key);
+
           const arrayName = match[1]
 
-          const tableData = dataRef.current[key]
+          const tableData = allData[key]
 
           if (Array.isArray(tableData)) {
 
@@ -705,6 +709,10 @@ export default function ViewCollection({
         return
       }
 
+
+      console.log(output, "output", { ...(tabsData || {}), ...sendData });
+
+
       // 👇 باقي المعالجة الطبيعية
       const match = key.match(/^(.+)\[(.+)\]$/)
 
@@ -745,7 +753,7 @@ export default function ViewCollection({
 
 
 
-    console.log(output, "output");
+    // console.log(output, "output", dataRef, tabsData);
 
     setLoading(true)
 

@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import DisplayField from './PageCreation/DisplayField'
 import { seterrorInAllRowData } from 'src/store/apps/errorInAllRow/errorInAllRow'
 import { useDispatch } from 'react-redux'
-import { useSelector } from 'react-redux'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
 
@@ -25,7 +24,6 @@ function ViewInputInTable({
   formTable,
   columnId,
   reloadErrors,
-  currentData
 }) {
   const refError = useRef({})
   const [reload, setReload] = useState(0)
@@ -68,25 +66,27 @@ function ViewInputInTable({
 
 
 
-  console.log(currentData, "currentData");
 
   return (
     <div
       key={columnId}
+      tabIndex={0}
       onClick={() => {
         setFindError(false)
       }}
       className='relative w-full'
       onBlur={() => {
-
-        console.log(dataRef.current[ele.key], "here", dataRef.current);
+       
+        console.log(dataRef, "dataRef");
         setChangedValue(prev => {
           const newPrev = [...prev]
+
           const findWithId = newPrev.find(e => e.Id === row.Id)
+          console.log(dataRef, findWithId, "currentData");
           if (findWithId) {
-            findWithId[ele.key] = currentData[ele.key]
+            findWithId[ele.key] = dataRef.current[ele.key]
           } else {
-            newPrev.push({ ...row, [ele.key]: currentData[ele.key] })
+            newPrev.push({ [ele.key]: dataRef.current[ele.key] })
           }
 
           return newPrev
@@ -98,11 +98,10 @@ function ViewInputInTable({
         )
 
         if (index !== -1) {
-          newPrev[index][ele.key] = currentData[ele.key]
+          newPrev[index][ele.key] = dataRef.current[ele.key]
         }
 
 
-        console.log(index);
 
         const cleanObject = (obj) =>
           Object.fromEntries(
@@ -117,12 +116,6 @@ function ViewInputInTable({
 
 
 
-        console.log(
-          {
-            ...data,
-            newRows: cleanedNewPrev
-          }
-        );
 
         onChange({
           ...data,
