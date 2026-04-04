@@ -234,7 +234,6 @@ export async function getServerSideProps(context) {
         layOutWorkflowId = res.data?.workflowId ?? ''
         layOutPageRoles = res.data?.pageRoles ?? []
         layOutPageTypeId = res.data?.pageTypeId ?? 1
-        pageId = res.data?.id ?? null
       } catch (error) {
 
 
