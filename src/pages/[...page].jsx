@@ -250,8 +250,12 @@ export async function getServerSideProps(context) {
     const findPageType = appViewOptions.find(option => option.id === pageTypeId)
 
     if (findPageType.name_en !== process.env.APP_TYPE) {
-      return {
-        notFound: true
+      if (findPageType.id === 4) {
+
+      } else {
+        return {
+          notFound: true
+        }
       }
     }
 
