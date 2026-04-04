@@ -96,6 +96,9 @@ const Index = ({ pageName, initialData, initialDataApi, workflowId, pageRoles, p
     setReadOnly(true)
   }, [pageName, isPrint])
 
+  console.log(pageId, "from:page");
+
+
 
 
 

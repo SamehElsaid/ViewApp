@@ -48,6 +48,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
   const [selectedLayout, setSelectedLayout] = useState(initialLayout ?? printName ?? '')
 
 
+  console.log(pageId,"from:ReactPageEditor");
 
   const { cellPlugins } = useCellPlugins({
     advancedEdit,

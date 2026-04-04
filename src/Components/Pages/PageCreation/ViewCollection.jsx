@@ -427,6 +427,8 @@ export default function ViewCollection({
   const [tabsData, setTabsData] = useState(null)
   const [stopSortLayout, setStopSortLayout] = useState(false)
 
+  console.log(pageId,"from:ViewCollection");
+
 
   useEffect(() => {
     setStopSortLayout(!readOnly ? true : false)
@@ -589,6 +591,7 @@ export default function ViewCollection({
 
 
 
+  console.log(pageId,"from:ViewCollection");
 
 
   const handleSubmit = async (e, handleSubmitEvent) => {
