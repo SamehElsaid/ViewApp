@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { Button, Dialog, DialogContent, Typography } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { axiosDelete, axiosGet, axiosPost } from 'src/Components/axiosCall'
 import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-hoc'
 import { useIntl } from 'react-intl'
@@ -49,6 +49,7 @@ function TableView({
   const [rowSettingOpen, setRowSettingOpen] = useState(false)
 
 
+  console.log("here in table view");
 
 
 
@@ -144,8 +145,10 @@ function TableView({
 
   const [loadingHeader, setLoadingHeader] = useState(true)
   useEffect(() => {
+    
     setLoadingHeader(true)
     if (data.collectionId) {
+      console.log("fromHere6");
       axiosGet(`collection-fields/get?CollectionId=${data.collectionId}`, locale)
         .then(res => {
           if (res.status) {
@@ -218,16 +221,20 @@ function TableView({
   }, [reloadRef])
 
 
+  const [loadingAssociations, setLoadingAssociations] = useState(true)
+  const [associationsData, setAssociationsData] = useState([])
+
+
   useEffect(() => {
     if (collectionFields.length === 0) return
     let filteredFields = collectionFields.filter(ele => data.selected.includes(ele.key))
-  
+
     if (filteredFields.length !== data.sortWithId?.length) {
       onChange({ ...data, sortWithId: filteredFields.map(ele => ele.id) })
     } else {
       const mapped = data.sortWithId
         ?.map(id => filteredFields.find(e => e?.id === id))
-        .filter(Boolean) 
+        .filter(Boolean)
 
       const newItems = filteredFields.filter(
         ele => !data.sortWithId?.includes(ele.id)
@@ -286,12 +293,46 @@ function TableView({
       }
     })
 
+    const newFilterWithSelect = !readOnly ? filteredFields?.filter(Boolean) : lastData?.filter(Boolean)
+    console.log(newFilterWithSelect, "newFilterWithSelect");
+    const newFilterWithSelectAssociations = newFilterWithSelect.filter(ele => ele.fieldCategory == 'Associations')
 
-    setFilterWithSelect(!readOnly ? filteredFields?.filter(Boolean) : lastData?.filter(Boolean))
+    console.log(newFilterWithSelectAssociations, "newFilterWithSelectAssociations");
+
+    const getAssociationsData = async () => {
+
+      try {
+        const requests = newFilterWithSelectAssociations.map(newInput => {
+          return axiosGet(
+            `generic-entities/${newInput?.options?.source}`,
+            locale,
+            undefined,
+            { pageNumber: 1, pageSize: 10 }
+          ).then(res => ({
+            key: newInput.key,
+            data: res?.data?.entities ?? []
+          }));
+        });
+
+        const responses = await Promise.all(requests);
+        console.log(responses, "responses");
+
+        setAssociationsData(responses)
+
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingAssociations(false)
+      }
+    }
+
+    getAssociationsData()
+
+    setFilterWithSelect(newFilterWithSelect || filteredFields?.filter(Boolean))
 
     onChange({
       ...data,
-      inputsVisibility: !readOnly ? filteredFields?.filter(Boolean) : lastData?.filter(Boolean)
+      inputsVisibility: newFilterWithSelect || filteredFields?.filter(Boolean)
     })
   }, [collectionFields.length, data?.selected?.length, data.sortWithId, reloadRef])
 
@@ -539,6 +580,8 @@ function TableView({
               setOpen(id)
             }}
             setGetFields={setGetFields}
+            associationsData={associationsData}
+            loadingAssociations={loadingAssociations}
             editAction={data.edit}
             deleteAction={data.delete}
             detailsAction={data.details}
@@ -584,4 +627,4 @@ function TableView({
   )
 }
 
-export default TableView
+export default memo(TableView)

@@ -5,8 +5,11 @@ import { seterrorInAllRowData } from 'src/store/apps/errorInAllRow/errorInAllRow
 import { useDispatch } from 'react-redux'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
+import { CircularProgress } from '@mui/material'
 
 function ViewInputInTable({
+  associationsDataInput,
+  loadingAssociationsInput,
   refErrorFromTable,
   ele,
   row,
@@ -64,6 +67,8 @@ function ViewInputInTable({
 
 
 
+  console.log(associationsDataInput, "associationsDataInput");
+  console.log(loadingAssociationsInput, "loadingAssociationsInput");
 
 
 
@@ -76,7 +81,7 @@ function ViewInputInTable({
       }}
       className='relative w-full'
       onBlur={() => {
-       
+
         console.log(dataRef, "dataRef");
         setChangedValue(prev => {
           const newPrev = [...prev]
@@ -124,6 +129,11 @@ function ViewInputInTable({
 
       }}
     >
+      {loadingAssociationsInput && ele.fieldCategory == 'Associations' && (
+        <div className='absolute inset-0 z-20 flex justify-center items-center bg-white'>
+          <CircularProgress />
+        </div>
+      )}
       {!readOnly && formTable === 'table' && (
         <div
           onContextMenu={e => {
@@ -163,6 +173,7 @@ function ViewInputInTable({
           refErrorFromTable={refErrorFromTable}
           allErrorsRef={allErrorsRef}
           columnId={columnId}
+          dataAssociations={associationsDataInput}
           setLayout={false}
           triggerData={triggerData}
           from='table'

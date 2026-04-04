@@ -14,10 +14,11 @@ import {
   InputAdornment,
   Paper,
   Rating,
+  Skeleton,
   TextField
 } from '@mui/material'
 import { Icon } from '@iconify/react'
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import TableView from '../PageCreation/TableView'
 import { axiosGet } from 'src/Components/axiosCall'
@@ -134,6 +135,8 @@ const ViewInput = ({
 
   useEffect(() => {
     if (input?.kind == 'Table') {
+      console.log("fromHere7");
+
       axiosGet(`collections/get-by-key?key=${input?.options?.source}`)
         .then(res => {
           if (res.status) {
@@ -977,7 +980,7 @@ const ViewInput = ({
 
   if (input.kind == 'Table') {
     if (collectionData.loading) {
-      return <></>
+      return <Skeleton variant="rectangular" width="100%" height={300} />
     }
 
     const onChangeTable = e => {
@@ -1027,4 +1030,4 @@ const ViewInput = ({
   }
 }
 
-export default ViewInput
+export default memo(ViewInput)

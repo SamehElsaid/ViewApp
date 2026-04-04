@@ -165,6 +165,10 @@ const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, message
       {filterWithSelect.map(column => {
         let roles = data?.additional_fields?.find(el => el?.key === column?.id)?.roles
 
+        console.log(filterWithSelect);
+
+
+
         return (
           <TableCell
             className='uppercase'
@@ -220,8 +224,10 @@ TableHeader.displayName = 'TableHeader'
 /**
  * Renders a single table row
  */
-const TableRowComponent = memo(
+const TableRowComponent = (
   ({
+    associationsData,
+    loadingAssociations,
     refErrorFromTable,
     setTotalCount,
     allData,
@@ -282,7 +288,6 @@ const TableRowComponent = memo(
     const borderColor = tableBorderColor ?? data?.tableStyle?.tableBorderColor ?? BORDER_COLOR
     const { locale } = useIntl()
 
-    console.log(findData, allData, "data.newRows");
 
     return (
       <TableRow key={column?.id} className='relative'>
@@ -301,15 +306,20 @@ const TableRowComponent = memo(
             </button>
           </TableCell>
         )}
+
         {filterWithSelect.map(parentKey => (
           parentKey?.id &&
           <TableCell key={parentKey?.id} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
             <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }} dir='auto'>
+              {console.log(associationsData.find(ele => ele.key === parentKey.key)?.data ?? [])
+              }
               {isFormTable ? (
                 <ViewInputInTable
                   refErrorFromTable={refErrorFromTable}
                   ele={parentKey}
                   columnId={columnId}
+                  associationsDataInput={associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
+                  loadingAssociationsInput={loadingAssociations}
                   row={column}
                   readOnly={readOnly}
                   disabled={disabled}
@@ -363,6 +373,8 @@ function TableComponent({
   paginationModel,
   setPaginationModel,
   totalCount = 0,
+  associationsData = [],
+  loadingAssociations = false,
   detailsAction = false,
   loadingEntity = false,
   loadingHeader = false,
@@ -654,6 +666,8 @@ function TableComponent({
             ) : (
               filteredColumns.map(column => (
                 <TableRowComponent
+                  associationsData={associationsData}
+                  loadingAssociations={loadingAssociations}
                   refErrorFromTable={refErrorFromTable}
                   setTotalCount={setTotalCount}
                   key={column.id || column.Id}
@@ -743,4 +757,4 @@ function TableComponent({
   )
 }
 
-export default memo(TableComponent)
+export default TableComponent

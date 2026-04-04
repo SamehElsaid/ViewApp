@@ -20,6 +20,7 @@ import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 export default function DisplayField({
   tabsData,
   loadingSaveAsDraft,
+  dataAssociations,
   onChangeData,
   advancedEdit,
   saveAsDraft,
@@ -68,7 +69,6 @@ export default function DisplayField({
   const { locale, messages } = useIntl()
   const [validations, setValidations] = useState({})
   const [selectedOptions, setSelectedOptions] = useState([])
-  const [oldSelectedOptions, setOldSelectedOptions] = useState([])
   const xComponentProps = useMemo(() => input?.options?.uiSchema?.xComponentProps ?? {}, [input])
   const [fileName, setFile] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -518,12 +518,10 @@ export default function DisplayField({
   const appendSearchEntities = useCallback(entities => {
     if (!Array.isArray(entities) || entities.length === 0) return
     setSelectedOptions(prev => [...prev, ...entities])
-    setOldSelectedOptions(prev => [...prev, ...entities])
   }, [])
 
   const replaceSearchCollectionOptions = useCallback((entities, total) => {
     setSelectedOptions(entities ?? [])
-    setOldSelectedOptions(entities ?? [])
     setTotalCount(total ?? 0)
     setPage(1)
   }, [])
@@ -790,12 +788,20 @@ export default function DisplayField({
   useEffect(() => {
     if (!input?.getDataForm || (!input?.options?.source && !input?.staticData)) {
       setSelectedOptions([])
-      setOldSelectedOptions([])
       setLoading(false)
 
       return
     }
-    if (input?.getDataForm === 'collection' && input?.options?.source) {
+
+    if (from === "table") {
+      console.log(dataAssociations, "dataAssociations");
+      setSelectedOptions(dataAssociations)
+      setLoading(false)
+
+      return
+    }
+
+    if (input?.getDataForm === 'collection' && input?.options?.source && from !== "table") {
       const isSearchKind = input?.kind === 'search'
       const collectionListParams = isSearchKind ? { pageNumber: 1, pageSize: 10 } : {}
 
@@ -803,7 +809,6 @@ export default function DisplayField({
         .then(res => {
           if (res.status) {
             setSelectedOptions(res?.data?.entities ?? [])
-            setOldSelectedOptions(res?.data?.entities ?? [])
             setTotalCount(res?.data?.totalCount ?? 0)
             setPage(1)
           }
@@ -815,10 +820,9 @@ export default function DisplayField({
 
     if (input?.getDataForm === 'static') {
       setSelectedOptions(input?.staticData || [])
-      setOldSelectedOptions(input?.staticData || [])
       setLoading(false)
     }
-  }, [collectionOptionsDeps, staticDataDeps, locale])
+  }, [collectionOptionsDeps, staticDataDeps, locale, dataAssociations])
 
 
   const [queryParams, setQueryParams] = useState(null)
@@ -900,12 +904,10 @@ export default function DisplayField({
 
           if (Array.isArray(selectData)) {
             setSelectedOptions(selectData)
-            setOldSelectedOptions(selectData)
           }
         })
         .catch(err => {
           setSelectedOptions([])
-          setOldSelectedOptions([])
         })
         .finally(() => {
           setLoading(false)
@@ -917,7 +919,7 @@ export default function DisplayField({
 
   useEffect(() => {
     setTimeout(() => {
-      if (layout && !loading) {
+      if (layout && !loading && !from === "table") {
         if (mainRef.current) {
           setLayout(prev => {
             return prev.map(ele =>
@@ -929,7 +931,7 @@ export default function DisplayField({
         }
       }
     }, 100)
-  }, [isDisable, readOnly, layout?.length, loading, triggerData, refreshHeight])
+  }, [isDisable, readOnly, layout?.length, loading, triggerData, refreshHeight, from])
 
   const mainRef = useRef()
 
@@ -1159,14 +1161,7 @@ export default function DisplayField({
             />
           )}
         </div>
-        {input?.viewAsInput && (
-          <ViewAsInputTrigger
-            setRefreshHeight={setRefreshHeight}
-            collectionInput={input?.options?.source}
-            viewAsInput={input?.viewAsInput}
-            value={value}
-          />
-        )}
+   
       </div>
 
       <div
