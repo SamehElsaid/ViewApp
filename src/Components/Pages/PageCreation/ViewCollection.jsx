@@ -427,7 +427,7 @@ export default function ViewCollection({
   const [tabsData, setTabsData] = useState(null)
   const [stopSortLayout, setStopSortLayout] = useState(false)
 
-  console.log(pageId,"from:ViewCollection");
+  console.log(pageId, "from:ViewCollection");
 
 
   useEffect(() => {
@@ -591,7 +591,7 @@ export default function ViewCollection({
 
 
 
-  console.log(pageId,"from:ViewCollection");
+  console.log(pageId, "from:ViewCollection");
 
 
   const handleSubmit = async (e, handleSubmitEvent) => {
@@ -652,7 +652,7 @@ export default function ViewCollection({
 
     let output = {}
 
-    Object.entries(sendData).forEach(([key, value]) => {
+    Object.entries({ ...(tabsData || {}), ...sendData }).forEach(([key, value]) => {
 
       // 👈 لو form-table
       if (key.startsWith("form-table[")) {
@@ -744,10 +744,13 @@ export default function ViewCollection({
 
       return
     } else {
-      output = { ...(tabsData || {}), ...output }
+      output = { ...output }
+
     }
 
 
+
+    console.log(output, "output");
 
     setLoading(true)
 
