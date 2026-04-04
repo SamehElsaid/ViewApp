@@ -35,9 +35,6 @@ const flattenDynamic = (data, SelectedRelatedCollectionsFields) => {
   const result = {};
 
 
-  console.log(data, "data",);
-  console.log(SelectedRelatedCollectionsFields, "SelectedRelatedCollectionsFields");
-
   Object.entries(data).forEach(([key, value]) => {
     if (Array.isArray(value)) {
       if (value.length === 0) {
@@ -182,14 +179,7 @@ function SortableGridItem({
   }
 
 
-  const findValue = useMemo(() => {
-    console.log(entitiesData?.[filed?.key], "entitiesData?.[filed?.key]");
 
-    return tabsData?.[filed?.key] || entitiesData?.[filed?.key]
-  }, [entitiesData, filed])
-
-
-  console.log(tabsData);
 
   return (
     <div
@@ -357,6 +347,11 @@ function SortableGridItem({
 
 
 
+      
+      
+
+
+
       <DisplayField
         handleSubmit={handleSubmit}
         tabsData={tabsData}
@@ -381,7 +376,7 @@ function SortableGridItem({
         dataRefWithCollectionId={dataRefWithCollectionId}
         allFields={sortedLoopWithoutTabs}
         setTriggerData={setTriggerData}
-        findValue={findValue}
+        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key]}
         roles={roles}
         advancedEdit={readOnly}
         editMode={advancedEdit}
@@ -427,7 +422,7 @@ export default function ViewCollection({
   const [tabsData, setTabsData] = useState(null)
   const [stopSortLayout, setStopSortLayout] = useState(false)
 
-  console.log(pageId, "from:ViewCollection");
+
 
 
   useEffect(() => {
@@ -441,7 +436,6 @@ export default function ViewCollection({
   }, [activeTab])
 
 
-  console.log(entitiesData, "entitiesDataentitiesData")
 
 
 
@@ -580,6 +574,7 @@ export default function ViewCollection({
     if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
+          console.log(res?.data?.entities?.[0], "res?.data?.entities?.[0]");
           setEntitiesData(flattenDynamic(res?.data?.entities?.[0], data?.SelectedRelatedCollectionsFields))
         }
       })
@@ -1061,7 +1056,6 @@ export default function ViewCollection({
     const fixedKeys = ["tabs", "submit", "back", "saveAsDraft"]
     const sortedIndexMap = new Map(sortedData.map((field, index) => [field.i, index]))
 
-    console.log(items, "items");
 
     const sorted = [...items].sort((a, b) => {
       const indexA = sortedIndexMap.get(a.id)

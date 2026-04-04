@@ -415,7 +415,7 @@ export default function DisplayField({
 
 
   const inputMemo = useMemo(() => input, [input.type, input.kind]);
-  
+
   useEffect(() => {
     console.log(findValue, "findValue");
     if (findValue !== undefined && findValue !== null && findValue !== '') {
@@ -504,7 +504,7 @@ export default function DisplayField({
                 newValue = valueDate
               }
             }
-            setValue(newValue)
+            setValue(findValue ?? newValue)
           }
         }
         setReloadValue(prev => prev + 1)
