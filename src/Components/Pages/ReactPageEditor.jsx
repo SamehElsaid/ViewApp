@@ -64,6 +64,9 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
     isPrint
   })
 
+  console.log(apiData);
+  
+
   // نجعل الـ cellPlugins متاحة عالمياً لاستخدامها داخل الـ popup عند عرض صفحات أخرى
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -250,6 +253,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
           }}
         ></button>
       </div>
+      <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
 
       {type === 'all-pages' ? (
         <div className={`relative ${loadingPdf ? 'generate-pdf' : ''}`}>
@@ -272,7 +276,6 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
         </div>
       ) : (
         <>
-          <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
           <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>
             <DialogTitle>{messages.ReturnToPrevious}</DialogTitle>
             <DialogContent>
