@@ -608,7 +608,7 @@ export default function ViewCollection({
       if (initialSendData[keyData] !== null) {
         sendData[keyData] = initialSendData[keyData]
       }
-      if (Array.isArray(initialSendData[keyData])) {
+      if (Array.isArray(initialSendData[keyData]) && !keyData.startsWith("form-table[")) {
         sendData[keyData] = initialSendData[keyData].map(item => item.Id || item)
       }
     })
@@ -651,6 +651,9 @@ export default function ViewCollection({
     let output = {}
 
     const allData = { ...(tabsData || {}), ...sendData }
+
+
+    console.log(allData, sendData, "allData");
 
     Object.entries(allData).forEach(([key, value]) => {
 
@@ -766,6 +769,7 @@ export default function ViewCollection({
 
 
     // console.log(output, "output", dataRef, tabsData);
+
 
     setLoading(true)
 
