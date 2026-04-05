@@ -146,7 +146,7 @@ function runEventHandlerFromDocument(fullCode, apiPayload, locale) {
 
 /** Live API row from Redux, then persisted `data.items` if store not ready yet (e.g. preview). */
 
-function resolveEventApiPayload(apiUrl, getApiData, storedItems) {
+function resolveEventApiPayload(apiUrl, getApiData, storedItems, row) {
 
   if (!apiUrl || !Array.isArray(getApiData)) {
 
@@ -154,7 +154,6 @@ function resolveEventApiPayload(apiUrl, getApiData, storedItems) {
 
   }
 
-  const row = getApiData.find(item => item.link === apiUrl)
 
   if (row && 'data' in row && row.data !== undefined) {
 
@@ -175,12 +174,15 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
   const { messages } = useIntl()
 
   const getApiData = useSelector(state => state.api.data)
+  const row = getApiData.find(item => item.link === data.api_url)
 
+  console.log(row, "drowata");
 
 
   const handleRunClick = () => {
 
-    const payload = resolveEventApiPayload(data.api_url, getApiData, data.items)
+    const payload = resolveEventApiPayload(data.api_url, getApiData, data.items, row)
+    console.log(payload, "payloadpayloadpayload");
 
     const apiData = payload
     const eventScript = data?.updatedCode
@@ -200,7 +202,6 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
     const cleanedScript = updatedScript.replace(/},\s*,/g, '},')
     const runEvent = new Function(cleanedScript + '; return __eventHandler;')()
 
-    console.log(cleanedScript);
     runEvent(document, 'en')
 
 
@@ -208,6 +209,9 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
   }
 
   useEffect(() => {
+    if (row && row.loading) {
+      return
+    }
     const payload = resolveEventApiPayload(data.api_url, getApiData, data.items)
     console.log(payload)
 
@@ -219,13 +223,13 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
 
       return () => clearTimeout(timer) // clean up if component unmounts
     }
-  }, []) // empty deps → run only once on mount
+  }, [row?.loading]) // empty deps → run only once on mount
 
 
 
 
 
-  return (readOnly ? "" :
+  return (readOnly ? null :
 
     <div className='p-2 rounded-md border border-dashed border-main-color min-h-[48px] flex flex-col gap-2'>
 
