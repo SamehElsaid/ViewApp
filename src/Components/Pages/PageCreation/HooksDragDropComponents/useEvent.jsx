@@ -3,7 +3,6 @@ import { MdOutlineEventNote } from 'react-icons/md'
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import ViewEvent from './ViewEvent'
-import EventControl from './EventControl'
 
 export default function useEvent({ locale, readOnly, buttonRef }) {
   const { messages } = useIntl()
@@ -24,7 +23,7 @@ export default function useEvent({ locale, readOnly, buttonRef }) {
       controls: {
         type: 'custom',
         Component: ({ data, onChange }) => (
-          <EventControl data={data} onChange={onChange} buttonRef={buttonRef} />
+          <></>
         )
       }
     }

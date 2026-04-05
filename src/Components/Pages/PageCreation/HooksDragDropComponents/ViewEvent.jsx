@@ -200,6 +200,7 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
     const cleanedScript = updatedScript.replace(/},\s*,/g, '},')
     const runEvent = new Function(cleanedScript + '; return __eventHandler;')()
 
+    console.log(cleanedScript);
     runEvent(document, 'en')
 
 
@@ -224,7 +225,7 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
 
 
 
-  return (readOnly ? null :
+  return (readOnly ? "" :
 
     <div className='p-2 rounded-md border border-dashed border-main-color min-h-[48px] flex flex-col gap-2'>
 
