@@ -2,6 +2,7 @@
 
 import { Button, Dialog, DialogContent, Typography, TextField, Box, Grid } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import { useReactToPrint } from 'react-to-print'
 import { axiosDelete, axiosGet, axiosPost } from 'src/Components/axiosCall'
 import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-hoc'
@@ -56,6 +57,44 @@ function getFontFetchUrl() {
   return new URL(`/fonts/${ARABIC_FONT_FILE}`, window.location.origin).href
 }
 
+/** Replace `{param}` with values from the page URL query (Next.js `router.query`). */
+function resolveTableApiQueryFilter(template, query) {
+  if (!template || typeof template !== 'string') {
+    return ''
+  }
+
+  return template.replace(/\{([^{}]+)\}/g, (_, rawKey) => {
+    const key = rawKey.trim()
+    if (!key) {
+      return ''
+    }
+    const v = query?.[key]
+    if (v == null) {
+      return ''
+    }
+
+    return Array.isArray(v) ? String(v[0]) : String(v)
+  })
+}
+
+/** `key=value&key2=value2` → `[{ column, operator: 'Equals', value }, ...]` */
+function parseQueryFilterStringToFilters(resolved) {
+  const trimmed = String(resolved).trim().replace(/^\?/, '')
+  if (!trimmed) {
+    return []
+  }
+
+  const params = new URLSearchParams(trimmed)
+  const filters = []
+  params.forEach((value, column) => {
+    if (column && value !== '') {
+      filters.push({ column, operator: 'Equals', value })
+    }
+  })
+
+  return filters
+}
+
 async function registerArabicPdfFont(doc) {
   const res = await fetch(getFontFetchUrl())
   if (!res.ok) throw new Error('Failed to load Arabic font')
@@ -92,6 +131,7 @@ const TABLE_PRINT_PAGE_STYLE = `
 `
 
 function TableReport({ data, locale, onChange, readOnly, disabled }) {
+  const router = useRouter()
   const [getFields, setGetFields] = useState([])
   const [changedValue, setChangedValue] = useState([])
   const [loading, setLoading] = useState(true)
@@ -139,6 +179,8 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
   // Fetch data without filters
   useEffect(() => {
     if (data.is_api_generated && !isFiltered) {
+      if (!router.isReady) return
+
       setLoadingHeader(true)
       setLoading(true)
 
@@ -146,6 +188,12 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
         reportAPIName: data.userReportName,
         pageSize: paginationModel.pageSize,
         pageNumber: paginationModel.page + 1
+      }
+      const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
+      const filtersFromQuery = parseQueryFilterStringToFilters(resolvedQueryFilter)
+      if (filtersFromQuery.length > 0) {
+        requestBody.apiName = data.userReportName
+        requestBody.filters = filtersFromQuery
       }
 
       Promise.all([
@@ -184,7 +232,17 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       setLoadingHeader(false)
       setLoading(false)
     }
-  }, [locale, data.is_api_generated, data.userReportName, data.reload, paginationModel, isFiltered])
+  }, [
+    locale,
+    data.is_api_generated,
+    data.userReportName,
+    data.tableApiQueryFilter,
+    data.reload,
+    paginationModel,
+    isFiltered,
+    router.isReady,
+    router.asPath
+  ])
 
   /** PDF from visible table (browser renders Arabic + English correctly); autoTable is fallback only */
   const exportToPDF = async () => {
@@ -336,8 +394,21 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
     } else {
       filteredFields = data.sortWithId.map(ele => filteredFields.find(e => e?.id === ele))
     }
-    setFilterWithSelect(filteredFields?.filter(Boolean))
-  }, [collectionFields.length, data?.selected?.length, data.sortWithId])
+    const visibility = data.tableApiColumnVisibility || {}
+    const ordered = filteredFields?.filter(Boolean) ?? []
+
+    const visibleOnly = data.is_api_generated
+      ? ordered.filter(f => visibility[f.id] !== false)
+      : ordered
+
+    setFilterWithSelect(visibleOnly)
+  }, [
+    collectionFields.length,
+    data?.selected?.length,
+    data.sortWithId,
+    data.is_api_generated,
+    data.tableApiColumnVisibility
+  ])
 
   const SortableButton = SortableElement(({ value }) => (
     <div className='flex gap-2 items-center p-2 text-white rounded-md cursor-pointer select-none text-nowrap bg-main-color'>
@@ -395,9 +466,18 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
   }
 
   const handleApplyFilter = () => {
-    // Filter out empty values and convert to required format
+    const visibleColumnKeys = new Set(filterWithSelect.filter(Boolean).map(f => f.key))
+    
+    // Filter out empty values; only columns currently visible (matches filter inputs)
+
     const filtersArray = Object.keys(filterValues)
-      .filter(key => filterValues[key] !== '' && filterValues[key] !== null && filterValues[key] !== undefined)
+      .filter(
+        key =>
+          visibleColumnKeys.has(key) &&
+          filterValues[key] !== '' &&
+          filterValues[key] !== null &&
+          filterValues[key] !== undefined
+      )
       .map(key => ({
         column: key,
         operator: 'Equals',
@@ -467,14 +547,14 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       <>
         {!readOnly && <SortableList items={filterWithSelect?.filter(Boolean)} onSortEnd={onSortEnd} axis='xy' />}
 
-        {/* Filter Section */}
-        {collectionFields.length > 0 && (
+        {/* Filter Section — same columns as visible table (hides inputs when column is hidden in report settings) */}
+        {(data.is_api_generated ? filterWithSelect.length > 0 : collectionFields.length > 0) && (
           <Box className='p-5 mb-3 border rounded-lg bg-gray-50'>
             <Typography variant='h6' className='mb-3'>
               {locale === 'ar' ? 'فلترة البيانات' : 'Filter Data'}
             </Typography>
             <Grid container spacing={2} className='mb-3'>
-              {collectionFields.map(field => (
+              {filterWithSelect.filter(Boolean).map(field => (
                 <Grid item xs={12} sm={6} md={4} key={field.key}>
                   <TextField
                     fullWidth
@@ -493,7 +573,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
                 variant='contained'
                 color='success'
                 onClick={handleApplyFilter}
-                disabled={loading || collectionFields.length === 0}
+                disabled={loading || filterWithSelect.filter(Boolean).length === 0}
               >
                 {locale === 'ar' ? 'فلترة' : 'Filter'}
               </Button>

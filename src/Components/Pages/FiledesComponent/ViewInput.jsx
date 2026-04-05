@@ -108,7 +108,8 @@ const ViewInput = ({
   setRedirect,
   triggerData,
   appendSearchEntities,
-  replaceSearchCollectionOptions
+  replaceSearchCollectionOptions,
+  isEntitiesData
 }) => {
 
   const [isOpen, setIsOpen] = useState(false)
@@ -1004,6 +1005,8 @@ const ViewInput = ({
       tableBorderColor: roles?.borderColor ?? 'rgba(224, 224, 224, 1)'
     }
 
+    console.log(isEntitiesData, value, "isEntitiesData");
+
 
     return (
       <div className='w-full '>
@@ -1011,7 +1014,7 @@ const ViewInput = ({
           refErrorFromTable={refErrorFromTable}
           setValue={onChange}
           input={input}
-          data={tableData}
+          data={{ ...tableData, ...(isEntitiesData ? { newRows: value } : {}) }}
           reloadHight={setTriggerData}
           locale={locale}
           onChange={onChangeTable}

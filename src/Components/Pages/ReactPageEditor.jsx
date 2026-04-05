@@ -184,7 +184,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
     axiosPatch(`page/update/${pageName}`, locale, {
       pageRoles: pageRoles,
       pageTypeId: pageTypeId,
-      workflowId: workflowId,
+      pageWorkflows: workflowId,
       VersionReason: new Date().toISOString(),
       description: '',
       pageComponents: [],

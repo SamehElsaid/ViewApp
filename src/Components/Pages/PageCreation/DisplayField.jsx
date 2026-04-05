@@ -58,7 +58,8 @@ export default function DisplayField({
   sortedLoopWithoutTabs = [],
   allErrorsRef,
   columnId,
-  FormType
+  FormType,
+  isEntitiesData
 }) {
 
   const [value, setValue] = useState('')
@@ -77,6 +78,8 @@ export default function DisplayField({
   const getApiData = useSelector(rx => rx.api.data)
   const [lastValue, setLastValue] = useState(null)
   const [refreshHeight, setRefreshHeight] = useState(0)
+
+  console.log(findValue, "findValue");
 
 
   useEffect(() => {
@@ -429,7 +432,10 @@ export default function DisplayField({
         setValue([])
       }
       if (input?.type == 'Date') {
-        setValue()
+        if (!roles?.api_url) {
+
+          setValue()
+        }
       }
     }
   }, [inputMemo, findValue])
@@ -484,7 +490,11 @@ export default function DisplayField({
           if (roles?.api_url) {
             const items = getApiData.find(item => item.link === roles.api_url)?.data
             const valueFromApi = getData(items, roles?.onMount?.value, '')
-            setValue(valueFromApi)
+            if (input?.type == 'Date') {
+              setValue(new Date(valueFromApi))
+            } else {
+              setValue(valueFromApi)
+            }
           } else {
             let newValue = roles?.onMount?.value
             const searchParams = new URLSearchParams(window.location.search)
@@ -1118,6 +1128,7 @@ export default function DisplayField({
               setPage={setPage}
               setTotalCount={setTotalCount}
               data={data}
+              isEntitiesData={isEntitiesData}
               input={input}
               xComponentProps={xComponentProps}
               readOnly={readOnly}
@@ -1161,7 +1172,7 @@ export default function DisplayField({
             />
           )}
         </div>
-   
+
       </div>
 
       <div

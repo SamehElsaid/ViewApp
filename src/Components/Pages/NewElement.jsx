@@ -249,8 +249,9 @@ function NewElement({
 
     const tabsData = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data ?? [];
 
+
     return (
-      <div className='flex flex-col w-full gap-2'>
+      <div id={`tab-${data.collectionName}`} className='flex flex-col w-full gap-2'>
         <div className='flex flex-wrap w-full parent-tabs'>
           {tabsData.map((tab, originalIndex) => (
             <button
@@ -414,6 +415,14 @@ function NewElement({
           onClick={e => {
             if (input.kind === 'back') {
               setActiveTab(prev => prev - 1);
+              const getTabId = document.getElementById(`tab-${data.collectionName}`)
+              const yOffset = -100 // علشان يوقف قبل العنصر بـ 100px
+              const y = getTabId.getBoundingClientRect().top + window.pageYOffset + yOffset
+
+              window.scrollTo({
+                top: y,
+                behavior: 'smooth' // أو 'instant' لو عايز بدون animation
+              })
 
               return
             }

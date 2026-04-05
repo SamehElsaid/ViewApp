@@ -243,7 +243,7 @@ export async function getServerSideProps(context) {
 
     const initialData = data?.editorValue ?? null
     const initialDataApi = data?.apiData ?? null
-    const workflowId = response?.data?.workflowId ?? ''
+    const workflowId = response?.data?.pageWorkflowNames ?? []
     const pageRoles = response?.data?.pageRoles ?? []
     const pageTypeId = response?.data?.pageTypeId ?? 1
 

@@ -20,7 +20,7 @@ import {
 import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import Collapse from '@kunukn/react-collapse'
-import { axiosGet } from 'src/Components/axiosCall'
+import { axiosGet, axiosPost } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
 import CloseNav from './CloseNav'
 import { MdDeleteOutline } from 'react-icons/md'
@@ -44,6 +44,29 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
   const [getFields, setGetFields] = useState([])
   const [SelectedRelatedCollectionsFields, setSelectedRelatedCollectionsFields] = useState([])
   const [tableData, setTableData] = useState([])
+  const [tableApiColumnKeys, setTableApiColumnKeys] = useState([])
+  const [tableApiLoading, setTableApiLoading] = useState(false)
+
+  useEffect(() => {
+    if (!data.is_api_generated || data.typeOfReport !== 'table' || !data.userReportName) {
+      setTableApiColumnKeys([])
+
+      return
+    }
+
+    setTableApiLoading(true)
+    axiosPost(`dynamic-report-data/get-API-columns/${data.userReportName}`, locale, {})
+      .then(res => {
+        if (res.status && Array.isArray(res.data)) {
+          setTableApiColumnKeys(res.data)
+        } else {
+          setTableApiColumnKeys([])
+        }
+      })
+      .finally(() => {
+        setTableApiLoading(false)
+      })
+  }, [locale, data.is_api_generated, data.typeOfReport, data.userReportName, data.reload])
 
   useEffect(() => {
     setLoadingCollection(true)
@@ -2124,6 +2147,76 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
           </div>
 
           {/* Generate API Button */}
+          <Collapse
+            transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
+            isOpen={Boolean(data.is_api_generated && data.typeOfReport === 'table')}
+          >
+            <div className='mt-4 rounded-md border border-gray-300 p-3'>
+              <TextField
+                fullWidth
+                className='mb-3'
+                label={locale === 'ar' ? 'فلتر الاستعلام (Query filter)' : 'Query filter'}
+                placeholder='name=sameh&age={age}'
+                value={data.tableApiQueryFilter || ''}
+                onChange={e => onChange({ ...data, tableApiQueryFilter: e.target.value })}
+                variant='filled'
+                size='small'
+                helperText={
+                  locale === 'ar'
+                    ? 'استخدم {اسم_المعامل} لقراءة القيمة من رابط الصفحة (?age=25).'
+                    : 'Use {paramName} to read from the page URL (?age=25).'
+                }
+              />
+              <Typography variant='subtitle2' className='mb-2 font-semibold'>
+                {locale === 'ar' ? 'أعمدة الجدول (إظهار / إخفاء)' : 'Table columns (show / hide)'}
+              </Typography>
+              {tableApiLoading ? (
+                <div className='flex items-center gap-2 py-2'>
+                  <CircularProgress size={24} />
+                  <Typography variant='body2' color='text.secondary'>
+                    {locale === 'ar' ? 'جاري التحميل…' : 'Loading…'}
+                  </Typography>
+                </div>
+              ) : tableApiColumnKeys.length === 0 && data.userReportName ? (
+                <Typography variant='caption' color='text.secondary'>
+                  {locale === 'ar' ? 'لم تُرجع الأعمدة.' : 'No columns returned.'}
+                </Typography>
+              ) : (
+                <div className='flex max-h-64 flex-col gap-1 overflow-y-auto pr-1'>
+                  {tableApiColumnKeys.map(col => (
+                    <div
+                      key={col}
+                      className='flex items-center justify-between gap-3 rounded border border-gray-200 bg-gray-50/80 px-2 py-1.5'
+                    >
+                      <Typography variant='body2' className='min-w-0 flex-1 break-all' dir='auto'>
+                        {col}
+                      </Typography>
+                      <FormControlLabel
+                        className='m-0 shrink-0'
+                        control={
+                          <Checkbox
+                            size='small'
+                            checked={data.tableApiColumnVisibility?.[col] !== false}
+                            onChange={e => {
+                              onChange({
+                                ...data,
+                                tableApiColumnVisibility: {
+                                  ...(data.tableApiColumnVisibility || {}),
+                                  [col]: e.target.checked
+                                }
+                              })
+                            }}
+                          />
+                        }
+                        label={locale === 'ar' ? 'إظهار' : 'Show'}
+                        labelPlacement='start'
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Collapse>
           <Collapse
             transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`}
             isOpen={Boolean(data.is_api_generated && data.typeOfReport === 'chart')}

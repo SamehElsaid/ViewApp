@@ -94,7 +94,6 @@ const flattenDynamic = (data, SelectedRelatedCollectionsFields) => {
 
 // Dnd Kit Sortable Item Component
 function SortableGridItem({
-  saveDataAsDraft,
   loadingSaveAsDraft,
   refErrorFromTable,
   tabsData,
@@ -132,7 +131,8 @@ function SortableGridItem({
   sortedLoopWithoutTabs,
   FormType,
   saveAsDraft,
-  reloadValue
+  reloadValue,
+  isEntitiesData
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: filed.id,
@@ -352,6 +352,7 @@ function SortableGridItem({
 
 
 
+
       <DisplayField
         handleSubmit={handleSubmit}
         tabsData={tabsData}
@@ -359,6 +360,7 @@ function SortableGridItem({
         input={filed}
         FormType={FormType}
         design={getDesign(filed.id, filed)}
+        isEntitiesData={isEntitiesData}
         setActiveTab={setActiveTab}
         activeTab={activeTab}
         loadingSaveAsDraft={loadingSaveAsDraft}
@@ -376,7 +378,7 @@ function SortableGridItem({
         dataRefWithCollectionId={dataRefWithCollectionId}
         allFields={sortedLoopWithoutTabs}
         setTriggerData={setTriggerData}
-        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key]}
+        findValue={tabsData?.[filed?.key] || entitiesData?.[filed?.key] || entitiesData?.[filed?.key]}
         roles={roles}
         advancedEdit={readOnly}
         editMode={advancedEdit}
@@ -570,19 +572,20 @@ export default function ViewCollection({
     }
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
+  const [isEntitiesData, setIsEntitiesData] = useState(false)
+
   useEffect(() => {
     if (entitiesId !== null && collectionName !== null && collectionName && entitiesId) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
-          console.log(res?.data?.entities?.[0], "res?.data?.entities?.[0]");
           setEntitiesData(flattenDynamic(res?.data?.entities?.[0], data?.SelectedRelatedCollectionsFields))
+          setIsEntitiesData(true)
         }
       })
     }
   }, [entitiesId, collectionName, pageName])
 
 
-  const [saveDataAsDraft, setSaveDataAsDraft] = useState({})
 
 
 
@@ -743,7 +746,16 @@ export default function ViewCollection({
     if (tabsDataArray.length > 0 && activeTab + 1 < tabsDataArray.length) {
       setActiveTab(prev => prev + 1)
       setTabsData(prev => ({ ...prev, ...dataRef.current }))
+      const getTabId = document.getElementById(`tab-${data.collectionName}`)
+      if (getTabId) {
+        const yOffset = -100 // علشان يوقف قبل العنصر بـ 100px
+        const y = getTabId.getBoundingClientRect().top + window.pageYOffset + yOffset
 
+        window.scrollTo({
+          top: y,
+          behavior: 'smooth' // أو 'instant' لو عايز بدون animation
+        })
+      }
 
       return
     } else {
@@ -1491,7 +1503,6 @@ export default function ViewCollection({
                       refErrorFromTable={refErrorFromTable}
                       saveAsDraft={saveAsDraft}
                       loadingSaveAsDraft={loadingSaveAsDraft}
-                      saveDataAsDraft={saveDataAsDraft}
                       setLayout={setLayout}
                       triggerData={triggerData}
                       onChange={onChange}
@@ -1511,6 +1522,7 @@ export default function ViewCollection({
                       setActiveTab={setActiveTab}
                       FormType={FormType}
                       activeTab={activeTab}
+                      isEntitiesData={isEntitiesData}
                       handleSubmit={handleSubmit}
                       sortedLoopWithoutTabs={sortedLoopWithoutTabs}
                       loading={loading}

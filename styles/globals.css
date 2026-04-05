@@ -1711,3 +1711,8 @@ select {
   display: none !important;
 }
 
+
+button:disabled{
+  cursor: not-allowed !important;
+}
+
