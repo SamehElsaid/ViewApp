@@ -752,44 +752,46 @@ const ViewInput = ({
           target='_blank'
           rel='noreferrer'
         >
-          {value?.slice(0, 30) ? (
+          {value && value?.slice(0, 30) ? (
             value.slice(0, 30) + '.' + value.split('.').pop()
           ) : (
             <></>
           )}
         </a>
-        <div className=''>
-          <Button
-            variant='outlined'
-            component='label'
-            className='!w-[30px] !h-[30px] !rounded-full  !max-w-[30px] !max-h-[30px]  !min-h-0 !p-0 !min-w-0 !flex !items-center !justify-center'
-          >
-            <Icon
-              icon={value?.split('/Uploads/')?.[1]?.slice(0, 30) ? 'tabler:edit' : 'tabler:upload'}
-              width={25}
-              height={25}
-            />
-            <input
-              type='file'
-              disabled={isDisable == 'disabled'}
-              id={input.key}
-              hidden
-              onChange={onChangeFile}
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
+        {isDisable !== 'disabled' && (
+          <div className=''>
+            <Button
+              variant='outlined'
+              component='label'
+              className='!w-[30px] !h-[30px] !rounded-full  !max-w-[30px] !max-h-[30px]  !min-h-0 !p-0 !min-w-0 !flex !items-center !justify-center'
+            >
+              <Icon
+                icon={value ? value?.includes('/Uploads/') ? 'tabler:edit' : 'tabler:upload' : 'tabler:upload'}
+                width={25}
+                height={25}
+              />
+              <input
+                type='file'
+                disabled={isDisable == 'disabled'}
+                id={input.key}
+                hidden
+                onChange={onChangeFile}
+                onBlur={e => {
+                  if (onBlur) {
+                    const evaluatedFn = eval('(' + onBlur + ')')
 
-                  evaluatedFn(e)
+                    evaluatedFn(e)
+                  }
+                }}
+                accept={
+                  input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
+                    ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
+                    : undefined
                 }
-              }}
-              accept={
-                input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
-                  ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
-                  : undefined
-              }
-            />
-          </Button>
-        </div>
+              />
+            </Button>
+          </div>
+        )}
       </div>
     )
   }

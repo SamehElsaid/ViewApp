@@ -162,10 +162,12 @@ function ViewInputInTable({
             <IoMdSettings />
           </button>
         )}
+
+        {console.log(row?.[ele?.key] ? row?.[ele?.key] : false)}
         <DisplayField
           input={ele}
           key={row.index}
-          findValue={row?.[ele?.key]}
+          findValue={row?.[ele?.key] ? row?.[ele?.key] : false}
           design={getDesign(ele.key, ele)}
           readOnly={disabled}
           disabledBtn={!data.type_of_sumbit || (data.type_of_sumbit === 'api' && !data.submitApi)}

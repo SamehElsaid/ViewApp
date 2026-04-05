@@ -15,7 +15,6 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import { decryptData } from 'src/Components/encryption'
 import { useSelector } from 'react-redux'
-import ViewAsInputTrigger from '../FiledesComponent/ViewAsInputTrigger'
 
 export default function DisplayField({
   tabsData,
@@ -79,7 +78,6 @@ export default function DisplayField({
   const [lastValue, setLastValue] = useState(null)
   const [refreshHeight, setRefreshHeight] = useState(0)
 
-  console.log(findValue, "findValue");
 
 
   useEffect(() => {
@@ -88,6 +86,8 @@ export default function DisplayField({
     }
   }, [isDisabled])
 
+
+  console.log(value)
   useEffect(() => {
     if (!input) {
       setValue('')
@@ -420,11 +420,11 @@ export default function DisplayField({
   const inputMemo = useMemo(() => input, [input.type, input.kind]);
 
   useEffect(() => {
-    console.log(findValue, "findValue");
-    if (findValue !== undefined && findValue !== null && findValue !== '') {
+    if (findValue !== undefined && findValue !== null && findValue !== '' && findValue !== false) {
       if (input?.type == 'Date') {
         setValue(new Date(findValue))
       } else {
+        console.log(findValue, "findValuefindValuefindValue");
         setValue(findValue)
       }
     } else {
