@@ -491,7 +491,7 @@ export default function DisplayField({
             const items = getApiData.find(item => item.link === roles.api_url)?.data
             const valueFromApi = getData(items, roles?.onMount?.value, '')
             if (input?.type == 'Date') {
-              setValue(new Date(valueFromApi))
+              setValue(valueFromApi ? new Date(valueFromApi) : null)
             } else {
               setValue(valueFromApi)
             }
