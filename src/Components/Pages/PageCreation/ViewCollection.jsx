@@ -781,7 +781,7 @@ export default function ViewCollection({
     if (handleSubmitEvent) {
       handleSubmitEvent()
     }
-    
+
     // if (entitiesId && collectionName) {
 
     //   if (data.onSubmit) {
@@ -832,6 +832,7 @@ export default function ViewCollection({
       .finally(() => setLoading(false))
   }
 
+  
   const [loadingSaveAsDraft, setLoadingSaveAsDraft] = useState(false)
 
   const saveAsDraft = async (e, href) => {
