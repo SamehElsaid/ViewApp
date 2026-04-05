@@ -1,8 +1,9 @@
 import { MdOutlineEventNote } from 'react-icons/md'
-import EventControl from '../EventControl'
-import ViewEvent from '../ViewEvent'
+
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
+import ViewEvent from './ViewEvent'
+import EventControl from './EventControl'
 
 export default function useEvent({ locale, readOnly, buttonRef }) {
   const { messages } = useIntl()
