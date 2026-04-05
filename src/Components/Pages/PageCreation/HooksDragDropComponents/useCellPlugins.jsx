@@ -11,6 +11,7 @@ import useFlexControl from './useFlexControl'
 import useButton from './useButton'
 import useIconView from './useIconView'
 import useCart from './useCart'
+import useEvent from './useEvent'
 import slate from '@react-page/plugins-slate'
 import useSpacer from './useSpacer'
 import useProgressBar from './useProgressBar'
@@ -72,6 +73,7 @@ export default function useCellPlugins({
   const { FlexControlCell } = useFlexControl({ locale, buttonRef })
   const { ButtonCell } = useButton({ locale, buttonRef })
   const { cartCell } = useCart({ locale, readOnly, buttonRef })
+  const { eventCell } = useEvent({ locale, readOnly, buttonRef })
   const { IconView } = useIconView({ locale, buttonRef })
   const { SectionControl } = useSection({ locale, buttonRef })
   const { dynamicTable } = useDynamicTable({ locale, buttonRef, advancedEdit })
@@ -101,6 +103,7 @@ export default function useCellPlugins({
       order,
       chart,
       cartCell,
+      eventCell,
       IconView,
       Header,
       report,
@@ -129,6 +132,7 @@ export default function useCellPlugins({
       ButtonCell,
       FlexControlCell,
       cartCell,
+      eventCell,
       IconView,
       Header,
       report,
