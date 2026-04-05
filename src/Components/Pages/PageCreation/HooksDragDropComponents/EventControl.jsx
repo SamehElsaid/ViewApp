@@ -3,7 +3,8 @@ import dynamic from 'next/dynamic'
 import { Button, MenuItem, TextField } from '@mui/material'
 import { useIntl } from 'react-intl'
 import { useSelector } from 'react-redux'
-import CloseNav from './CloseNav'
+
+import CloseNav from '../CloseNav'
 import {
   getDefaultEventScript,
   buildEventDocument,
