@@ -30,7 +30,13 @@ export default function useButton({ locale, buttonRef }) {
           }
         }
 
+        const rawId = data?.elementId
+
+        const domId =
+          rawId != null && String(rawId).trim() !== '' ? String(rawId).trim() : undefined
+
         const options = {
+          ...(domId ? { id: domId } : {}),
           onMouseEnter: () => setHover(true),
           onMouseLeave: () => setHover(false),
           onClick: handleClick,
