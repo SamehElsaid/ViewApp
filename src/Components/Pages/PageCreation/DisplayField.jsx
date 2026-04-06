@@ -81,8 +81,12 @@ export default function DisplayField({
   const [refreshHeight, setRefreshHeight] = useState(0)
 
 
+
+
   useEffect(() => {
-    setValue("")
+    if(from !== "table") {
+      setValue("")
+    }
   }, [JSON.stringify(selectedOptions)])
 
 
@@ -239,7 +243,6 @@ export default function DisplayField({
       setSelectedOptions(prev =>
         oldSelectedOptions.filter(item => compare(item?.[key] || item.id, currentValue))
       )
-      setValue("")
 
     }
 

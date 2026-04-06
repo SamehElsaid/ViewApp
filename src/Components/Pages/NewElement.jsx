@@ -33,8 +33,7 @@ function NewElement({
   setActiveTab,
   allSortData = [],
   sortedLoopWithoutTabs = [],
-  saveAsDraft,
-  loadingSaveAsDraft
+  saveAsDraft
 }) {
   const [open, setOpen] = useState(false)
   const { locale, messages } = useIntl()
@@ -111,7 +110,7 @@ function NewElement({
 
 
 
-  const handleClick = e => {
+  const handleClick = async e => {
 
     if (roles?.type === 'saveAsDraft') {
       saveAsDraft(e)
@@ -147,8 +146,52 @@ function NewElement({
           })
         }
 
+        const promises = inputsWithValues
+          ?.filter(item =>
+            item.fieldCategory === "Associations" &&
+            item.value &&
+            item.kind !== "Table"
+          )
+          .map(item => {
+
+
+
+            return axiosGet(`generic-entities/${item?.options.source}/${item?.value}`).then(res => {
+
+              return { ...res, key: item?.key }
+            })
+          })
+
+        let newInputsWithValues = [...inputsWithValues]
+
+        const loadingToast = toast.loading('Generating PDF...')
+
+        await Promise.all(promises).then(res => {
+          newInputsWithValues = newInputsWithValues.map(item => {
+            const find = res.find(config => config?.key === item?.key)
+            const associationsConfig = data?.associationsConfig ?? []
+            const findAssociation = associationsConfig.find(config => config?.key === item?.key)
+
+
+
+            if (find) {
+
+              return {
+                ...item,
+                value: find?.data?.entities?.[0]?.[findAssociation?.selectedOptions[0]] || item.value
+              }
+            }
+
+            return item
+          })
+        })
+
+
+
+
+
         setPrintData({
-          inputsWithValues,
+          inputsWithValues: newInputsWithValues,
           pages: roles.print?.pages || [],
           inputsOrder: roles.print?.inputsOrder || [],
           inputsVisibility: roles.print?.inputsVisibility || {},
@@ -158,6 +201,7 @@ function NewElement({
         })
         setTimeout(() => {
           handlePrint()
+          toast.dismiss(loadingToast)
         }, 0)
         setTimeout(() => {
           setPrintData({ inputsWithValues: [], pages: [], inputsOrder: [], customCSS: '' })
@@ -249,9 +293,8 @@ function NewElement({
 
     const tabsData = data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data ?? [];
 
-
     return (
-      <div id={`tab-${data.collectionName}`} className='flex flex-col w-full gap-2'>
+      <div className='flex flex-col w-full gap-2'>
         <div className='flex flex-wrap w-full parent-tabs'>
           {tabsData.map((tab, originalIndex) => (
             <button
@@ -411,18 +454,10 @@ function NewElement({
           )}
         </div>
         <button
-          disabled={isDisable === 'disable' || (input.kind === 'back' && activeTab === 0) || (loadingSaveAsDraft && roles?.type === 'saveAsDraft')}
+          disabled={isDisable === 'disable' || (input.kind === 'back' && activeTab === 0)}
           onClick={e => {
             if (input.kind === 'back') {
               setActiveTab(prev => prev - 1);
-              const getTabId = document.getElementById(`tab-${data.collectionName}`)
-              const yOffset = -100 // علشان يوقف قبل العنصر بـ 100px
-              const y = getTabId.getBoundingClientRect().top + window.pageYOffset + yOffset
-
-              window.scrollTo({
-                top: y,
-                behavior: 'smooth' // أو 'instant' لو عايز بدون animation
-              })
 
               return
             }
