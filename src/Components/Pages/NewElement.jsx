@@ -199,7 +199,7 @@ function NewElement({
         }
       }
 
-      if (input?.kind === 'submit') {
+      if (input?.kind === 'submit' || roles?.type === 'submit') {
         handleSubmit(e, handleSubmitEvent)
       } else {
         handleSubmitEvent()

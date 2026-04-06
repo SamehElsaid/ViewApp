@@ -594,6 +594,7 @@ export default function ViewCollection({
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
+    console.log(dataRef.current, "dataRef.current");
 
 
     const initialSendData = { ...dataRef.current }
@@ -768,7 +769,7 @@ export default function ViewCollection({
 
 
 
-    // console.log(output, "output", dataRef, tabsData);
+    console.log(output, "output", dataRef, tabsData);
 
 
     setLoading(true)
@@ -778,45 +779,15 @@ export default function ViewCollection({
         ? data.submitApi
         : `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
 
-    if (handleSubmitEvent) {
-      handleSubmitEvent()
-    }
+  
 
-    // if (entitiesId && collectionName) {
-
-    //   if (data.onSubmit) {
-    //     const evaluatedFn = eval('(' + data.onSubmit + ')')
-    //     if (handleSubmitEvent) {
-    //       handleSubmitEvent()
-    //     } else {
-    //       evaluatedFn()
-    //     }
-    //   }
-    //   axiosPut(
-    //     `generic-entities/${collectionName}?Id=${entitiesId}&requestId=${requestId}&pageId=${pageId}`,
-    //     locale,
-    //     output
-    //   )
-    //     .then(res => {
-    //       if (res.status) {
-    //         setReload(prev => prev + 1)
-    //         toast.success(messages.dialogs.dataSentSuccessfully)
-
-    //         if (data?.redirect) {
-    //           push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
-    //         }
-    //       }
-    //     })
-    //     .finally(() => setLoading(false))
-    // } else {
-    // }
     axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false)
       .then(res => {
         if (res.status) {
           setReload(prev => prev + 1)
           toast.success(messages.dialogs.dataSentSuccessfully)
           if (data.onSubmit) {
-            const evaluatedFn = eval('(' + data.onSubmit + ')')
+            const evaluatedFn = eval('(' + data?.onSubmit + ')')
             if (handleSubmitEvent) {
               handleSubmitEvent()
             } else {
