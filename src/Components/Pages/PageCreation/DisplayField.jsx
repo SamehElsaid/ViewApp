@@ -81,6 +81,10 @@ export default function DisplayField({
   const [refreshHeight, setRefreshHeight] = useState(0)
 
 
+  useEffect(() => {
+    setValue("")
+  }, [JSON.stringify(selectedOptions)])
+
 
   useEffect(() => {
     if (isDisabled) {
