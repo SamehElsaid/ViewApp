@@ -69,6 +69,8 @@ export default function DisplayField({
   const { locale, messages } = useIntl()
   const [validations, setValidations] = useState({})
   const [selectedOptions, setSelectedOptions] = useState([])
+  const [oldSelectedOptions, setOldSelectedOptions] = useState([])
+
   const xComponentProps = useMemo(() => input?.options?.uiSchema?.xComponentProps ?? {}, [input])
   const [fileName, setFile] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -233,6 +235,8 @@ export default function DisplayField({
       setSelectedOptions(prev =>
         oldSelectedOptions.filter(item => compare(item?.[key] || item.id, currentValue))
       )
+      setValue("")
+
     }
 
     // =========================
@@ -528,10 +532,13 @@ export default function DisplayField({
   const appendSearchEntities = useCallback(entities => {
     if (!Array.isArray(entities) || entities.length === 0) return
     setSelectedOptions(prev => [...prev, ...entities])
+    setOldSelectedOptions(prev => [...prev, ...entities])
   }, [])
 
   const replaceSearchCollectionOptions = useCallback((entities, total) => {
     setSelectedOptions(entities ?? [])
+    setOldSelectedOptions(entities ?? [])
+
     setTotalCount(total ?? 0)
     setPage(1)
   }, [])
@@ -798,6 +805,7 @@ export default function DisplayField({
   useEffect(() => {
     if (!input?.getDataForm || (!input?.options?.source && !input?.staticData)) {
       setSelectedOptions([])
+      setOldSelectedOptions([])
       setLoading(false)
 
       return
@@ -806,6 +814,7 @@ export default function DisplayField({
     if (from === "table") {
       console.log(dataAssociations, "dataAssociations");
       setSelectedOptions(dataAssociations)
+      setOldSelectedOptions(dataAssociations)
       setLoading(false)
 
       return
@@ -819,6 +828,7 @@ export default function DisplayField({
         .then(res => {
           if (res.status) {
             setSelectedOptions(res?.data?.entities ?? [])
+            setOldSelectedOptions(res?.data?.entities ?? [])
             setTotalCount(res?.data?.totalCount ?? 0)
             setPage(1)
           }
@@ -830,6 +840,7 @@ export default function DisplayField({
 
     if (input?.getDataForm === 'static') {
       setSelectedOptions(input?.staticData || [])
+      setOldSelectedOptions(input?.staticData || [])
       setLoading(false)
     }
   }, [collectionOptionsDeps, staticDataDeps, locale, dataAssociations])
@@ -914,10 +925,12 @@ export default function DisplayField({
 
           if (Array.isArray(selectData)) {
             setSelectedOptions(selectData)
+            setOldSelectedOptions(selectData)
           }
         })
         .catch(err => {
           setSelectedOptions([])
+          setOldSelectedOptions([])
         })
         .finally(() => {
           setLoading(false)
