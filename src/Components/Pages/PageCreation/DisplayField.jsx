@@ -84,7 +84,11 @@ export default function DisplayField({
 
 
 
-
+  useEffect(() => {
+    if(from !== "table") {
+      setValue("")
+    }
+  }, [JSON.stringify(selectedOptions)])
 
 
   useEffect(() => {
