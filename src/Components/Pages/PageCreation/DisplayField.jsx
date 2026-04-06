@@ -15,6 +15,7 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import { decryptData } from 'src/Components/encryption'
 import { useSelector } from 'react-redux'
+import get from 'lodash/get'
 
 export default function DisplayField({
   tabsData,
@@ -83,11 +84,7 @@ export default function DisplayField({
 
 
 
-  useEffect(() => {
-    if(from !== "table") {
-      setValue("")
-    }
-  }, [JSON.stringify(selectedOptions)])
+
 
 
   useEffect(() => {
@@ -505,7 +502,7 @@ export default function DisplayField({
         if (roles?.onMount?.value) {
           if (roles?.api_url) {
             const items = getApiData.find(item => item.link === roles.api_url)?.data
-            const valueFromApi = getData(items, roles?.onMount?.value, '')
+            const valueFromApi = get(items, roles?.onMount?.value, '')
             if (input?.type == 'Date') {
               setValue(valueFromApi ? new Date(valueFromApi) : null)
             } else {
