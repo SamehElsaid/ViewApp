@@ -837,7 +837,7 @@ export default function DisplayField({
       const isSearchKind = input?.kind === 'search'
       const collectionListParams = isSearchKind ? { pageNumber: 1, pageSize: 10 } : {}
 
-      axiosGet(`generic-entities/${input?.options?.source}?pageNumber=1&pageSize=999`, locale, undefined, collectionListParams)
+      axiosGet(`generic-entities/${input?.options?.source}?pageNumber=1&pageSize=300`, locale, undefined, collectionListParams)
         .then(res => {
           if (res.status) {
             setSelectedOptions(res?.data?.entities ?? [])

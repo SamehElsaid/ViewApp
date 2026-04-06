@@ -223,11 +223,13 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
 
       const requestBody = {
         reportAPIName: data.userReportName,
-        pageSize: 999,
+        pageSize: 10,
         pageNumber: paginationModel.page + 1
       }
       const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
       const filtersFromQuery = parseQueryFilterStringToFilters(resolvedQueryFilter)
+
+      console.log(filtersFromQuery, "filtersFromQueryfiltersFromQuery");
       if (filtersFromQuery.length > 0) {
         requestBody.apiName = data.userReportName
         requestBody.filters = filtersFromQuery
@@ -235,22 +237,23 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
 
 
 
+
+
       Promise.all([
-        axiosPost(`dynamic-report-data/get-collections-data-by-API-name`, locale, requestBody),
+        axiosPost(`dynamic-report-data/get-filtered-data`, locale, requestBody),
         axiosPost(`dynamic-report-data/get-API-columns/${data.userReportName}`, locale)
       ])
         .then(([res, res2]) => {
           if (res.status) {
             const mappedRows =
-              res?.data?.result?.map(ele => ({
+              res?.data?.map(ele => ({
                 ...ele,
                 id: ele.RegionsId
               })) ?? []
 
             
-            const filteredRows = applyQueryFiltersToRows(mappedRows, filtersFromQuery)
 
-            setGetFields(filteredRows)
+            setGetFields(mappedRows)
             setTotalCount(res.data.totalCount)
           }
           if (res2.status) {
