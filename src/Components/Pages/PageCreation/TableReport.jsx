@@ -223,7 +223,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
 
       const requestBody = {
         reportAPIName: data.userReportName,
-        pageSize: paginationModel.pageSize,
+        pageSize: 999,
         pageNumber: paginationModel.page + 1
       }
       const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
