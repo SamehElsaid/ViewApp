@@ -183,7 +183,7 @@ export default function Index() {
             LinkComponent={Link}
             href=
             {
-              `/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}` : ''}${row.collectionName ? `&collection=${row.collectionName}` : ''
+              `/${row.pageName}?requestId=${row.id}${row.entityId ? `&entityId=${row.entityId}&facilityid=${row.entityId}` : ''}${row.collectionName ? `&collection=${row.collectionName}` : ''
               }${row.workflowInstanceId ? `&MainWfInstanceId=${row.workflowInstanceId}` : ''}${row.caseId ? `&caseId=${row.caseId}` : ''
               }${profile?.sub ? `&sub=${profile?.sub}` : ''}${profile?.name ? `&name=${profile?.name}` : ''}`
             }
