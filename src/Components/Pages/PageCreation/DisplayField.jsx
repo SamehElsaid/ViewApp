@@ -231,7 +231,7 @@ export default function DisplayField({
       const key = trigger.currentField === 'id' ? 'Id' : trigger.currentField
 
       setSelectedOptions(prev =>
-        prev.filter(item => compare(item?.[key], currentValue))
+        oldSelectedOptions.filter(item => compare(item?.[key] || item.id, currentValue))
       )
     }
 
