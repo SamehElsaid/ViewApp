@@ -63,7 +63,7 @@ function resolveTableApiQueryFilter(template, query) {
     return ''
   }
 
-  return template.replace(/\{([^{}]+)\}/g, (_, rawKey) => {
+  const result = template.replace(/\{([^{}]+)\}/g, (_, rawKey) => {
     const key = rawKey.trim()
     if (!key) {
       return ''
@@ -75,6 +75,9 @@ function resolveTableApiQueryFilter(template, query) {
 
     return Array.isArray(v) ? String(v[0]) : String(v)
   })
+
+  return result
+
 }
 
 /** `key=value&key2=value2` → `[{ column, operator: 'Equals', value }, ...]` */
@@ -84,8 +87,12 @@ function parseQueryFilterStringToFilters(resolved) {
     return []
   }
 
+
   const params = new URLSearchParams(trimmed)
   const filters = []
+
+
+
   params.forEach((value, column) => {
     if (column && value !== '') {
       filters.push({ column, operator: 'Equals', value })
@@ -93,6 +100,36 @@ function parseQueryFilterStringToFilters(resolved) {
   })
 
   return filters
+}
+
+function normalizeCellForFilter(v) {
+  if (v == null) return ''
+  if (typeof v === 'object' && v !== null && 'value' in v) {
+    return normalizeCellForFilter(v.value)
+  }
+
+  return String(v).trim()
+}
+
+/** Client-side row filter matching API-style `{ column, operator, value }` (e.g. from query string). */
+function applyQueryFiltersToRows(rows, filters) {
+  if (!filters?.length) {
+    return rows
+  }
+
+
+  return rows.filter(row =>
+    filters.every(({ column, operator, value }) => {
+      const op = String(operator || 'Equals').toLowerCase()
+      const cell = normalizeCellForFilter(row[column])
+      const wanted = normalizeCellForFilter(value)
+      if (op === 'equals' || op === 'equal') {
+        return cell === wanted
+      }
+
+      return true
+    })
+  )
 }
 
 async function registerArabicPdfFont(doc) {
@@ -196,20 +233,24 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
         requestBody.filters = filtersFromQuery
       }
 
+
+
       Promise.all([
         axiosPost(`dynamic-report-data/get-collections-data-by-API-name`, locale, requestBody),
         axiosPost(`dynamic-report-data/get-API-columns/${data.userReportName}`, locale)
       ])
         .then(([res, res2]) => {
           if (res.status) {
-            setGetFields(
-              res?.data?.result?.map(ele => {
-                return {
-                  ...ele,
-                  id: ele.RegionsId
-                }
-              })
-            )
+            const mappedRows =
+              res?.data?.result?.map(ele => ({
+                ...ele,
+                id: ele.RegionsId
+              })) ?? []
+
+            
+            const filteredRows = applyQueryFiltersToRows(mappedRows, filtersFromQuery)
+
+            setGetFields(filteredRows)
             setTotalCount(res.data.totalCount)
           }
           if (res2.status) {
@@ -467,7 +508,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
 
   const handleApplyFilter = () => {
     const visibleColumnKeys = new Set(filterWithSelect.filter(Boolean).map(f => f.key))
-    
+
     // Filter out empty values; only columns currently visible (matches filter inputs)
 
     const filtersArray = Object.keys(filterValues)
@@ -595,7 +636,7 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
           >
             {locale === 'ar' ? 'تصدير PDF' : 'Export PDF'}
           </Button>
-        
+
           <Button
             variant='contained'
             color='success'
@@ -615,10 +656,10 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
                     ele.fieldCategory === 'Associations'
                       ? []
                       : ele.type === 'Date'
-                      ? new Date()
-                      : ele.type === 'DateTime'
-                      ? new Date()
-                      : ''
+                        ? new Date()
+                        : ele.type === 'DateTime'
+                          ? new Date()
+                          : ''
                 })
                 setGetFields([newData, ...getFields])
               }}
