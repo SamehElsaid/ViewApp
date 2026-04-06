@@ -435,10 +435,15 @@ export default function DisplayField({
       if (input?.kind == 'search' || input?.kind == 'checkbox') {
         setValue([])
       }
+      console.log(input?.type, "input?.kindinput?.kindinput?.kind");
+      console.log();
+      if (input?.type == 'Boolean') {
+        setValue(false)
+      }
       if (input?.type == 'Date') {
         if (!roles?.api_url) {
 
-          setValue()
+          setValue(findValue)
         }
       }
     }
