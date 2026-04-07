@@ -58,7 +58,7 @@ function getFontFetchUrl() {
 }
 
 /** Replace `{param}` with values from the page URL query (Next.js `router.query`). */
-function resolveTableApiQueryFilter(template, query) {
+export function resolveTableApiQueryFilter(template, query) {
   if (!template || typeof template !== 'string') {
     return ''
   }

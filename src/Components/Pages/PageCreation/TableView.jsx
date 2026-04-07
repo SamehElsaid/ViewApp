@@ -14,6 +14,8 @@ import TableComponent from './TableComponent'
 import { IoMdSettings } from 'react-icons/io'
 import TableColumnControl from './tableColumnControl'
 import { DEFAULT_TABLE_STYLE } from './tableColumnControl'
+import { resolveTableApiQueryFilter } from './TableReport'
+import { useRouter } from 'next/router'
 
 function TableView({
   refErrorFromTable,
@@ -70,15 +72,18 @@ function TableView({
     pageSize: 10
   })
   const [totalCount, setTotalCount] = useState(0)
+  const router = useRouter()
 
   useEffect(() => {
     setLoading(true)
     const getOldRows = data.newRows || []
 
     if (data.collectionId && data.collectionName && data.showOldData) {
+      const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
+
       axiosGet(
         `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${paginationModel.pageSize
-        }&isLookup=true`,
+        }&isLookup=true${resolvedQueryFilter ? `&${resolvedQueryFilter}` : ''}`,
         locale
       )
         .then(res => {
