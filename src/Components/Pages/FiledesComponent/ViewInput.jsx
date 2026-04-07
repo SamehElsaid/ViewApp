@@ -657,7 +657,7 @@ const ViewInput = ({
   if (input.type == 'File') {
     return from != 'table' ? (
       <div className='px-4 w-full relative'>
-        {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>}
+        {/* {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>} */}
         <div id='file-upload-container'>
           <label htmlFor={input.key} id='file-upload-label'>
             <div id='label-color'>{locale == 'ar' ? input.nameAr : input.nameEn}</div>
