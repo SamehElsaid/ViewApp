@@ -99,7 +99,7 @@ const ViewInput = ({
   error,
   showPassword,
   setShowPassword,
-  selectedOptions,
+  selectedOptions = [],
   setTriggerData,
   isDisable,
   placeholder,
@@ -225,10 +225,10 @@ const ViewInput = ({
         <select
           value={value}
           onChange={e => onChange(e)}
-          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
+          disabled={isDisable == 'disabled' || selectedOptions?.length == 0}
           onBlur={e => {
             if (isRedirect) {
-              const findOption = selectedOptions.find(option => option.Id == e.target.value)
+              const findOption = selectedOptions?.find(option => option.Id == e.target.value)
               setRedirect(findOption.redirect)
             }
             if (onBlur) {
