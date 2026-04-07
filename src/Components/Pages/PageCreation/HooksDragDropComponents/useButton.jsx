@@ -4,6 +4,7 @@ import ButtonControl from '../ButtonControl'
 import Link from 'next/link'
 import { useIntl } from 'react-intl'
 import { resolveTableApiQueryFilter } from '../TableReport'
+import { useRouter } from 'next/router'
 
 export default function useButton({ locale, buttonRef }) {
   const { messages } = useIntl()
@@ -12,7 +13,9 @@ export default function useButton({ locale, buttonRef }) {
     return {
       Renderer: ({ data }) => {
         const [hover, setHover] = useState(false)
-
+        const router = useRouter()
+        const query = router.query
+        
         const handleClick = e => {
           if (data?.popupTargetId) {
             try {
@@ -75,12 +78,13 @@ export default function useButton({ locale, buttonRef }) {
           return !!pattern.test(str)
         }
 
+
         return isValidURL(data.href) ? (
           <a href={data.href} target='_blank' rel='noopener noreferrer' {...options}>
             {(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'}
           </a>
         ) : data.href ? (
-          <Link href={`${resolveTableApiQueryFilter(data.href)}`} {...options}>
+          <Link href={`${resolveTableApiQueryFilter(data.href, query)}`} {...options}>
             {(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'}
           </Link>
         ) : (
