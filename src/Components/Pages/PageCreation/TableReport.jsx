@@ -221,8 +221,11 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       setLoadingHeader(true)
       setLoading(true)
 
+
+      console.log(data.userReportName, "data.userReportNamedata.userReportName");
+
       const requestBody = {
-        reportAPIName: data.userReportName,
+        apiName: data.userReportName,
         pageSize: 10,
         pageNumber: paginationModel.page + 1
       }

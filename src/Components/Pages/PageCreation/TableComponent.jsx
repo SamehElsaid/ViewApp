@@ -224,10 +224,8 @@ TableHeader.displayName = 'TableHeader'
 /**
  * Renders a single table row
  */
-const TableRowComponent = (
+const TableRowComponent = memo(
   ({
-    associationsData,
-    loadingAssociations,
     refErrorFromTable,
     setTotalCount,
     allData,
@@ -273,9 +271,16 @@ const TableRowComponent = (
       })
       setTotalCount(prev => prev - 1)
     }, [column.Id, setGetFields, reloadHight, onChange, data, setTotalCount])
-    const findData = data.newRows?.find(ele => ele.Id === column.Id)
+
+
+
+    const findData = {...allData, ...data.newRows?.find(ele => ele.Id === column.Id)}
 
     const dataRef = useRef(findData ?? {})
+
+    
+
+
 
 
 
@@ -289,10 +294,11 @@ const TableRowComponent = (
     const { locale } = useIntl()
 
 
+
     return (
-      <TableRow key={column?.id} className='relative'>
+      <TableRow key={column?.Id} className='relative'>
         {isFormTable && !readOnly && (
-          <TableCell key={column.id + 'delete'} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
+          <TableCell key={column.Id + 'delete'} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
             <button
               type='button'
               className='w-[30px] || h-[30px] hover:bg-main-color hover:text-white duration-200 || rounded-lg || shadow-2xl text-xl flex || items-center justify-center bg-white border-main-color border'
@@ -306,25 +312,22 @@ const TableRowComponent = (
             </button>
           </TableCell>
         )}
-
-        {filterWithSelect.map(parentKey => (
+        {filterWithSelect.map((parentKey, index) => (
           parentKey?.id &&
-          <TableCell key={parentKey?.id} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
+          <TableCell key={parentKey?.id + column.Id + index} sx={{ borderInlineEnd: `1px solid ${borderColor}`, borderBottom: `1px solid ${borderColor}` }}>
+
             <Typography variant='subtitle2' sx={{ fontWeight: 500, color: 'text.secondary' }} dir='auto'>
-              {console.log(associationsData.find(ele => ele.key === parentKey.key)?.data ?? [])
-              }
               {isFormTable ? (
                 <ViewInputInTable
                   refErrorFromTable={refErrorFromTable}
                   ele={parentKey}
                   columnId={columnId}
-                  associationsDataInput={associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
-                  loadingAssociationsInput={loadingAssociations}
                   row={column}
                   readOnly={readOnly}
                   disabled={disabled}
                   data={data}
-                  dataRef={{ ...dataRef, ...allData }}
+                  dataRef={dataRef}
+                  allData={allData}
                   currentData={dataRef}
                   setGetFields={setGetFields}
                   onChange={onChange}
@@ -362,7 +365,6 @@ const TableRowComponent = (
     )
   }
 )
-
 TableRowComponent.displayName = 'TableRowComponent'
 
 function TableComponent({

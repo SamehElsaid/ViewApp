@@ -3,16 +3,15 @@ import React, { useEffect, useRef, useState } from 'react'
 import DisplayField from './PageCreation/DisplayField'
 import { seterrorInAllRowData } from 'src/store/apps/errorInAllRow/errorInAllRow'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
-import { CircularProgress } from '@mui/material'
 
 function ViewInputInTable({
-  associationsDataInput,
-  loadingAssociationsInput,
   refErrorFromTable,
   ele,
   row,
+  allData,
   readOnly,
   disabled,
   data,
@@ -27,6 +26,7 @@ function ViewInputInTable({
   formTable,
   columnId,
   reloadErrors,
+  currentData
 }) {
   const refError = useRef({})
   const [reload, setReload] = useState(0)
@@ -67,14 +67,12 @@ function ViewInputInTable({
 
 
 
-  console.log(associationsDataInput, "associationsDataInput");
-  console.log(loadingAssociationsInput, "loadingAssociationsInput");
 
 
 
   return (
     <div
-      key={columnId}
+      key={columnId + ele.key + "inputView"}
       tabIndex={0}
       onClick={() => {
         setFindError(false)
@@ -82,12 +80,12 @@ function ViewInputInTable({
       className='relative w-full'
       onBlur={() => {
 
-        console.log(dataRef, "dataRef");
+        console.log(dataRef, "dataRefdataRefdataRef");
+
         setChangedValue(prev => {
           const newPrev = [...prev]
 
           const findWithId = newPrev.find(e => e.Id === row.Id)
-          console.log(dataRef, findWithId, "currentData");
           if (findWithId) {
             findWithId[ele.key] = dataRef.current[ele.key]
           } else {
@@ -129,11 +127,6 @@ function ViewInputInTable({
 
       }}
     >
-      {loadingAssociationsInput && ele.fieldCategory == 'Associations' && (
-        <div className='absolute inset-0 z-20 flex justify-center items-center bg-white'>
-          <CircularProgress />
-        </div>
-      )}
       {!readOnly && formTable === 'table' && (
         <div
           onContextMenu={e => {
@@ -162,12 +155,10 @@ function ViewInputInTable({
             <IoMdSettings />
           </button>
         )}
-
-        {console.log(row?.[ele?.key] ? row?.[ele?.key] : false)}
         <DisplayField
           input={ele}
           key={row.index}
-          findValue={row?.[ele?.key] ? row?.[ele?.key] : false}
+          findValue={row?.[ele?.key]}
           design={getDesign(ele.key, ele)}
           readOnly={disabled}
           disabledBtn={!data.type_of_sumbit || (data.type_of_sumbit === 'api' && !data.submitApi)}
@@ -175,7 +166,6 @@ function ViewInputInTable({
           refErrorFromTable={refErrorFromTable}
           allErrorsRef={allErrorsRef}
           columnId={columnId}
-          dataAssociations={associationsDataInput}
           setLayout={false}
           triggerData={triggerData}
           from='table'
