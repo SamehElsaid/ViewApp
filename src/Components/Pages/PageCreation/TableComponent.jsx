@@ -276,11 +276,11 @@ const TableRowComponent = memo(
 
 
 
-    const findData = {...allData, ...data.newRows?.find(ele => ele.Id === column.Id)}
+    const findData = { ...allData, ...data.newRows?.find(ele => ele.Id === column.Id) }
 
     const dataRef = useRef(findData ?? {})
 
-    
+
 
 
 
@@ -323,7 +323,7 @@ const TableRowComponent = memo(
                 <ViewInputInTable
                   refErrorFromTable={refErrorFromTable}
                   ele={parentKey}
-                  associationsDataInput={associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
+                  associationsDataInput={parentKey?.staticData ? parentKey?.staticData : associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
                   loadingAssociationsInput={loadingAssociations}
                   columnId={columnId}
                   row={column}
