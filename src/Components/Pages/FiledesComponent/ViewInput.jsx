@@ -251,7 +251,7 @@ const ViewInput = ({
     )
   }
 
-  if (input.kind == 'radio') {
+  if (input.kind == 'boolean') {
     const label = JSON.parse(input?.descriptionEn)
     const valueSend = JSON.parse(input?.selectedValueSend) || []
 
