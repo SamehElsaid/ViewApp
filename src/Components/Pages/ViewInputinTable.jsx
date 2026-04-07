@@ -36,6 +36,9 @@ function ViewInputInTable({
   const dispatch = useDispatch()
   const [findError, setFindError] = useState(false)
   const { locale } = useIntl()
+
+
+  console.log(row?.[ele?.key],row.Id,data.newRows,dataRef,ele.key, "associationsDataInputassociationsDataInput");
   useEffect(() => {
     if (document.getElementById(`btn-actions-${data.collectionId}`)) {
       document.getElementById(`btn-actions-${data.collectionId}`).addEventListener('click', () => {

@@ -310,7 +310,7 @@ function TableView({
       try {
         const requests = newFilterWithSelectAssociations.map(newInput => {
           return axiosGet(
-            `generic-entities/${newInput?.options?.source}`,
+            `generic-entities/${newInput?.options?.source}?pageNumber=1&pageSize=300`,
             locale,
             undefined,
             { pageNumber: 1, pageSize: 10 }

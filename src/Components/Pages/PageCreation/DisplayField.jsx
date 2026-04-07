@@ -98,7 +98,6 @@ export default function DisplayField({
   }, [isDisabled])
 
 
-  console.log(value)
   useEffect(() => {
     if (!input) {
       setValue('')
@@ -436,15 +435,12 @@ export default function DisplayField({
       if (input?.type == 'Date') {
         setValue(new Date(findValue))
       } else {
-        console.log(findValue, "findValuefindValuefindValue");
         setValue(findValue)
       }
     } else {
       if (input?.kind == 'search' || input?.kind == 'checkbox') {
         setValue([])
       }
-      console.log(input?.type, "input?.kindinput?.kindinput?.kind");
-      console.log();
       if (input?.type == 'Boolean') {
         setValue(false)
       }
@@ -825,7 +821,6 @@ export default function DisplayField({
     }
 
     if (from === "table") {
-      console.log(dataAssociations, "dataAssociations");
       setSelectedOptions(dataAssociations)
       setOldSelectedOptions(dataAssociations)
       setLoading(false)
