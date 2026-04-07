@@ -699,12 +699,12 @@ function TableComponent({
                   messages={messages}
                   onEdit={(column) => {
                     // rou
-                    router.push(`/${locale}/${data.editPageNameRedirect ?? ''}?entitiesId=${column.Id}`)
+                    router.push(`/${locale}/${data.editPageNameRedirect ?? ''}?entityId=${column.Id}&collection=${data.collectionName}`)
 
                   }}
 
                   onDetails={(column) => {
-                    router.push(`/${locale}/${data.detailsPageNameRedirect ?? ''}?entitiesId=${column.Id}`)
+                    router.push(`/${locale}/${data.detailsPageNameRedirect ?? ''}?entityId=${column.Id}&collection=${data.collectionName}`)
                   }}
                   onDelete={() => {
 
