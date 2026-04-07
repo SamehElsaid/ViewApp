@@ -464,7 +464,7 @@ export default function DisplayField({
   }, [reload, input])
 
 
-  const [loadingValue, setLoadingValue] = useState(false)
+  const items = getApiData.find(item => item.link === roles.api_url)?.data
 
 
 
@@ -497,7 +497,6 @@ export default function DisplayField({
 
         if (roles?.onMount?.value) {
           if (roles?.api_url) {
-            const items = getApiData.find(item => item.link === roles.api_url)?.data
             const valueFromApi = get(items, roles?.onMount?.value, '')
             if (input?.type == 'Date') {
               setValue(valueFromApi ? new Date(valueFromApi) : null)
@@ -529,7 +528,7 @@ export default function DisplayField({
         setReloadValue(prev => prev + 1)
       }, 0)
     }
-  }, [roles?.onMount?.type, roles?.onMount?.value, loading])
+  }, [roles?.onMount?.type, roles?.onMount?.value, loading ,items.loading])
 
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
