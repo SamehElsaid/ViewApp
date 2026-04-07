@@ -49,6 +49,7 @@ function TableView({
   const [columnControl, setColumnControl] = useState(false)
   const allErrorsRef = useRef([])
   const [rowSettingOpen, setRowSettingOpen] = useState(false)
+  const router = useRouter()
 
 
   console.log("here in table view");
@@ -72,13 +73,13 @@ function TableView({
     pageSize: 10
   })
   const [totalCount, setTotalCount] = useState(0)
-  const router = useRouter()
 
   useEffect(() => {
     setLoading(true)
     const getOldRows = data.newRows || []
 
     if (data.collectionId && data.collectionName && data.showOldData) {
+
       const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
 
       axiosGet(

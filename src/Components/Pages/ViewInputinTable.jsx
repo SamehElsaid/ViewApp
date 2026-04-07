@@ -6,8 +6,11 @@ import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
+import { CircularProgress } from '@mui/material'
 
 function ViewInputInTable({
+  loadingAssociationsInput,
+  associationsDataInput,
   refErrorFromTable,
   ele,
   row,
@@ -155,6 +158,11 @@ function ViewInputInTable({
             <IoMdSettings />
           </button>
         )}
+        {loadingAssociationsInput && ele.fieldCategory == 'Associations' && (
+          <div className='absolute inset-0 z-20 flex justify-center items-center bg-white'>
+            <CircularProgress />
+          </div>
+        )}
         <DisplayField
           input={ele}
           key={row.index}
@@ -217,6 +225,7 @@ function ViewInputInTable({
             }
           }
           reload={reload}
+          dataAssociations={associationsDataInput}
           errorView={findError}
           findError={findError && typeof findError === 'object'}
           hiddenLabel={true}

@@ -229,6 +229,8 @@ const TableRowComponent = memo(
     refErrorFromTable,
     setTotalCount,
     allData,
+    associationsData,
+    loadingAssociations,
     column,
     filterWithSelect,
     data,
@@ -321,6 +323,8 @@ const TableRowComponent = memo(
                 <ViewInputInTable
                   refErrorFromTable={refErrorFromTable}
                   ele={parentKey}
+                  associationsDataInput={associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
+                  loadingAssociationsInput={loadingAssociations}
                   columnId={columnId}
                   row={column}
                   readOnly={readOnly}
