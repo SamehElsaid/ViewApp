@@ -323,7 +323,7 @@ const TableRowComponent = memo(
                 <ViewInputInTable
                   refErrorFromTable={refErrorFromTable}
                   ele={parentKey}
-                  associationsDataInput={parentKey?.staticData ? parentKey?.staticData : associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
+                  associationsDataInput={parentKey?.staticData?.length > 0 ? parentKey?.staticData : associationsData.find(ele => ele.key === parentKey.key)?.data ?? []}
                   loadingAssociationsInput={loadingAssociations}
                   columnId={columnId}
                   row={column}
