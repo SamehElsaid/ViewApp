@@ -3,6 +3,7 @@ import { GiClick } from 'react-icons/gi'
 import ButtonControl from '../ButtonControl'
 import Link from 'next/link'
 import { useIntl } from 'react-intl'
+import { resolveTableApiQueryFilter } from '../TableReport'
 
 export default function useButton({ locale, buttonRef }) {
   const { messages } = useIntl()
@@ -63,11 +64,11 @@ export default function useButton({ locale, buttonRef }) {
         function isValidURL(str) {
           const pattern = new RegExp(
             '^(https?:\\/\\/)?' +
-              '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' +
-              '((\\d{1,3}\\.){3}\\d{1,3}))' +
-              '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' +
-              '(\\?[;&a-z\\d%_.~+=-]*)?' +
-              '(\\#[-a-z\\d_]*)?$',
+            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' +
+            '((\\d{1,3}\\.){3}\\d{1,3}))' +
+            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' +
+            '(\\?[;&a-z\\d%_.~+=-]*)?' +
+            '(\\#[-a-z\\d_]*)?$',
             'i'
           )
 
@@ -79,7 +80,7 @@ export default function useButton({ locale, buttonRef }) {
             {(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'}
           </a>
         ) : data.href ? (
-          <Link href={data.href} {...options}>
+          <Link href={`${resolveTableApiQueryFilter(data.href)}`} {...options}>
             {(locale === 'ar' ? data.buttonTextAr : data.buttonTextEn) ?? 'Button'}
           </Link>
         ) : (
