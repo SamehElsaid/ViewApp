@@ -132,14 +132,8 @@ function ViewInputInTable({
 
       }}
     >
-      {!readOnly && formTable === 'table' && (
-        <div
-          onContextMenu={e => {
-            e.preventDefault()
-          }}
-          className='absolute inset-0 z-20'
-        ></div>
-      )}
+      {console.log(loadingAssociationsInput && ele.fieldCategory)
+      }
       <div className="flex items-center gap-2">
 
         {!readOnly && (
@@ -228,6 +222,7 @@ function ViewInputInTable({
           }
           reload={reload}
           dataAssociations={associationsDataInput}
+          loadingAssociationsInput={loadingAssociationsInput}
           errorView={findError}
           findError={findError && typeof findError === 'object'}
           hiddenLabel={true}

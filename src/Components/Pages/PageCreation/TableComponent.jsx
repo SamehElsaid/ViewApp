@@ -279,6 +279,7 @@ const TableRowComponent = memo(
     const findData = { ...allData, ...data.newRows?.find(ele => ele.Id === column.Id) }
 
     const dataRef = useRef(findData ?? {})
+    const hiddenInTableFields = Array.isArray(data?.hiddenInTableFields) ? data.hiddenInTableFields : []
 
 
 

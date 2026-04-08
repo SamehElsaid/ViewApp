@@ -16,6 +16,7 @@ import TableColumnControl from './tableColumnControl'
 import { DEFAULT_TABLE_STYLE } from './tableColumnControl'
 import { resolveTableApiQueryFilter } from './TableReport'
 import { useRouter } from 'next/router'
+import { toast } from 'react-toastify'
 
 function TableView({
   refErrorFromTable,
@@ -30,6 +31,7 @@ function TableView({
   reloadHight,
   type,
   formTable,
+  pageId,
   FilterData,
   filterWithAPIValue,
   setValue,
@@ -343,6 +345,7 @@ function TableView({
   }, [collectionFields.length, data?.selected?.length, data.sortWithId, reloadRef])
 
 
+  console.log(loadingAssociations, associationsData, "loadingAssociations");
 
 
   const SortableButton = SortableElement(({ value }) => (
@@ -392,6 +395,61 @@ function TableView({
     setDeleteOpen(false)
   }
   const [loadingButton, setLoadingButton] = useState(false)
+
+  const resolveQueryPlaceholders = useCallback(
+    value => {
+      if (Array.isArray(value)) {
+        return value.map(item => resolveQueryPlaceholders(item))
+      }
+
+      if (value && typeof value === 'object') {
+        return Object.fromEntries(
+          Object.entries(value).map(([key, itemValue]) => [key, resolveQueryPlaceholders(itemValue)])
+        )
+      }
+
+      if (typeof value === 'string') {
+        return value.replace(/{{\s*([^}]+)\s*}}/g, (_match, queryKey) => {
+          const queryValue = router.query?.[queryKey]
+          if (Array.isArray(queryValue)) {
+            return queryValue[0] ?? ''
+          }
+
+          return queryValue ?? ''
+        })
+      }
+
+      return value
+    },
+    [router.query]
+  )
+
+  const mapRowsBeforeSubmit = useCallback(
+    rows => {
+      const baseRows = Array.isArray(rows) ? rows.map(rowItem => resolveQueryPlaceholders(rowItem)) : []
+      const jsCode = data?.tableRowJsData?.trim()
+      if (!jsCode) {
+
+        return baseRows
+      }
+
+      try {
+        const transformFn = new Function('row', 'allRows', 'allData', 'routerQuery', jsCode)
+
+        return baseRows.map(rowItem => {
+          const transformed = transformFn(rowItem, baseRows, allData, router.query)
+
+          return transformed && typeof transformed === 'object' ? resolveQueryPlaceholders(transformed) : rowItem
+        })
+      } catch (error) {
+        console.error('tableRowJsData execution error:', error)
+        toast.error(messages?.dialogs?.invalidCode || 'Invalid JS code for table rows')
+
+        return baseRows
+      }
+    },
+    [allData, data?.tableRowJsData, messages?.dialogs?.invalidCode, resolveQueryPlaceholders, router.query]
+  )
 
   const defaultDesign =
     open?.type === 'new_element' ? DefaultStyle(open?.key) : open?.options?.uiSchema?.xComponentProps?.cssClass
@@ -444,6 +502,8 @@ function TableView({
 
   const dispatch = useDispatch()
   const [reloadErrors, setReloadErrors] = useState(0)
+
+  console.log(data?.newRows, "data?.newRows");
 
   return (
     <div>
@@ -534,7 +594,7 @@ function TableView({
                 filterWithSelect.forEach(ele => {
                   newData[ele.key] =
                     ele.fieldCategory === 'Associations'
-                      ? []
+                      ? ''
                       : ele.type === 'Date'
                         ? new Date()
                         : ele.type === 'DateTime'
@@ -603,14 +663,17 @@ function TableView({
           />
           {data.kind === 'form-table' && type !== 'from-collection' && paginationModel.page === 0 && (
             <div className='flex justify-end px-5 mt-3'>
-              <Button
+              <LoadingButton
                 variant='contained'
-                color='success'
+                color='primary'
+                loading={loadingButton}
                 onClick={() => {
+                  const transformedRows = mapRowsBeforeSubmit(data.newRows)
+                  setLoadingButton(true)
                   axiosPost(
-                    `generic-entities/${data.collectionName}`,
+                    `generic-entities/${data.collectionName}?pageId=${pageId}`,
                     locale,
-                    changedValue.map(ele => {
+                    transformedRows.map(ele => {
                       return {
                         ...ele,
                         Id: ele.Id.includes('front') ? undefined : ele.Id
@@ -621,10 +684,13 @@ function TableView({
                       toast.success(messages.savedSuccessfully)
                     }
                   })
+                  .finally(() => {
+                    setLoadingButton(false)
+                  })
                 }}
               >
-                {messages.save}
-              </Button>
+                {messages.submit}
+              </LoadingButton>
             </div>
           )}
         </div>

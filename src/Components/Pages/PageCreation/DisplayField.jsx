@@ -23,6 +23,7 @@ export default function DisplayField({
   dataAssociations,
   onChangeData,
   advancedEdit,
+  loadingAssociationsInput,
   saveAsDraft,
   editMode,
   from,
@@ -522,14 +523,22 @@ export default function DisplayField({
                 newValue = valueDate
               }
             }
-            setValue(findValue ?? newValue)
+
+            if (Array.isArray(findValue) && findValue.length === 0) {
+              setValue(newValue)
+            } else {
+              setValue(findValue ?? newValue)
+
+            }
           }
         }
         setReloadValue(prev => prev + 1)
       }, 0)
     }
-  }, [roles?.onMount?.type, roles?.onMount?.value, loading,items?.loading])
+  }, [roles?.onMount?.type, roles?.onMount?.value, loading, items?.loading, loadingAssociationsInput])
 
+
+  console.log(input.key, value, "value");
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
 
@@ -815,7 +824,7 @@ export default function DisplayField({
       return
     }
 
-    if (from === "table") {
+    if (from === "table" || from === "from-collection") {
       setSelectedOptions(dataAssociations)
       setOldSelectedOptions(dataAssociations)
       setLoading(false)

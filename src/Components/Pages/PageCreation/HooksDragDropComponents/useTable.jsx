@@ -4,7 +4,7 @@ import TableView from '../TableView'
 import Select from '../Select'
 import { useIntl } from 'react-intl'
 
-export default function useTable({ advancedEdit, locale, readOnly, buttonRef }) {
+export default function useTable({ advancedEdit, locale, readOnly, buttonRef, pageId }) {
   const { messages } = useIntl()
 
   const table = useMemo(() => {
@@ -13,6 +13,7 @@ export default function useTable({ advancedEdit, locale, readOnly, buttonRef }) 
         return (
           <TableView
             readOnly={!advancedEdit}
+            pageId={pageId}
             selectCollection={data.selectCollection}
             onChange={onChange}
             disabled={!readOnly}

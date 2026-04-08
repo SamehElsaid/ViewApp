@@ -16,17 +16,19 @@ import {
   DialogContent,
   DialogActions
 } from '@mui/material'
-import { Box } from '@mui/system'
 import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
 import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import Collapse from '@kunukn/react-collapse'
 import { axiosGet } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
+import dynamic from 'next/dynamic'
 import CloseNav from './CloseNav'
 import IconifyIcon from 'src/Components/icon'
 import { MdDeleteOutline } from 'react-icons/md'
 import JsEditorOnSubmit from 'src/Components/FormCreation/PageCreation/jsEditorOnSubmit'
+
+const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
 function Select({ onChange, data, buttonRef, title, tableType }) {
   const { locale, messages } = useIntl()
@@ -796,14 +798,27 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                             size='small'
                             color='error'
                             onClick={() => {
+
+
+                              const removeCollection = (data, key) => {
+                                const newData = {
+                                  ...data,
+                                  relatedCollections: data.relatedCollections.filter(x => x.key !== key),
+                                  SelectedRelatedCollectionsFields: data.SelectedRelatedCollectionsFields.filter(
+                                    x => x.collection.key !== key
+                                  ),
+                                  additional_fields: data.additional_fields.filter(x => x.key !== `form-table[${key}]`),
+                                };
+
+                                newData[`form-table[${key}]`] = null;
+
+                                return newData;
+                              };
+
+                              const newData = removeCollection(data, item.collection.key)
+
                               onChange({
-                                ...data,
-                                relatedCollections: data.relatedCollections.filter(
-                                  items => items.key !== item?.collection?.key
-                                ),
-                                SelectedRelatedCollectionsFields: SelectedRelatedCollectionsFields.filter(
-                                  items => items.collection.key !== item?.collection?.key
-                                )
+                                ...newData,
                               })
                             }}
                           >
@@ -1264,6 +1279,20 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                       ))}
                   </div>
                 </Collapse>
+                <FormControlLabel
+                key='edit-data-checkbox'
+                className='!w-fit capitalize'
+                control={
+                  <Checkbox
+                    value={data.stopFetchingDataFromApi}
+                    checked={data.stopFetchingDataFromApi}
+                    onChange={() => {
+                      onChange({ ...data, stopFetchingDataFromApi: data.stopFetchingDataFromApi ? false : true })
+                    }}
+                  />
+                }
+                label={locale==="ar" ? 'وقف جلب المعلومات من الAPI' : 'Stop fetching data from the API'}
+              />
               </div>
             </>
           ) : (
@@ -1373,6 +1402,29 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                     variant='filled'
                   />
                 </Collapse>
+              <div className='mt-3 p-2 border-2 rounded-md border-dashed border-main-color'>
+                <div className='text-sm mb-2'>
+                  {locale === 'ar' ? 'JS Data لكل عنصر قبل الإرسال' : 'JS data for each row before submit'}
+                </div>
+                <MonacoEditor
+                  height='220px'
+                  width='100%'
+                  language='javascript'
+                  theme='vs-dark'
+                  value={data.tableRowJsData || "return { ...row }"}
+                  onChange={value => onChange({ ...data, tableRowJsData: value || '' })}
+                  options={{
+                    selectOnLineNumbers: true,
+                    minimap: { enabled: false },
+                    readOnly: false
+                  }}
+                />
+                <div className='text-xs mt-2 text-gray-600'>
+                  {locale === 'ar'
+                    ? 'المتاح: row, allRows, allData, routerQuery. لازم ترجع object باستخدام return.'
+                    : 'Available: row, allRows, allData, routerQuery. Must return an object using return.'}
+                </div>
+              </div>
 
                 <div className='p-2 mt-4 rounded-md border-2 border-gray-300'>
                   <div className='text-lg font-bold'>{messages.dialogs.addMoreElement}</div>
@@ -1521,6 +1573,21 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                   </Collapse>
                 </div>
               </Collapse>
+              <TextField
+                fullWidth
+                className='mb-3'
+                label={locale === 'ar' ? 'فلتر الاستعلام (Query filter)' : 'Query filter'}
+                placeholder='name=sameh&age={age}'
+                value={data.tableApiQueryFilter || ''}
+                onChange={e => onChange({ ...data, tableApiQueryFilter: e.target.value })}
+                variant='filled'
+                size='small'
+                helperText={
+                  locale === 'ar'
+                    ? 'استخدم {اسم_المعامل} لقراءة القيمة من رابط الصفحة (?age=25).'
+                    : 'Use {paramName} to read from the page URL (?age=25).'
+                }
+              />
               <h2 className='text-lg font-bold'>{messages.dialogs.actions}</h2>
               <FormControlLabel
                 key='edit-data-checkbox'
