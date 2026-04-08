@@ -681,7 +681,7 @@ function TableView({
                     })
                   ).then(res => {
                     if (res.status) {
-                      toast.success(messages.savedSuccessfully)
+                      toast.success(messages.dialogs.dataSentSuccessfully)
                     }
                   })
                   .finally(() => {
