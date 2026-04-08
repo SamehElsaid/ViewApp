@@ -92,14 +92,13 @@ function TableView({
         .then(res => {
           if (res.status) {
             let newEntities = [...res?.data?.entities]
-            console.log(newEntities, "newEntities");
             
 
             if (newEntities.length !== 0) {
               setGetFields(newEntities)
               onChange({
                 ...data,
-                newRows: newEntities
+                newRows: [...newEntities]
               })
             }else{
               setGetFields(getOldRows)
@@ -119,6 +118,7 @@ function TableView({
     }
   }, [locale, data.collectionId, paginationModel, newDataInsert.length, data.showOldData])
 
+  console.log(newDataInsert,data.newRows, "newDataInsert");
   useEffect(() => {
     if (loading || !filterWithAPIValue) return
 
@@ -419,6 +419,7 @@ function TableView({
     [router.query]
   )
 
+  
   const mapRowsBeforeSubmit = useCallback(
     rows => {
       const baseRows = Array.isArray(rows) ? rows.map(rowItem => resolveQueryPlaceholders(rowItem)) : []
@@ -443,7 +444,7 @@ function TableView({
         return baseRows
       }
     },
-    [allData, data?.tableRowJsData, messages?.dialogs?.invalidCode, resolveQueryPlaceholders, router.query]
+    [allData, data?.tableRowJsData, messages?.dialogs?.invalidCode,data.newRows, resolveQueryPlaceholders, router.query]
   )
 
   const defaultDesign =
@@ -664,6 +665,7 @@ function TableView({
                 loading={loadingButton}
                 onClick={() => {
                   const transformedRows = mapRowsBeforeSubmit(data.newRows)
+                 
                   setLoadingButton(true)
                   axiosPost(
                     `generic-entities/${data.collectionName}?pageId=${pageId}`,
