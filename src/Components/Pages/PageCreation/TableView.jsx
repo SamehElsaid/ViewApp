@@ -85,28 +85,15 @@ function TableView({
       const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
 
       axiosGet(
-        `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}&pageSize=${paginationModel.pageSize
-        }&isLookup=true${resolvedQueryFilter ? `&${resolvedQueryFilter}` : ''}`,
+        `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}${resolvedQueryFilter ? `&${resolvedQueryFilter}` : ''}&pageSize=${paginationModel.pageSize
+        }&isLookup=true`,
         locale
       )
         .then(res => {
           if (res.status) {
             let newEntities = [...res?.data?.entities]
-            const newChangedValue = changedValue.filter(ele => ele.Id?.includes('front'))
-            if (changedValue.length !== 0) {
-              newEntities = newEntities.map(ele => {
-                let newEle = { ...ele }
-                const findWithId = changedValue.find(e => e.Id === newEle.Id)
-                if (findWithId) {
-                  newEle = findWithId
-                }
-
-                return newEle
-              })
-            }
-            if (paginationModel.page === 0) {
-              newEntities = [...newChangedValue, ...newEntities]
-            }
+            console.log(newEntities, "newEntities");
+            
 
             if (newEntities.length !== 0) {
               setGetFields(newEntities)
@@ -118,16 +105,16 @@ function TableView({
               setGetFields(getOldRows)
             }
 
-            setTotalCount(res.totalCount === 0 ? getOldRows.length === 0 ? 0 : 1 : res.totalCount)
+            setTotalCount(res.totalCount ?? data.newRows.length)
           } else {
-            setGetFields([...getOldRows, ...newDataInsert])
-            setTotalCount(getOldRows.length === 0 ? 0 : 1)
+            setGetFields(getOldRows)
+            setTotalCount(getOldRows.length )
           }
         })
         .finally(() => setLoading(false))
     } else {
-      setGetFields([...getOldRows, ...newDataInsert])
-      setTotalCount(getOldRows.length === 0 ? 0 : 1)
+      setGetFields(getOldRows)
+      setTotalCount(getOldRows.length )
       setLoading(false)
     }
   }, [locale, data.collectionId, paginationModel, newDataInsert.length, data.showOldData])
