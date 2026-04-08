@@ -108,7 +108,15 @@ function TableView({
               newEntities = [...newChangedValue, ...newEntities]
             }
 
-            setGetFields([...getOldRows, ...newEntities, ...newDataInsert])
+            if (newEntities.length !== 0) {
+              setGetFields(newEntities)
+              onChange({
+                ...data,
+                newRows: newEntities
+              })
+            }else{
+              setGetFields(getOldRows)
+            }
 
             setTotalCount(res.totalCount === 0 ? getOldRows.length === 0 ? 0 : 1 : res.totalCount)
           } else {
@@ -153,7 +161,7 @@ function TableView({
 
   const [loadingHeader, setLoadingHeader] = useState(true)
   useEffect(() => {
-    
+
     setLoadingHeader(true)
     if (data.collectionId) {
       console.log("fromHere6");
@@ -684,9 +692,9 @@ function TableView({
                       toast.success(messages.dialogs.dataSentSuccessfully)
                     }
                   })
-                  .finally(() => {
-                    setLoadingButton(false)
-                  })
+                    .finally(() => {
+                      setLoadingButton(false)
+                    })
                 }}
               >
                 {messages.submit}
