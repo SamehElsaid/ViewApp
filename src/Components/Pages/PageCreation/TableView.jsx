@@ -92,7 +92,7 @@ function TableView({
         .then(res => {
           if (res.status) {
             let newEntities = [...res?.data?.entities]
-            
+
 
             if (newEntities.length !== 0) {
               setGetFields(newEntities)
@@ -100,25 +100,25 @@ function TableView({
                 ...data,
                 newRows: [...newEntities]
               })
-            }else{
+            } else {
               setGetFields(getOldRows)
             }
 
             setTotalCount(res.totalCount ?? data.newRows.length)
           } else {
             setGetFields(getOldRows)
-            setTotalCount(getOldRows.length )
+            setTotalCount(getOldRows.length)
           }
         })
         .finally(() => setLoading(false))
     } else {
       setGetFields(getOldRows)
-      setTotalCount(getOldRows.length )
+      setTotalCount(getOldRows.length)
       setLoading(false)
     }
   }, [locale, data.collectionId, paginationModel, newDataInsert.length, data.showOldData])
 
-  console.log(newDataInsert,data.newRows, "newDataInsert");
+  console.log(newDataInsert, data.newRows, "newDataInsert");
   useEffect(() => {
     if (loading || !filterWithAPIValue) return
 
@@ -419,9 +419,10 @@ function TableView({
     [router.query]
   )
 
-  
+
   const mapRowsBeforeSubmit = useCallback(
     rows => {
+      console.log(rows, "rows");
       const baseRows = Array.isArray(rows) ? rows.map(rowItem => resolveQueryPlaceholders(rowItem)) : []
       const jsCode = data?.tableRowJsData?.trim()
       if (!jsCode) {
@@ -444,7 +445,7 @@ function TableView({
         return baseRows
       }
     },
-    [allData, data?.tableRowJsData, messages?.dialogs?.invalidCode,data.newRows, resolveQueryPlaceholders, router.query]
+    [allData, data?.tableRowJsData, messages?.dialogs?.invalidCode, data.newRows, resolveQueryPlaceholders, router.query]
   )
 
   const defaultDesign =
@@ -664,8 +665,9 @@ function TableView({
                 color='primary'
                 loading={loadingButton}
                 onClick={() => {
+                  console.log(data.newRows, "data.newRows");
                   const transformedRows = mapRowsBeforeSubmit(data.newRows)
-                 
+                  console.log(transformedRows, "transformedRows");
                   setLoadingButton(true)
                   axiosPost(
                     `generic-entities/${data.collectionName}?pageId=${pageId}`,
