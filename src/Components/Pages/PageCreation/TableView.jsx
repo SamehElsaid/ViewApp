@@ -18,6 +18,7 @@ import { resolveTableApiQueryFilter } from './TableReport'
 import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
 
+
 function TableView({
   refErrorFromTable,
   data,
@@ -448,6 +449,9 @@ function TableView({
     [allData, data?.tableRowJsData, messages?.dialogs?.invalidCode, data.newRows, resolveQueryPlaceholders, router.query]
   )
 
+
+
+
   const defaultDesign =
     open?.type === 'new_element' ? DefaultStyle(open?.key) : open?.options?.uiSchema?.xComponentProps?.cssClass
   let additionalField = null
@@ -500,10 +504,20 @@ function TableView({
   const dispatch = useDispatch()
   const [reloadErrors, setReloadErrors] = useState(0)
 
-  console.log(data?.newRows, "data?.newRows");
+
+
+  useEffect(() => {
+   setChangedValue(getFields)
+  }, [getFields])
+
+  console.log(changedValue, "changedValue");
 
   return (
     <div>
+      <button onClick={() => {
+        console.log(changedValue, "open");
+
+      }}>asd</button>
 
       <button className='hidden absolute top-0 left-0 check-errors' type='button' onClick={() => {
         const errors = []
@@ -665,8 +679,7 @@ function TableView({
                 color='primary'
                 loading={loadingButton}
                 onClick={() => {
-                  console.log(data.newRows, "data.newRows");
-                  const transformedRows = mapRowsBeforeSubmit(data.newRows)
+                  const transformedRows = mapRowsBeforeSubmit(changedValue)
                   console.log(transformedRows, "transformedRows");
                   setLoadingButton(true)
                   axiosPost(
