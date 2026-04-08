@@ -514,10 +514,7 @@ function TableView({
 
   return (
     <div>
-      <button onClick={() => {
-        console.log(changedValue, "open");
-
-      }}>asd</button>
+    
 
       <button className='hidden absolute top-0 left-0 check-errors' type='button' onClick={() => {
         const errors = []
