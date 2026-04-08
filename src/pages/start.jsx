@@ -61,12 +61,15 @@ export default function Index() {
     axiosPost(`facility-task/get`,
       locale,
       {
-        userId: profile?.sub
+        userId: profile?.sub,
+        pageNumber: paginationModel.page + 1,
+        pageSize: paginationModel.pageSize
       }
     )
       .then(res => {
         if (res.status) {
           setData(res.data)
+          setTotalCount(res.data.totalCount)
           if (profile?.view_type === 'gahar' && res.data.tasks.length === 0) {
             router.push('/FacilityTypee')
           } else {
