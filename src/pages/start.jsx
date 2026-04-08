@@ -63,13 +63,12 @@ export default function Index() {
       {
         userId: profile?.sub,
         pageNumber: paginationModel.page + 1,
-        pageSize: paginationModel.pageSize
+        pageSize: 300
       }
     )
       .then(res => {
         if (res.status) {
           setData(res.data)
-          setTotalCount(res.data.totalCount)
           if (profile?.view_type === 'gahar' && res.data.tasks.length === 0) {
             router.push('/FacilityTypee')
           } else {
