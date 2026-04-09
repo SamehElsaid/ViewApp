@@ -863,7 +863,8 @@ export default function ViewCollection({
           }
 
           if (data?.redirect) {
-            push(`/${locale}/${data?.redirect === '/' ? '' : data?.redirect}`)
+            const newHref = resolveTableApiQueryFilter(data.redirect, query)
+            push(`/${locale}/${newHref === '/' ? '' : newHref}`)
           }
         }
       })
