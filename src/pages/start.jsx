@@ -70,7 +70,7 @@ export default function Index() {
         if (res.status) {
           setData(res.data)
           if (profile?.view_type === 'gahar' && res.data.tasks.length === 0) {
-            router.push('/FacilityTypee')
+            router.push(`/${locale}/FacilityTypee/?email=${profile?.email}`)
           } else {
             setLoading(false)
 
