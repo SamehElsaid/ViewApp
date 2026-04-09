@@ -691,6 +691,11 @@ function TableView({
                   ).then(res => {
                     if (res.status) {
                       toast.success(messages.dialogs.dataSentSuccessfully)
+                      if (data.onSubmit) {
+                        const evaluatedFn = eval('(' + data?.onSubmit + ')')
+                        evaluatedFn()
+                        
+                      }
                     }
                   })
                     .finally(() => {

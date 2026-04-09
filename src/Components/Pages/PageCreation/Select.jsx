@@ -996,6 +996,18 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
           )}
 
           <div className='mt-4'></div>
+          <div className='pt-2 border-2 rounded-md mt-5 p-2 border-dashed border-main-color'>
+            <h2 className='mt-2 text-lg font-bold text-main-color'>{messages.onSubmit}</h2>
+            <TextField
+              fullWidth
+              value={data.redirect || ''}
+              onChange={e => onChange({ ...data, redirect: e.target.value })}
+              label={messages.dialogs.redirectTo}
+              variant='filled'
+            />
+            <div className='mt-2'></div>
+            <JsEditorOnSubmit jsCode={data.onSubmit ?? ''} onChange={onChange} data={data} />
+          </div>
           {!tableType ? (
             <>
               <TextField
@@ -1025,18 +1037,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                 />
               </Collapse>
 
-              <div className='pt-2 border-2 rounded-md mt-5 p-2 border-dashed border-main-color'>
-                <h2 className='mt-2 text-lg font-bold text-main-color'>{messages.onSubmit}</h2>
-                <TextField
-                  fullWidth
-                  value={data.redirect || ''}
-                  onChange={e => onChange({ ...data, redirect: e.target.value })}
-                  label={messages.dialogs.redirectTo}
-                  variant='filled'
-                />
-                <div className='mt-2'></div>
-                <JsEditorOnSubmit jsCode={data.onSubmit ?? ''} onChange={onChange} data={data} />
-              </div>
+
               <div className='mt-3 p-2 border-2 rounded-md border-dashed border-main-color'>
                 <div className='text-sm mb-2'>
                   {locale === 'ar'
@@ -1305,19 +1306,19 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                   </div>
                 </Collapse>
                 <FormControlLabel
-                key='edit-data-checkbox'
-                className='!w-fit capitalize'
-                control={
-                  <Checkbox
-                    value={data.stopFetchingDataFromApi}
-                    checked={data.stopFetchingDataFromApi}
-                    onChange={() => {
-                      onChange({ ...data, stopFetchingDataFromApi: data.stopFetchingDataFromApi ? false : true })
-                    }}
-                  />
-                }
-                label={locale==="ar" ? 'وقف جلب المعلومات من الAPI' : 'Stop fetching data from the API'}
-              />
+                  key='edit-data-checkbox'
+                  className='!w-fit capitalize'
+                  control={
+                    <Checkbox
+                      value={data.stopFetchingDataFromApi}
+                      checked={data.stopFetchingDataFromApi}
+                      onChange={() => {
+                        onChange({ ...data, stopFetchingDataFromApi: data.stopFetchingDataFromApi ? false : true })
+                      }}
+                    />
+                  }
+                  label={locale === "ar" ? 'وقف جلب المعلومات من الAPI' : 'Stop fetching data from the API'}
+                />
               </div>
             </>
           ) : (
@@ -1427,29 +1428,29 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                     variant='filled'
                   />
                 </Collapse>
-              <div className='mt-3 p-2 border-2 rounded-md border-dashed border-main-color'>
-                <div className='text-sm mb-2'>
-                  {locale === 'ar' ? 'JS Data لكل عنصر قبل الإرسال' : 'JS data for each row before submit'}
+                <div className='mt-3 p-2 border-2 rounded-md border-dashed border-main-color'>
+                  <div className='text-sm mb-2'>
+                    {locale === 'ar' ? 'JS Data لكل عنصر قبل الإرسال' : 'JS data for each row before submit'}
+                  </div>
+                  <MonacoEditor
+                    height='220px'
+                    width='100%'
+                    language='javascript'
+                    theme='vs-dark'
+                    value={data.tableRowJsData || "return { ...row }"}
+                    onChange={value => onChange({ ...data, tableRowJsData: value || '' })}
+                    options={{
+                      selectOnLineNumbers: true,
+                      minimap: { enabled: false },
+                      readOnly: false
+                    }}
+                  />
+                  <div className='text-xs mt-2 text-gray-600'>
+                    {locale === 'ar'
+                      ? 'المتاح: row, allRows, allData, routerQuery. لازم ترجع object باستخدام return.'
+                      : 'Available: row, allRows, allData, routerQuery. Must return an object using return.'}
+                  </div>
                 </div>
-                <MonacoEditor
-                  height='220px'
-                  width='100%'
-                  language='javascript'
-                  theme='vs-dark'
-                  value={data.tableRowJsData || "return { ...row }"}
-                  onChange={value => onChange({ ...data, tableRowJsData: value || '' })}
-                  options={{
-                    selectOnLineNumbers: true,
-                    minimap: { enabled: false },
-                    readOnly: false
-                  }}
-                />
-                <div className='text-xs mt-2 text-gray-600'>
-                  {locale === 'ar'
-                    ? 'المتاح: row, allRows, allData, routerQuery. لازم ترجع object باستخدام return.'
-                    : 'Available: row, allRows, allData, routerQuery. Must return an object using return.'}
-                </div>
-              </div>
 
                 <div className='p-2 mt-4 rounded-md border-2 border-gray-300'>
                   <div className='text-lg font-bold'>{messages.dialogs.addMoreElement}</div>
@@ -1641,6 +1642,20 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                   />
                 }
                 label={messages.dialogs.showDetails}
+              />
+              <FormControlLabel
+                key='details-data-checkbox'
+                className='!w-fit capitalize'
+                control={
+                  <Checkbox
+                    value={data.hideOnSubmit ?? false}
+                    checked={data.hideOnSubmit ?? false}
+                    onChange={() => {
+                      onChange({ ...data, hideOnSubmit: data.hideOnSubmit ? false : true })
+                    }}
+                  />
+                }
+                label={locale === 'ar' ? 'إخفاء عند الإرسال' : 'Hide on submit'}
               />
               <FormControlLabel
                 key='delete-data-checkbox'
