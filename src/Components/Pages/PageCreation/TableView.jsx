@@ -507,14 +507,14 @@ function TableView({
 
 
   useEffect(() => {
-   setChangedValue(getFields)
+    setChangedValue(getFields)
   }, [getFields])
 
   console.log(changedValue, "changedValue");
 
   return (
     <div>
-    
+
 
       <button className='hidden absolute top-0 left-0 check-errors' type='button' onClick={() => {
         const errors = []
@@ -670,7 +670,7 @@ function TableView({
             tableStyle={tableStyle ?? data?.tableStyle ?? DEFAULT_TABLE_STYLE}
           />
           {data.kind === 'form-table' && type !== 'from-collection' && paginationModel.page === 0 && (
-            <div className='flex justify-end px-5 mt-3'>
+            data.hideOnSubmit !== true && ( <div className='flex justify-end px-5 mt-3'>
               <LoadingButton
                 variant='contained'
                 color='primary'
@@ -701,7 +701,7 @@ function TableView({
                 {messages.submit}
               </LoadingButton>
             </div>
-          )}
+          ))}
         </div>
       </>
     </div>
