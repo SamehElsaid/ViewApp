@@ -192,7 +192,8 @@ export default function DisplayField({
     if (loading || !roles?.trigger) return
 
     const trigger = roles.trigger
-    const currentValue = dataRef?.current?.[trigger.selectedField]
+    const allData ={...(tabsData || {}), ...dataRef?.current}
+    const currentValue = allData?.[trigger.selectedField]
 
     if (currentValue === undefined) return
 
