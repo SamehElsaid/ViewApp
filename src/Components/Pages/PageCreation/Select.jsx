@@ -1037,6 +1037,31 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                 <div className='mt-2'></div>
                 <JsEditorOnSubmit jsCode={data.onSubmit ?? ''} onChange={onChange} data={data} />
               </div>
+              <div className='mt-3 p-2 border-2 rounded-md border-dashed border-main-color'>
+                <div className='text-sm mb-2'>
+                  {locale === 'ar'
+                    ? 'JS Data قبل الإرسال (collection)'
+                    : 'JS data before submit (collection)'}
+                </div>
+                <MonacoEditor
+                  height='220px'
+                  width='100%'
+                  language='javascript'
+                  theme='vs-dark'
+                  value={data.collectionBeforeSubmitJsData || 'return { ...output }'}
+                  onChange={value => onChange({ ...data, collectionBeforeSubmitJsData: value || '' })}
+                  options={{
+                    selectOnLineNumbers: true,
+                    minimap: { enabled: false },
+                    readOnly: false
+                  }}
+                />
+                <div className='text-xs mt-2 text-gray-600'>
+                  {locale === 'ar'
+                    ? 'المتاح: output, allData, routerQuery. لازم ترجع object باستخدام return.'
+                    : 'Available: output, allData, routerQuery. Must return an object using return.'}
+                </div>
+              </div>
 
               <div className='p-2 mt-4 rounded-md border-2 border-gray-300'>
                 <div className='text-lg font-bold'>{messages.dialogs.addMoreElement}</div>

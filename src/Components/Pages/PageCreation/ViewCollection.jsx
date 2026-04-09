@@ -87,7 +87,6 @@ const flattenDynamic = (data, SelectedRelatedCollectionsFields) => {
   });
 
 
-  console.log(result, "result");
 
   return result;
 };
@@ -467,7 +466,6 @@ export default function ViewCollection({
 
 
 
-  console.log(entitiesData, "entitiesData")
 
   useEffect(() => {
     if (!loading) {
@@ -489,6 +487,7 @@ export default function ViewCollection({
       setLayout(layout.map(item => ({ ...item, minH: 0 })))
     }
   }, [loading, data?.selected, dataLength])
+
 
   useEffect(() => {
     if (data.collectionId) {
@@ -573,17 +572,20 @@ export default function ViewCollection({
   }, [locale, data.collectionId, data.SelectedRelatedCollectionsFields, data.selected])
 
   const [isEntitiesData, setIsEntitiesData] = useState(false)
+  const [loadingEntitiesData, setLoadingEntitiesData] = useState(true)
+
 
   useEffect(() => {
     const stopFetchingDataFromApi = data.stopFetchingDataFromApi ?? false
-
-    if (entitiesId !== null && collectionName !== null && collectionName === data.collectionName && entitiesId && !stopFetchingDataFromApi) {
+    if (entitiesId !== null && collectionName !== null && collectionName && entitiesId && !stopFetchingDataFromApi) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
           setEntitiesData(flattenDynamic(res?.data?.entities?.[0], data?.SelectedRelatedCollectionsFields))
           setIsEntitiesData(true)
         }
-      })
+      }).finally(() => setLoadingEntitiesData(false))
+    } else {
+      setLoadingEntitiesData(false)
     }
   }, [entitiesId, collectionName, pageName])
 
@@ -591,12 +593,75 @@ export default function ViewCollection({
 
 
 
-  console.log(pageId, "from:ViewCollection");
 
+  const resolveQueryPlaceholders = useCallback(
+    value => {
+      if (Array.isArray(value)) {
+        return value.map(item => resolveQueryPlaceholders(item))
+      }
+
+      if (value && typeof value === 'object') {
+        return Object.fromEntries(
+          Object.entries(value).map(([key, itemValue]) => [key, resolveQueryPlaceholders(itemValue)])
+        )
+      }
+
+      if (typeof value === 'string') {
+        return value.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_match, queryKey) => {
+          const queryValue = query?.[queryKey]
+          if (Array.isArray(queryValue)) {
+            return queryValue[0] ?? ''
+          }
+          if (queryValue !== undefined && queryValue !== null) {
+            return queryValue
+          }
+
+          // Fallback to real URL search params when Next router query is not hydrated yet.
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search || '')
+            const allValues = params.getAll(queryKey)
+            if (allValues.length > 0) {
+              return allValues[0] ?? ''
+            }
+          }
+
+          return ''
+        })
+      }
+
+      return value
+    },
+    [query]
+  )
+
+  const transformCollectionOutputBeforeSubmit = useCallback(
+    (outputData, allDataPayload) => {
+      const jsCode = data?.collectionBeforeSubmitJsData?.trim()
+      if (!jsCode) {
+        return resolveQueryPlaceholders(outputData)
+      }
+
+      try {
+        const transformFn = new Function('output', 'allData', 'routerQuery', jsCode)
+        const transformed = transformFn(outputData, allDataPayload, query)
+
+        if (transformed && typeof transformed === 'object' && !Array.isArray(transformed)) {
+          return resolveQueryPlaceholders({ ...outputData, ...transformed })
+        }
+
+        return resolveQueryPlaceholders(outputData)
+      } catch (error) {
+        console.error('collectionBeforeSubmitJsData execution error:', error)
+        toast.error(messages?.dialogs?.invalidCode || 'Invalid JS code for submit data')
+
+        return resolveQueryPlaceholders(outputData)
+      }
+    },
+    [data?.collectionBeforeSubmitJsData, messages?.dialogs?.invalidCode, query, resolveQueryPlaceholders]
+  )
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
-    console.log(dataRef.current, "dataRef.current");
 
 
     const initialSendData = { ...dataRef.current }
@@ -656,7 +721,6 @@ export default function ViewCollection({
     const allData = { ...(tabsData || {}), ...sendData }
 
 
-    console.log(allData, sendData, "allData");
 
     Object.entries(allData).forEach(([key, value]) => {
 
@@ -666,7 +730,6 @@ export default function ViewCollection({
         const match = key.match(/^form-table\[(.+)\]$/)
 
         if (match) {
-          console.log(key);
 
           const arrayName = match[1]
 
@@ -719,7 +782,6 @@ export default function ViewCollection({
       }
 
 
-      console.log(output, "output", { ...(tabsData || {}), ...sendData });
 
 
       // 👇 باقي المعالجة الطبيعية
@@ -771,7 +833,6 @@ export default function ViewCollection({
 
 
 
-    console.log(output, "output", dataRef, tabsData);
 
 
     setLoading(true)
@@ -781,9 +842,13 @@ export default function ViewCollection({
         ? data.submitApi
         : `generic-entities/${data.collectionName}/?pageId=${pageId}${requestId ? `&requestId=${requestId}` : ''}`
 
-  
 
-    axiosPost(apiCall, locale, output, false, false, data.type_of_sumbit !== 'collection' ? true : false)
+
+    const payloadOutput =
+      data.type_of_sumbit === 'collection' ? transformCollectionOutputBeforeSubmit(output, allData) : output
+
+    const draftOutput = transformCollectionOutputBeforeSubmit(output, {})
+    axiosPost(apiCall, locale, draftOutput, false, false, data.type_of_sumbit !== 'collection' ? true : false)
       .then(res => {
         if (res.status) {
           setReload(prev => prev + 1)
@@ -805,8 +870,9 @@ export default function ViewCollection({
       .finally(() => setLoading(false))
   }
 
-  
+
   const [loadingSaveAsDraft, setLoadingSaveAsDraft] = useState(false)
+
 
   const saveAsDraft = async (e, href) => {
     e?.preventDefault()
@@ -832,7 +898,9 @@ export default function ViewCollection({
     let output = {}
 
 
-    Object.entries({ ...(tabsData || {}), ...sendData }).forEach(([key, value]) => {
+    const allData = { ...(tabsData || {}), ...sendData }
+
+    Object.entries(allData).forEach(([key, value]) => {
 
       // 👈 لو form-table
       if (key.startsWith("form-table[")) {
@@ -919,8 +987,11 @@ export default function ViewCollection({
 
 
 
+    const draftOutput = transformCollectionOutputBeforeSubmit(output, allData)
+
+    console.log(draftOutput, "draftOutput");
     setLoadingSaveAsDraft(true)
-    axiosPost(`generic-entities/${data.collectionName}/draft?pageId=${pageId}`, locale, output).then(res => {
+    axiosPost(`generic-entities/${data.collectionName}/draft?pageId=${pageId}`, locale, draftOutput).then(res => {
       if (res.status) {
 
 
@@ -1072,7 +1143,6 @@ export default function ViewCollection({
       const layoutYMap = new Map(layout.map(item => [item.i, item.y]))
       const getY = id => layoutYMap.get(id) ?? 9999
 
-      console.log(sorted, "sorted");
 
       const allRealItemsMeta = sorted.map(ele => ({
         item: ele,
@@ -1322,6 +1392,10 @@ export default function ViewCollection({
       {loading ? (
         <div className='h-[300px]  flex justify-center items-center text-2xl font-bold border-2 border-dashed border-main rounded-md'>
           {messages.pleaseSelectDataModel}
+        </div>
+      ) : loadingEntitiesData ? (
+        <div className='h-[300px]  bg-white/50 flex justify-center items-center  border-2 border-dashed border-main rounded-md'>
+          <CircularProgress />
         </div>
       ) : (
         <form className={'w-[calc(100%)]'} onClick={(e) => {
