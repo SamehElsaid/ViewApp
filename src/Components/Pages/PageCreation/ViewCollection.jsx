@@ -578,7 +578,7 @@ export default function ViewCollection({
 
   useEffect(() => {
     const stopFetchingDataFromApi = data.stopFetchingDataFromApi ?? false
-    if (entitiesId !== null && collectionName !== null && collectionName && entitiesId && !stopFetchingDataFromApi) {
+    if (entitiesId !== null && collectionName !== null && collectionName === data.collectionName && entitiesId && !stopFetchingDataFromApi) {
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
           setEntitiesData(flattenDynamic(res?.data?.entities?.[0], data?.SelectedRelatedCollectionsFields))
