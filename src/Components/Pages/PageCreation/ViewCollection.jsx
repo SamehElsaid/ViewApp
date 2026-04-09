@@ -14,6 +14,7 @@ import { useIntl } from 'react-intl'
 import { CircularProgress } from '@mui/material'
 import { useDispatch } from 'react-redux'
 import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
+import { resolveTableApiQueryFilter } from './TableReport'
 
 
 
