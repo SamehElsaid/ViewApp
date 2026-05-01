@@ -12,6 +12,7 @@ import { removeerrorInAllRowData } from 'src/store/apps/errorInAllRow/errorInAll
 import { useDispatch } from 'react-redux'
 import TableComponent from './TableComponent'
 import * as XLSX from 'xlsx'
+import get from 'lodash/get'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { saveAs } from 'file-saver'
@@ -58,7 +59,8 @@ function getFontFetchUrl() {
 }
 
 /** Replace `{param}` with values from the page URL query (Next.js `router.query`). */
-export function resolveTableApiQueryFilter(template, query) {
+export function resolveTableApiQueryFilter(template, query, user) {
+  console.log(user, "user");
   if (!template || typeof template !== 'string') {
     return ''
   }
@@ -68,6 +70,18 @@ export function resolveTableApiQueryFilter(template, query) {
     if (!key) {
       return ''
     }
+
+    if (key.startsWith('user.')) {
+      const userPath = key.slice(5)
+      const v = get(user, userPath)
+      if (v == null) {
+        return ''
+      }
+      console.log(v, "vsad");
+
+      return Array.isArray(v) ? String(v[0]) : String(v)
+    }
+
     const v = query?.[key]
     if (v == null) {
       return ''
@@ -81,7 +95,7 @@ export function resolveTableApiQueryFilter(template, query) {
 }
 
 /** `key=value&key2=value2` → `[{ column, operator: 'Equals', value }, ...]` */
-function parseQueryFilterStringToFilters(resolved) {
+export function parseQueryFilterStringToFilters(resolved) {
   const trimmed = String(resolved).trim().replace(/^\?/, '')
   if (!trimmed) {
     return []
@@ -222,7 +236,6 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       setLoading(true)
 
 
-      console.log(data.userReportName, "data.userReportNamedata.userReportName");
 
       const requestBody = {
         apiName: data.userReportName,
@@ -232,7 +245,6 @@ function TableReport({ data, locale, onChange, readOnly, disabled }) {
       const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
       const filtersFromQuery = parseQueryFilterStringToFilters(resolvedQueryFilter)
 
-      console.log(filtersFromQuery, "filtersFromQueryfiltersFromQuery");
       if (filtersFromQuery.length > 0) {
         requestBody.apiName = data.userReportName
         requestBody.filters = filtersFromQuery

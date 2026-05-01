@@ -17,6 +17,7 @@ import { DEFAULT_TABLE_STYLE } from './tableColumnControl'
 import { resolveTableApiQueryFilter } from './TableReport'
 import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
+import { useSelector } from 'react-redux'
 
 
 function TableView({
@@ -76,6 +77,7 @@ function TableView({
     pageSize: 10
   })
   const [totalCount, setTotalCount] = useState(0)
+  const user = useSelector(state => state.auth.data)
 
   useEffect(() => {
     setLoading(true)
@@ -83,7 +85,7 @@ function TableView({
 
     if (data.collectionId && data.collectionName && data.showOldData) {
 
-      const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query)
+      const resolvedQueryFilter = resolveTableApiQueryFilter(data.tableApiQueryFilter, router.query, user)
 
       axiosGet(
         `generic-entities/${data.collectionName}?pageNumber=${paginationModel.page + 1}${resolvedQueryFilter ? `&${resolvedQueryFilter}` : ''}&pageSize=${paginationModel.pageSize
@@ -670,7 +672,7 @@ function TableView({
             tableStyle={tableStyle ?? data?.tableStyle ?? DEFAULT_TABLE_STYLE}
           />
           {data.kind === 'form-table' && type !== 'from-collection' && paginationModel.page === 0 && (
-            data.hideOnSubmit !== true && ( <div className='flex justify-end px-5 mt-3'>
+            data.hideOnSubmit !== true && (<div className='flex justify-end px-5 mt-3'>
               <LoadingButton
                 variant='contained'
                 color='primary'
@@ -694,7 +696,7 @@ function TableView({
                       if (data.onSubmit) {
                         const evaluatedFn = eval('(' + data?.onSubmit + ')')
                         evaluatedFn()
-                        
+
                       }
                     }
                   })
@@ -706,7 +708,7 @@ function TableView({
                 {messages.submit}
               </LoadingButton>
             </div>
-          ))}
+            ))}
         </div>
       </>
     </div>
