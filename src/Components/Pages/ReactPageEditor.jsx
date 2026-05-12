@@ -282,6 +282,8 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
 
   const editorContent = (
     <div className='relative pdf-wrapper' id='pdf-content'>
+      <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
+
       {/* PDF Loading Overlay */}
       {loadingPdf && (
         <div className='fixed  no-print inset-0 z-[999999] flex items-center justify-center bg-white animate-in fade-in duration-300'>
@@ -347,7 +349,6 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
         </div>
       ) : (
         <>
-          <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
           <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>
             <DialogTitle>{messages.ReturnToPrevious}</DialogTitle>
             <DialogContent>
