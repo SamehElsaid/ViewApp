@@ -14,17 +14,18 @@ import {
   InputAdornment,
   Paper,
   Rating,
+  Skeleton,
   TextField
 } from '@mui/material'
 import { Icon } from '@iconify/react'
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import TableView from '../PageCreation/TableView'
 import { axiosGet, staticToken } from 'src/Components/axiosCall'
-import axios from 'axios'
-import Cookies from 'js-cookie'
-import { decryptData } from 'src/Components/encryption'
 import { usePdfSplit } from 'src/context/PdfSplitContext'
+import axios from 'axios'
+import { decryptData } from 'src/Components/encryption'
+import Cookies from 'js-cookie'
 
 const SEARCH_COLLECTION_PAGE_SIZE = 10
 
@@ -102,7 +103,7 @@ const ViewInput = ({
   error,
   showPassword,
   setShowPassword,
-  selectedOptions,
+  selectedOptions = [],
   setTriggerData,
   isDisable,
   placeholder,
@@ -111,13 +112,18 @@ const ViewInput = ({
   setRedirect,
   triggerData,
   appendSearchEntities,
-  replaceSearchCollectionOptions
+  replaceSearchCollectionOptions,
+  isEntitiesData
 }) => {
 
   const [isOpen, setIsOpen] = useState(false)
-  const [pdfLoading, setPdfLoading] = useState(false)
   const [searchLoadingMore, setSearchLoadingMore] = useState(false)
+  const [searchInputValue, setSearchInputValue] = useState('')
+  const [searchTypingLoading, setSearchTypingLoading] = useState(false)
+  const skipInitialEmptySearchFetch = useRef(true)
+  const committedSearchRef = useRef('')
   const pdfSplitCtx = usePdfSplit()
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   const handleOpenPdfPopup = async e => {
     e.preventDefault()
@@ -148,10 +154,7 @@ const ViewInput = ({
       setPdfLoading(false)
     }
   }
-  const [searchInputValue, setSearchInputValue] = useState('')
-  const [searchTypingLoading, setSearchTypingLoading] = useState(false)
-  const skipInitialEmptySearchFetch = useRef(true)
-  const committedSearchRef = useRef('')
+
 
   const handleKeyDown = event => {
     if (input.type != 'Phone') return
@@ -168,9 +171,10 @@ const ViewInput = ({
   const [collectionData, setCollectionData] = useState({ data: null, loading: true })
   const [tableData, setTableData] = useState(null)
 
-
   useEffect(() => {
     if (input?.kind == 'Table') {
+      console.log("fromHere7");
+
       axiosGet(`collections/get-by-key?key=${input?.options?.source}`)
         .then(res => {
           if (res.status) {
@@ -178,7 +182,6 @@ const ViewInput = ({
             const selected = JSON.parse(input?.descriptionEn) || []
             setCollectionData(prev => ({ ...prev, data: res.data }))
             const findDataFromAllData = data[input.key]
-
             setTableData({
               ...findDataFromAllData,
               collectionId: res.data.id,
@@ -254,17 +257,15 @@ const ViewInput = ({
 
 
 
-
-
     return (
       <div id='custom-select'>
         <select
           value={value}
           onChange={e => onChange(e)}
-          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
+          disabled={isDisable == 'disabled' || selectedOptions?.length == 0}
           onBlur={e => {
             if (isRedirect) {
-              const findOption = selectedOptions.find(option => option.Id == e.target.value)
+              const findOption = selectedOptions?.find(option => option.Id == e.target.value)
               setRedirect(findOption.redirect)
             }
             if (onBlur) {
@@ -308,7 +309,7 @@ const ViewInput = ({
                         name={input.nameEn + (columnId ? `_${columnId}` : '')}
                         checked={valueSendOption === value}
                         onChange={e => {
-                          onChange({ target: { value: e.target.value } })
+                          onChange(e)
                         }}
                         type='radio'
                         id={valueSendOption + (columnId ? `_${columnId}` : '')}
@@ -693,6 +694,7 @@ const ViewInput = ({
   if (input.type == 'File') {
     return from != 'table' ? (
       <div className='px-4 w-full relative'>
+        {/* {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>} */}
         <div id='file-upload-container'>
           <label htmlFor={input.key} id='file-upload-label'>
             <div id='label-color'>{locale == 'ar' ? input.nameAr : input.nameEn}</div>
@@ -721,6 +723,7 @@ const ViewInput = ({
                     ? 'SVG, PNG, JPG أو GIF (MAX. 800x400px)'
                     : 'SVG, PNG, JPG or GIF (MAX. 800x400px)'}
               </p>
+
 
 
               {value && (
@@ -799,49 +802,76 @@ const ViewInput = ({
       </div>
     ) : (
       <div className='flex gap-2 items-center relative'>
-        <a
-          href={process.env.API_URL + "/file/download/" + value}
-          target='_blank'
-          rel='noreferrer'
-        >
-          {value?.slice(0, 30) ? (
-            value.slice(0, 30) + '.' + value.split('.').pop()
-          ) : (
-            <></>
-          )}
-        </a>
-        <div className=''>
-          <Button
-            variant='outlined'
-            component='label'
-            className='!w-[30px] !h-[30px] !rounded-full  !max-w-[30px] !max-h-[30px]  !min-h-0 !p-0 !min-w-0 !flex !items-center !justify-center'
-          >
-            <Icon
-              icon={value?.split('/Uploads/')?.[1]?.slice(0, 30) ? 'tabler:edit' : 'tabler:upload'}
-              width={25}
-              height={25}
-            />
-            <input
-              type='file'
-              disabled={isDisable == 'disabled'}
-              id={input.key}
-              hidden
-              onChange={onChangeFile}
-              onBlur={e => {
-                if (onBlur) {
-                  const evaluatedFn = eval('(' + onBlur + ')')
-
-                  evaluatedFn(e)
-                }
-              }}
-              accept={
-                input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
-                  ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
-                  : undefined
+        {(fileName || value) ? <>
+          {((fileName?.toLowerCase().endsWith('.pdf') || value?.toLowerCase().endsWith('.pdf'))) ? (
+            <>
+            {value && value?.slice(0, 30) ? (
+                value.slice(0, 30) + '.' + value.split('.').pop()
+              ) : (
+                <></>
+              )}
+            <button
+              type='button'
+              onClick={handleOpenPdfPopup}
+              disabled={pdfLoading}
+              className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+            >
+              {pdfLoading
+                ? <CircularProgress size={14} color='inherit' />
+                : <Icon icon='tabler:eye' fontSize='1.25rem' />
               }
-            />
-          </Button>
-        </div>
+            </button>
+            </>
+          ) : (
+            <a
+              href={process.env.API_URL + "/file/download/" + value}
+              target='_blank'
+              rel='noreferrer'
+            >
+
+              {value && value?.slice(0, 30) ? (
+                value.slice(0, 30) + '.' + value.split('.').pop()
+              ) : (
+                <></>
+              )}
+            </a>
+          )}
+        </> : null}
+
+        {isDisable !== 'disabled' && (
+          <div className=''>
+            <Button
+              variant='outlined'
+              component='label'
+              className='!w-[30px] !h-[30px] !rounded-full  !max-w-[30px] !max-h-[30px]  !min-h-0 !p-0 !min-w-0 !flex !items-center !justify-center'
+            >
+              <Icon
+                icon={value ? value?.includes('/Uploads/') ? 'tabler:edit' : 'tabler:upload' : 'tabler:upload'}
+                width={25}
+                height={25}
+              />
+              <input
+                type='file'
+                disabled={isDisable == 'disabled'}
+                id={input.key}
+                hidden
+                onChange={onChangeFile}
+                onBlur={e => {
+                  if (onBlur) {
+                    const evaluatedFn = eval('(' + onBlur + ')')
+
+                    evaluatedFn(e)
+                  }
+                }}
+                accept={
+                  input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
+                    ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
+                    : undefined
+                }
+              />
+            </Button>
+          </div>
+        )}
       </div>
     )
   }
@@ -863,7 +893,6 @@ const ViewInput = ({
       maxDate = new Date(roles?.afterDateValue)
     }
     const timeFormat = roles?.timeFormat == '12hrs' ? 'h:mm aa' : 'HH:mm'
-
 
     const datePicker = inline => {
       return (
@@ -1034,7 +1063,7 @@ const ViewInput = ({
 
   if (input.kind == 'Table') {
     if (collectionData.loading) {
-      return <></>
+      return <Skeleton variant="rectangular" width="100%" height={300} />
     }
 
     const onChangeTable = e => {
@@ -1058,7 +1087,8 @@ const ViewInput = ({
       tableBorderColor: roles?.borderColor ?? 'rgba(224, 224, 224, 1)'
     }
 
-    
+    console.log(isEntitiesData, value, "isEntitiesData");
+
 
     return (
       <div className='w-full '>
@@ -1066,7 +1096,7 @@ const ViewInput = ({
           refErrorFromTable={refErrorFromTable}
           setValue={onChange}
           input={input}
-          data={tableData}
+          data={{ ...tableData, ...(isEntitiesData ? { newRows: value } : {}) }}
           reloadHight={setTriggerData}
           locale={locale}
           onChange={onChangeTable}
@@ -1085,4 +1115,4 @@ const ViewInput = ({
   }
 }
 
-export default ViewInput
+export default memo(ViewInput)
