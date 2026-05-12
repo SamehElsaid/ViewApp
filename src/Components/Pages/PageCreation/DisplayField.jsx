@@ -192,7 +192,7 @@ export default function DisplayField({
     if (loading || !roles?.trigger) return
 
     const trigger = roles.trigger
-    const allData ={...(tabsData || {}), ...dataRef?.current}
+    const allData = { ...(tabsData || {}), ...dataRef?.current }
     const currentValue = allData?.[trigger.selectedField]
 
     if (currentValue === undefined) return
@@ -467,7 +467,7 @@ export default function DisplayField({
 
 
   const [loadingValue, setLoadingValue] = useState(false)
-  const items = getApiData.find(item => item.link === roles.api_url)
+  const items = getApiData.find(item => item.id === roles.api_url)
 
 
   useEffect(() => {
@@ -539,7 +539,6 @@ export default function DisplayField({
   }, [roles?.onMount?.type, roles?.onMount?.value, loading, items?.loading, loadingAssociationsInput])
 
 
-  console.log(input.key, value, "value");
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
 
