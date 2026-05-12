@@ -47,7 +47,7 @@ const PdfPanel = () => {
   if (!pdfState) return null
 
   return (
-    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid #e5e7eb', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '90dvh', display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid #e5e7eb', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', flexShrink: 0 }}>
         <span style={{ fontWeight: 600, color: '#374151', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
@@ -247,7 +247,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
   console.log(editorValue)
 
   const uploadPage = () => {
-   
+
 
     setLoadingSaveData(true)
     axiosPatch(`page/update/${pageName}`, locale, {
@@ -322,24 +322,26 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
 
       {type === 'all-pages' ? (
         <div className={`relative ${loadingPdf ? 'generate-pdf' : ''}`}>
+          <ContentSplitView>
 
-          <div
+            <div
 
-            style={{
-              background: theme.palette.background.default
-            }}
-            className={`duration-300 pdf-container  ${readOnly ? `` : '!bg-white'}`}
-          >
-            <Editor
-              cellPlugins={cellPlugins}
-              theme={theme}
-              value={editorValue}
-              onChange={(e, editor) => {
-                setEditorValue(e)
+              style={{
+                background: theme.palette.background.default
               }}
-              readOnly={readOnly}
-            />
-          </div>
+              className={`duration-300 pdf-container  ${readOnly ? `` : '!bg-white'}`}
+            >
+              <Editor
+                cellPlugins={cellPlugins}
+                theme={theme}
+                value={editorValue}
+                onChange={(e, editor) => {
+                  setEditorValue(e)
+                }}
+                readOnly={readOnly}
+              />
+            </div>
+          </ContentSplitView>
         </div>
       ) : (
         <>
@@ -627,31 +629,32 @@ const ContentSplitView = ({ children }) => {
     }
   }, [])
 
+
   return (
-    <div ref={containerRef} style={{ display: 'flex', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <div ref={containerRef} style={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
       {/* Left: editor content */}
-      <div style={{ width: pdfState ? `${leftWidth}%` : '100%', overflow: 'auto', flexShrink: 0, transition: isDragging.current ? 'none' : 'width 0.3s ease' }}>
+      <div style={{ width: `${leftWidth}%`, flexShrink: 0, transition: isDragging.current ? 'none' : 'width 0.3s ease' }}>
         {children}
       </div>
 
       {/* Divider */}
-      {pdfState && (
-        <div
-          onMouseDown={handleDividerMouseDown}
-          style={{ width: '6px', flexShrink: 0, cursor: 'col-resize', background: '#e5e7eb', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#3b82f6')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#e5e7eb')}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {[0, 1, 2].map(i => (
-              <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#9ca3af' }} />
-            ))}
-          </div>
+      <div
+        onMouseDown={handleDividerMouseDown}
+        style={{ width: '6px', flexShrink: 0, cursor: 'col-resize', background: '#e5e7eb', position: 'sticky', top: 0, alignSelf: 'flex-start', height: '90dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#3b82f6')}
+        onMouseLeave={e => (e.currentTarget.style.background = '#e5e7eb')}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#9ca3af' }} />
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* Right: PDF */}
-      {pdfState && <PdfPanel />}
+      {/* Right: PDF - sticky so it stays visible while scrolling */}
+      <div style={{ position: 'sticky', top: 80, alignSelf: 'flex-start', flex: 1, minWidth: 0, height: '90dvh' }}>
+        <PdfPanel />
+      </div>
     </div>
   )
 }
