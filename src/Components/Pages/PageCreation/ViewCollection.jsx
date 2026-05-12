@@ -11,7 +11,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { DefaultStyle, getTypeFromCollection } from 'src/Components/_Shared'
 import { IoMdSettings } from 'react-icons/io'
 import { useIntl } from 'react-intl'
-import { CircularProgress } from '@mui/material'
+import { CircularProgress, Skeleton } from '@mui/material'
 import { useDispatch } from 'react-redux'
 import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
 import { resolveTableApiQueryFilter } from './TableReport'
@@ -131,6 +131,7 @@ function SortableGridItem({
   sortedLoopWithoutTabs,
   FormType,
   saveAsDraft,
+  loadingEntitiesData,
   reloadValue,
   isEntitiesData
 }) {
@@ -188,6 +189,12 @@ function SortableGridItem({
       className={`relative w-full ${className} ${!readOnly ? 'px-2' : ''} ${hoverText || hintText ? '!z-[5555555]' : ''}`}
       {...attributes}
     >
+
+      {loadingEntitiesData && (
+        <div className="absolute z-20  bg-white rounded-md overflow-hidden inset-0">
+          <Skeleton variant="rectangular" width="100%" height="100%" />
+        </div>
+      )}
 
       {!readOnly && !stopSort && (
         <div className='absolute inset-0 z-20 flex flex-wrap justify-end items-start gap-1 border-main-color border-dashed border rounded-md p-1'>
@@ -575,12 +582,17 @@ export default function ViewCollection({
   const [isEntitiesData, setIsEntitiesData] = useState(false)
   const [loadingEntitiesData, setLoadingEntitiesData] = useState(true)
 
+  console.log(loadingEntitiesData);
+
 
   useEffect(() => {
     const stopFetchingDataFromApi = data.stopFetchingDataFromApi ?? false
+
     if (entitiesId !== null && collectionName !== null && collectionName === data.collectionName && entitiesId && !stopFetchingDataFromApi) {
+      console.log(3);
       axiosGet(`generic-entities/${collectionName}/${entitiesId}`, locale).then(res => {
         if (res.status) {
+
           setEntitiesData(flattenDynamic(res?.data?.entities?.[0], data?.SelectedRelatedCollectionsFields))
           setIsEntitiesData(true)
         }
@@ -660,6 +672,8 @@ export default function ViewCollection({
     },
     [data?.collectionBeforeSubmitJsData, messages?.dialogs?.invalidCode, query, resolveQueryPlaceholders]
   )
+
+
 
   const handleSubmit = async (e, handleSubmitEvent) => {
     e.preventDefault()
@@ -852,7 +866,6 @@ export default function ViewCollection({
     axiosPost(apiCall, locale, draftOutput, false, false, data.type_of_sumbit !== 'collection' ? true : false)
       .then(res => {
         if (res.status) {
-          setReload(prev => prev + 1)
           toast.success(messages.dialogs.dataSentSuccessfully)
           if (data.onSubmit) {
             const evaluatedFn = eval('(' + data?.onSubmit + ')')
@@ -862,7 +875,6 @@ export default function ViewCollection({
               evaluatedFn()
             }
           }
-
           if (data?.redirect) {
             const newHref = resolveTableApiQueryFilter(data.redirect, query)
             push(`/${locale}/${newHref === '/' ? '' : newHref}`)
@@ -1333,9 +1345,9 @@ export default function ViewCollection({
 
 
   return (
-    <div className={`${disabled ? 'text-main' : ''}`}>
+    <div className={`${disabled ? 'text-main' : ''} relative`}>
       {loading && (
-        <div className='fixed inset-0 z-10 flex justify-center items-center w-full h-full bg-white/50'>
+        <div className='absolute inset-0 z-50 flex justify-center items-center w-full h-full bg-white'>
           {/* <img src={photo.src} alt='loading' className='w-[25px] h-[25px] scale-150 ' /> */}
           <CircularProgress />
         </div>
@@ -1391,207 +1403,201 @@ export default function ViewCollection({
 
         </>
       )}
-      {loading ? (
-        <div className='h-[300px]  flex justify-center items-center text-2xl font-bold border-2 border-dashed border-main rounded-md'>
-          {messages.pleaseSelectDataModel}
-        </div>
-      ) : loadingEntitiesData ? (
-        <div className='h-[300px]  bg-white/50 flex justify-center items-center  border-2 border-dashed border-main rounded-md'>
-          <CircularProgress />
-        </div>
-      ) : (
-        <form className={'w-[calc(100%)]'} onClick={(e) => {
-          const button = e.target.closest('button')
 
-          if (button?.type === 'submit') {
-            return
-          } else {
-            setErrors(false)
-          }
+      <form className={`w-[calc(100%)] ${loading ? 'opacity-0' : ''}`} onClick={(e) => {
+        const button = e.target.closest('button')
 
-        }} onSubmit={handleSubmit}>
+        if (button?.type === 'submit') {
+          return
+        } else {
+          setErrors(false)
+        }
 
-          {/* <TabsComponent data={data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data} setActiveTab={setActiveTab} /> */}
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={sortedLoop.map(item => item.id)} strategy={verticalListSortingStrategy}>
-              <div
-                className='layout'
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(12, 1fr)',
-                  gap: isPrint ? '0px' : '10px',
-                  width: '100%'
-                }}
-              >
-                {sortedLoop.map((filed, i) => {
-                  const associationsConfigData = data?.associationsConfig ?? []
-                  const find = associationsConfigData.find(item => item?.key === filed?.key)
-                  const filedData = { ...filed }
-                  if (find) {
+      }} onSubmit={handleSubmit}>
 
-                    filedData.kind = find.viewType
-                    filedData.descriptionEn = JSON.stringify(find.selectedOptions)
-                    filedData.getDataForm = find.dataSourceType
-                    filedData.externalApi = find.externalApi
-                    filedData.staticData = find.staticData
-                    filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
-                    filedData.apiHeaders = find.apiHeaders
-                    filedData.body = find.body
-                    filedData.method = find.method
-                    filedData.viewAsInput = find.viewAsInput
-                  }
+        {/* <TabsComponent data={data?.addMoreElement?.find(ele => ele.key === 'tabs')?.data} setActiveTab={setActiveTab} /> */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={sortedLoop.map(item => item.id)} strategy={verticalListSortingStrategy}>
+            <div
+              className='layout'
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(12, 1fr)',
+                gap: isPrint ? '0px' : '10px',
+                width: '100%'
+              }}
+            >
+              {sortedLoop.map((filed, i) => {
+                const associationsConfigData = data?.associationsConfig ?? []
+                const find = associationsConfigData.find(item => item?.key === filed?.key)
+                const filedData = { ...filed }
+                if (find) {
+
+                  filedData.kind = find.viewType
+                  filedData.descriptionEn = JSON.stringify(find.selectedOptions)
+                  filedData.getDataForm = find.dataSourceType
+                  filedData.externalApi = find.externalApi
+                  filedData.staticData = find.staticData
+                  filedData.selectedValueSend = JSON.stringify(find.selectedValueSend)
+                  filedData.apiHeaders = find.apiHeaders
+                  filedData.body = find.body
+                  filedData.method = find.method
+                  filedData.viewAsInput = find.viewAsInput
+                }
 
 
-                  if (filed.type === '__tab_header__') {
-                    const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
-                    const tabs = tabsElement?.data || []
-                    const totalTabs = tabs.length
-                    const currentTabIndex = filed.tabIndex
-
-                    return (
-                      <div
-                        key={filed.id}
-                        style={{ gridColumn: 'span 12' }}
-                        className='w-full mt-4 mb-1 px-2'
-                      >
-                        <div className='flex items-center gap-2'>
-                          <div className='flex-1 h-px bg-main-color opacity-30' />
-                          <span className='text-sm font-semibold text-main-color px-3 py-1 border border-main-color rounded-full'>
-                            {filed.tabName}
-                          </span>
-
-                          {/* أزرار تحريك الـ tab */}
-                          {!readOnly && currentTabIndex !== -1 && (
-                            <div className='flex flex-col gap-0.5'>
-                              <button
-                                type='button'
-                                disabled={currentTabIndex === 0}
-                                onClick={() => handleTabReorder(currentTabIndex, currentTabIndex - 1)}
-                                className='w-5 h-5 flex items-center justify-center text-xs border border-main-color rounded hover:bg-main-color hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
-                                title={locale === 'ar' ? 'تحريك لأعلى' : 'Move Up'}
-                              >
-                                ▲
-                              </button>
-                              <button
-                                type='button'
-                                disabled={currentTabIndex === totalTabs - 1}
-                                onClick={() => handleTabReorder(currentTabIndex, currentTabIndex + 1)}
-                                className='w-5 h-5 flex items-center justify-center text-xs border border-main-color rounded hover:bg-main-color hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
-                                title={locale === 'ar' ? 'تحريك لأسفل' : 'Move Down'}
-                              >
-                                ▼
-                              </button>
-                            </div>
-                          )}
-
-                          <div className='flex-1 h-px bg-main-color opacity-30' />
-                        </div>
-                      </div>
-                    )
-                  }
-
-                  const roles = data?.additional_fields?.find(ele => ele.key === filed.id)?.roles ?? {
-                    onMount: { type: '', value: '' },
-                    placeholder: {
-                      placeholder_ar: '',
-                      placeholder_en: ''
-                    },
-                    hover: {
-                      hover_ar: '',
-                      hover_en: ''
-                    },
-                    hint: {
-                      hint_ar: '',
-                      hint_en: ''
-                    },
-                    trigger: {
-                      selectedField: null,
-                      triggerKey: null,
-                      typeOfValidation: null,
-                      isEqual: 'equal',
-                      currentField: 'Id',
-                      mainValue: '',
-                      parentKey: ''
-                    },
-                    event: {
-                      onChange: '',
-                      onBlur: '',
-                      onUnmount: ''
-                    },
-                    afterDateType: '',
-                    afterDateValue: '',
-                    beforeDateType: '',
-                    beforeDateValue: '',
-                    regex: {
-                      regex: '',
-                      message_ar: '',
-                      message_en: ''
-                    },
-                    size: ''
-                  }
-                  const hoverText = roles?.hover?.hover_ar || roles?.hover?.hover_en
-                  const hintText = roles?.hint?.hint_ar || roles?.hint?.hint_en
-
-                  const className = filed.type === 'new_element' ? `s${filed.id}` : 'ss' + filed.id
-                  const layoutItem = layout.find(l => l.i === filed.id)
-                  const gridColumnSpan = layoutItem?.w || 12
-
+                if (filed.type === '__tab_header__') {
+                  const tabsElement = data?.addMoreElement?.find(ele => ele.key === 'tabs')
+                  const tabs = tabsElement?.data || []
+                  const totalTabs = tabs.length
+                  const currentTabIndex = filed.tabIndex
 
                   return (
-                    <SortableGridItem
-                      tabsData={tabsData}
+                    <div
                       key={filed.id}
-                      advancedEdit={advancedEdit}
-                      filed={filedData}
-                      index={i}
-                      readOnly={readOnly}
-                      stopSort={stopSort}
-                      locale={locale}
-                      data={data}
-                      getDesign={getDesign}
-                      setOpen={setOpen}
-                      refError={refError}
-                      refErrorFromTable={refErrorFromTable}
-                      saveAsDraft={saveAsDraft}
-                      loadingSaveAsDraft={loadingSaveAsDraft}
-                      setLayout={setLayout}
-                      triggerData={triggerData}
-                      onChange={onChange}
-                      layout={layout}
-                      dataRef={dataRef}
-                      dataRefWithCollectionId={dataRefWithCollectionId}
-                      sortedLoop={sortedLoop}
-                      setTriggerData={setTriggerData}
-                      entitiesData={entitiesData}
-                      errors={errors}
-                      addMoreElement={addMoreElement}
-                      gridColumnSpan={gridColumnSpan}
-                      className={className}
-                      hoverText={hoverText}
-                      hintText={hintText}
-                      roles={roles}
-                      setActiveTab={setActiveTab}
-                      FormType={FormType}
-                      activeTab={activeTab}
-                      isEntitiesData={isEntitiesData}
-                      handleSubmit={handleSubmit}
-                      sortedLoopWithoutTabs={sortedLoopWithoutTabs}
-                      loading={loading}
-                      disabled={disabled}
-                      reload={reload}
-                      messages={messages}
-                    />
+                      style={{ gridColumn: 'span 12' }}
+                      className='w-full mt-4 mb-1 px-2'
+                    >
+                      <div className='flex items-center gap-2'>
+                        <div className='flex-1 h-px bg-main-color opacity-30' />
+                        <span className='text-sm font-semibold text-main-color px-3 py-1 border border-main-color rounded-full'>
+                          {filed.tabName}
+                        </span>
+
+                        {/* أزرار تحريك الـ tab */}
+                        {!readOnly && currentTabIndex !== -1 && (
+                          <div className='flex flex-col gap-0.5'>
+                            <button
+                              type='button'
+                              disabled={currentTabIndex === 0}
+                              onClick={() => handleTabReorder(currentTabIndex, currentTabIndex - 1)}
+                              className='w-5 h-5 flex items-center justify-center text-xs border border-main-color rounded hover:bg-main-color hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                              title={locale === 'ar' ? 'تحريك لأعلى' : 'Move Up'}
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type='button'
+                              disabled={currentTabIndex === totalTabs - 1}
+                              onClick={() => handleTabReorder(currentTabIndex, currentTabIndex + 1)}
+                              className='w-5 h-5 flex items-center justify-center text-xs border border-main-color rounded hover:bg-main-color hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                              title={locale === 'ar' ? 'تحريك لأسفل' : 'Move Down'}
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        )}
+
+                        <div className='flex-1 h-px bg-main-color opacity-30' />
+                      </div>
+                    </div>
                   )
-                })}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </form>
-      )}
+                }
+
+                const roles = data?.additional_fields?.find(ele => ele.key === filed.id)?.roles ?? {
+                  onMount: { type: '', value: '' },
+                  placeholder: {
+                    placeholder_ar: '',
+                    placeholder_en: ''
+                  },
+                  hover: {
+                    hover_ar: '',
+                    hover_en: ''
+                  },
+                  hint: {
+                    hint_ar: '',
+                    hint_en: ''
+                  },
+                  trigger: {
+                    selectedField: null,
+                    triggerKey: null,
+                    typeOfValidation: null,
+                    isEqual: 'equal',
+                    currentField: 'Id',
+                    mainValue: '',
+                    parentKey: ''
+                  },
+                  event: {
+                    onChange: '',
+                    onBlur: '',
+                    onUnmount: ''
+                  },
+                  afterDateType: '',
+                  afterDateValue: '',
+                  beforeDateType: '',
+                  beforeDateValue: '',
+                  regex: {
+                    regex: '',
+                    message_ar: '',
+                    message_en: ''
+                  },
+                  size: ''
+                }
+                const hoverText = roles?.hover?.hover_ar || roles?.hover?.hover_en
+                const hintText = roles?.hint?.hint_ar || roles?.hint?.hint_en
+
+                const className = filed.type === 'new_element' ? `s${filed.id}` : 'ss' + filed.id
+                const layoutItem = layout.find(l => l.i === filed.id)
+                const gridColumnSpan = layoutItem?.w || 12
+
+
+                return (
+                  <SortableGridItem
+                    tabsData={tabsData}
+                    key={filed.id}
+                    advancedEdit={advancedEdit}
+                    filed={filedData}
+                    index={i}
+                    readOnly={readOnly}
+                    stopSort={stopSort}
+                    locale={locale}
+                    data={data}
+                    loadingEntitiesData={loadingEntitiesData}
+                    getDesign={getDesign}
+                    setOpen={setOpen}
+                    refError={refError}
+                    refErrorFromTable={refErrorFromTable}
+                    saveAsDraft={saveAsDraft}
+                    loadingSaveAsDraft={loadingSaveAsDraft}
+                    setLayout={setLayout}
+                    triggerData={triggerData}
+                    onChange={onChange}
+                    layout={layout}
+                    dataRef={dataRef}
+                    dataRefWithCollectionId={dataRefWithCollectionId}
+                    sortedLoop={sortedLoop}
+                    setTriggerData={setTriggerData}
+                    entitiesData={entitiesData}
+                    errors={errors}
+                    addMoreElement={addMoreElement}
+                    gridColumnSpan={gridColumnSpan}
+                    className={className}
+                    hoverText={hoverText}
+                    hintText={hintText}
+                    roles={roles}
+                    setActiveTab={setActiveTab}
+                    FormType={FormType}
+                    activeTab={activeTab}
+                    isEntitiesData={isEntitiesData}
+                    handleSubmit={handleSubmit}
+                    sortedLoopWithoutTabs={sortedLoopWithoutTabs}
+                    loading={loading}
+                    disabled={disabled}
+                    reload={reload}
+                    messages={messages}
+                  />
+                )
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </form>
+
+
     </div>
   )
 }
