@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import Editor from '@react-page/editor'
 import '@react-page/editor/lib/index.css'
 import { useIntl } from 'react-intl'
@@ -18,6 +18,72 @@ import { useSelector } from 'react-redux'
 import useCellPlugins from './PageCreation/HooksDragDropComponents/useCellPlugins'
 import { useDispatch } from 'react-redux'
 import { SET_ACTIVE_LOADING } from 'src/store/apps/LoadingPages/LoadingPages'
+import { PdfSplitProvider } from 'src/context/PdfSplitContext'
+import { usePdfSplit } from 'src/context/PdfSplitContext'
+import CircularProgress from '@mui/material/CircularProgress'
+
+const ReadOnlyCloseButton = ({ onClose }) => {
+  const ctx = usePdfSplit()
+
+  // hide when PDF is open to avoid z-index clash with PDF panel close button
+  if (ctx?.pdfState) return null
+
+  return (
+    <div className='fixed top-[10px] end-[10px] z-[11111111]'>
+      <IconButton
+        size='large'
+        onClick={onClose}
+        className='!text-white !bg-red-500 hover:!bg-red-600'
+      >
+        <Icon icon='tabler:x' fontSize='1.125rem' />
+      </IconButton>
+    </div>
+  )
+}
+
+const PdfPanel = () => {
+  const { pdfState, closePdf } = usePdfSplit()
+
+  if (!pdfState) return null
+
+  return (
+    <div style={{ width: '100%', height: '90dvh', display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid #e5e7eb', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 600, color: '#374151', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
+          {pdfState.fileName}
+        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <a
+            href={pdfState.blobUrl}
+            download={pdfState.fileName}
+            style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--main-color, #1976d2)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
+            <Icon icon='tabler:download' fontSize='1.1rem' />
+          </a>
+          <button
+            type='button'
+            onClick={closePdf}
+            style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#e5e7eb', color: '#4b5563', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Icon icon='tabler:x' fontSize='1.1rem' />
+          </button>
+        </div>
+      </div>
+
+      {/* PDF iframe */}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        {pdfState.blobUrl ? (
+          <iframe src={pdfState.blobUrl + '#toolbar=1&navpanes=1'} style={{ width: '100%', height: '100%', border: 'none' }} title={pdfState.fileName} />
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <CircularProgress size={48} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, setEditorValueNewData, type, pageId, workflowId, entitiesId, collectionName, pageRoles, pageTypeId, readOnly, setReadOnly, children, initialLayout, isPrint, printName, hiddenPrintBtn, startPrint }) => {
   const [newData, setNewData] = useState(initialData)
@@ -34,6 +100,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
   const { push } = useRouter()
   const apiData = useSelector(state => state.api.data)
 
+
   const { query: { FormType } } = useRouter()
 
 
@@ -48,7 +115,6 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
   const [selectedLayout, setSelectedLayout] = useState(initialLayout ?? printName ?? '')
 
 
-  console.log(pageId,"from:ReactPageEditor");
 
   const { cellPlugins } = useCellPlugins({
     advancedEdit,
@@ -63,9 +129,6 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
     layoutComponent: children,
     isPrint
   })
-
-  console.log(apiData);
-  
 
   // نجعل الـ cellPlugins متاحة عالمياً لاستخدامها داخل الـ popup عند عرض صفحات أخرى
   useEffect(() => {
@@ -181,8 +244,11 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
   }, [])
 
 
+  console.log(editorValue)
 
   const uploadPage = () => {
+
+
     setLoadingSaveData(true)
     axiosPatch(`page/update/${pageName}`, locale, {
       pageRoles: pageRoles,
@@ -211,7 +277,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
       })
   }
 
-  return (
+  const editorContent = (
     <div className='relative pdf-wrapper' id='pdf-content'>
       {/* PDF Loading Overlay */}
       {loadingPdf && (
@@ -253,29 +319,33 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
           }}
         ></button>
       </div>
-      <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
 
       {type === 'all-pages' ? (
         <div className={`relative ${loadingPdf ? 'generate-pdf' : ''}`}>
+          <ContentSplitView>
 
-          <div
+            <div
 
-       
-            className={`duration-300 pdf-container  ${readOnly ? `` : '!bg-white'}`}
-          >
-            <Editor
-              cellPlugins={cellPlugins}
-              theme={theme}
-              value={editorValue}
-              onChange={(e, editor) => {
-                setEditorValue(e)
+              style={{
+                background: theme.palette.background.default
               }}
-              readOnly={readOnly}
-            />
-          </div>
+              className={`duration-300 pdf-container  ${readOnly ? `` : '!bg-white'}`}
+            >
+              <Editor
+                cellPlugins={cellPlugins}
+                theme={theme}
+                value={editorValue}
+                onChange={(e, editor) => {
+                  setEditorValue(e)
+                }}
+                readOnly={readOnly}
+              />
+            </div>
+          </ContentSplitView>
         </div>
       ) : (
         <>
+          <ApiData open={openApiData} setOpen={setOpenApiData} initialDataApi={initialDataApi} />
           <Dialog open={openBack} onClose={() => setOpenBack(false)} fullWidth>
             <DialogTitle>{messages.ReturnToPrevious}</DialogTitle>
             <DialogContent>
@@ -437,44 +507,35 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
             }}
             className={`content-editor-print  duration-300 ${readOnly ? `overflow-auto ${!initialLayout ? 'fixed' : 'w-full'} inset-0 pb-10 z-[1111111]` : '!bg-white'}`}
           >
+            <ContentSplitView>
+              {isPrint ?
 
-            {isPrint ?
+                hiddenPrintBtn ? null :
 
-              hiddenPrintBtn ? null :
+                  <div className="flex justify-end items-center p-3 btn-print">
 
-                <div className="flex justify-end items-center p-3 btn-print">
+                    <Button variant="contained" color="primary" onClick={() => handlePrint()}>{messages.print || "click to print"}</Button>
+                  </div>
+                :
+                readOnly ? <ReadOnlyCloseButton onClose={() => setReadOnly(false)} /> : null}
+              <div >
+                <Editor
+                  blurGateDisabled={true}
+                  cellPlugins={cellPlugins}
+                  theme={theme}
+                  value={editorValue}
+                  onChange={(e, editor) => {
+                    setEditorValue(e)
+                  }}
 
-                  <Button variant="contained" color="primary" onClick={() => handlePrint()}>{messages.print || "click to print"}</Button>
-                </div>
-              :
-              readOnly ? (
-                <div className='fixed top-[10px] end-[10px] z-[11111111]'>
-                  <IconButton
-                    size='large'
-                    onClick={() => setReadOnly(false)}
-                    className='!text-white !bg-red-500 hover:!bg-red-600'
-                  >
-                    <Icon icon='tabler:x' fontSize='1.125rem' />
-                  </IconButton>
-                </div>
-              ) : null}
-            <div >
-              <Editor
-                blurGateDisabled={true}
-                cellPlugins={cellPlugins}
-                theme={theme}
-                value={editorValue}
-                onChange={(e, editor) => {
-                  setEditorValue(e)
-                }}
-
-                readOnly={readOnly}
-                uiTranslator={(key) => {
-                  return messages.pagestranslations[key] || key
-                }}
-                lang={locale}
-                languages={['en', 'ar']}
-              /></div>
+                  readOnly={readOnly}
+                  uiTranslator={(key) => {
+                    return messages.pagestranslations[key] || key
+                  }}
+                  lang={"en"}
+                  languages={['en', 'ar']}
+                /></div>
+            </ContentSplitView>
           </div>
         </>
       )}
@@ -523,6 +584,78 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
           </LoadingButton>
         </DialogActions>
       </Dialog>
+    </div>
+  )
+
+  return (
+    <PdfSplitProvider>
+      {editorContent}
+    </PdfSplitProvider>
+  )
+}
+
+const ContentSplitView = ({ children }) => {
+  const { pdfState } = usePdfSplit()
+  const [leftWidth, setLeftWidth] = useState(50)
+  const isDragging = useRef(false)
+  const containerRef = useRef(null)
+
+  const handleDividerMouseDown = useCallback(e => {
+    e.preventDefault()
+    isDragging.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }, [])
+
+  useEffect(() => {
+    const handleMouseMove = e => {
+      if (!isDragging.current || !containerRef.current) return
+      const rect = containerRef.current.getBoundingClientRect()
+      const pct = ((e.clientX - rect.left) / rect.width) * 100
+      setLeftWidth(Math.min(Math.max(pct, 20), 80))
+    }
+
+    const handleMouseUp = () => {
+      isDragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
+  if (!pdfState) return children
+
+  return (
+    <div ref={containerRef} style={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+      {/* Left: editor content */}
+      <div style={{ width: `${leftWidth}%`, flexShrink: 0, transition: isDragging.current ? 'none' : 'width 0.3s ease' }}>
+        {children}
+      </div>
+
+      {/* Divider */}
+      <div
+        onMouseDown={handleDividerMouseDown}
+        style={{ width: '6px', flexShrink: 0, cursor: 'col-resize', background: '#e5e7eb', position: 'sticky', top: 0, alignSelf: 'flex-start', height: '90dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#3b82f6')}
+        onMouseLeave={e => (e.currentTarget.style.background = '#e5e7eb')}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#9ca3af' }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Right: PDF - sticky so it stays visible while scrolling */}
+      <div style={{ position: 'sticky', top: 80, alignSelf: 'flex-start', flex: 1, minWidth: 0, height: '90dvh' }}>
+        <PdfPanel />
+      </div>
     </div>
   )
 }

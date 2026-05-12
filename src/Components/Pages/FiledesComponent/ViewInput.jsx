@@ -14,14 +14,17 @@ import {
   InputAdornment,
   Paper,
   Rating,
-  Skeleton,
   TextField
 } from '@mui/material'
 import { Icon } from '@iconify/react'
-import { forwardRef, memo, useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import TableView from '../PageCreation/TableView'
-import { axiosGet } from 'src/Components/axiosCall'
+import { axiosGet, staticToken } from 'src/Components/axiosCall'
+import axios from 'axios'
+import Cookies from 'js-cookie'
+import { decryptData } from 'src/Components/encryption'
+import { usePdfSplit } from 'src/context/PdfSplitContext'
 
 const SEARCH_COLLECTION_PAGE_SIZE = 10
 
@@ -99,7 +102,7 @@ const ViewInput = ({
   error,
   showPassword,
   setShowPassword,
-  selectedOptions = [],
+  selectedOptions,
   setTriggerData,
   isDisable,
   placeholder,
@@ -108,12 +111,43 @@ const ViewInput = ({
   setRedirect,
   triggerData,
   appendSearchEntities,
-  replaceSearchCollectionOptions,
-  isEntitiesData
+  replaceSearchCollectionOptions
 }) => {
 
   const [isOpen, setIsOpen] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
   const [searchLoadingMore, setSearchLoadingMore] = useState(false)
+  const pdfSplitCtx = usePdfSplit()
+
+  const handleOpenPdfPopup = async e => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!pdfSplitCtx) {
+      console.error('[PDF] PdfSplitContext not found - make sure PdfSplitProvider wraps the app')
+
+      return
+    }
+    setPdfLoading(true)
+    try {
+      const authToken = Cookies.get('sub')
+      const token = staticToken || `Bearer ${decryptData(authToken).token.trim()}`
+      const url = `${process.env.API_URL}/file/download/${value}`
+      console.log('[PDF] fetching:', url)
+
+      const response = await axios.get(url, {
+        headers: { Authorization: token },
+        responseType: 'blob'
+      })
+      console.log('[PDF] blob size:', response.data.size, 'type:', response.data.type)
+      const blobUrl = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const displayName = fileName || value?.split('/').pop() || 'document.pdf'
+      pdfSplitCtx.openPdf(blobUrl, displayName)
+    } catch (err) {
+      console.error('[PDF] error:', err)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
   const [searchInputValue, setSearchInputValue] = useState('')
   const [searchTypingLoading, setSearchTypingLoading] = useState(false)
   const skipInitialEmptySearchFetch = useRef(true)
@@ -134,10 +168,9 @@ const ViewInput = ({
   const [collectionData, setCollectionData] = useState({ data: null, loading: true })
   const [tableData, setTableData] = useState(null)
 
+
   useEffect(() => {
     if (input?.kind == 'Table') {
-      console.log("fromHere7");
-
       axiosGet(`collections/get-by-key?key=${input?.options?.source}`)
         .then(res => {
           if (res.status) {
@@ -145,6 +178,7 @@ const ViewInput = ({
             const selected = JSON.parse(input?.descriptionEn) || []
             setCollectionData(prev => ({ ...prev, data: res.data }))
             const findDataFromAllData = data[input.key]
+
             setTableData({
               ...findDataFromAllData,
               collectionId: res.data.id,
@@ -220,15 +254,17 @@ const ViewInput = ({
 
 
 
+
+
     return (
       <div id='custom-select'>
         <select
           value={value}
           onChange={e => onChange(e)}
-          disabled={isDisable == 'disabled' || selectedOptions?.length == 0}
+          disabled={isDisable == 'disabled' || selectedOptions.length == 0}
           onBlur={e => {
             if (isRedirect) {
-              const findOption = selectedOptions?.find(option => option.Id == e.target.value)
+              const findOption = selectedOptions.find(option => option.Id == e.target.value)
               setRedirect(findOption.redirect)
             }
             if (onBlur) {
@@ -272,7 +308,7 @@ const ViewInput = ({
                         name={input.nameEn + (columnId ? `_${columnId}` : '')}
                         checked={valueSendOption === value}
                         onChange={e => {
-                          onChange(e)
+                          onChange({ target: { value: e.target.value } })
                         }}
                         type='radio'
                         id={valueSendOption + (columnId ? `_${columnId}` : '')}
@@ -657,7 +693,6 @@ const ViewInput = ({
   if (input.type == 'File') {
     return from != 'table' ? (
       <div className='px-4 w-full relative'>
-        {/* {isDisable === 'disabled' && <div className='absolute inset-0 opacity-50 bg-black/20 z-10'></div>} */}
         <div id='file-upload-container'>
           <label htmlFor={input.key} id='file-upload-label'>
             <div id='label-color'>{locale == 'ar' ? input.nameAr : input.nameEn}</div>
@@ -689,39 +724,56 @@ const ViewInput = ({
 
 
               {value && (
-                <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
-                  <div className='flex gap-3 items-center file-name-item'>
-                    <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
-                      <BsPaperclip className='text-xl text-main-color' />
-                      <span className='flex-1'>{fileName}</span>
-                    </span>
-                    <div className='flex gap-2 items-center'>
-                      <a
-                        href={process.env.API_URL + "/file/download/" + value}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                      >
-                        <Icon icon='tabler:eye' fontSize='1.25rem' />
-                      </a>
-                      <a
-                        href={process.env.API_URL + "/file/download/" + value}
-                        download
-                        target='_blank'
-                        className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                      >
-                        <Icon icon='tabler:download' fontSize='1.25rem' />
-                      </a>
-                      <button
-                        type='button'
-                        className='delete-button w-[25px] h-[25px] bg-red-500/70 rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
-                        onClick={e => handleDelete(e)}
-                      >
-                        <BsTrash />
-                      </button>
+                <>
+                  <div className='flex flex-col gap-1 p-2 mt-5 rounded-md shadow-inner shadow-gray-300 file-names-container'>
+                    <div className='flex gap-3 items-center file-name-item'>
+                      <span className='flex gap-1 items-center file-name w-[calc(100%-110px)]'>
+                        <BsPaperclip className='text-xl text-main-color' />
+                        <span className='flex-1'>{fileName ? fileName : value?.split('/').pop()}</span>
+                      </span>
+                      <div className='flex gap-2 items-center'>
+                        {(fileName?.toLowerCase().endsWith('.pdf') || value?.toLowerCase().endsWith('.pdf')) ? (
+                          <button
+                            type='button'
+                            onClick={handleOpenPdfPopup}
+                            disabled={pdfLoading}
+                            className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                          >
+                            {pdfLoading
+                              ? <CircularProgress size={14} color='inherit' />
+                              : <Icon icon='tabler:eye' fontSize='1.25rem' />
+                            }
+                          </button>
+                        ) : (
+                          <a
+                            href={process.env.API_URL + "/file/download/" + value}
+                            target='_blank'
+                            rel='noreferrer'
+                            className='view-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                          >
+                            <Icon icon='tabler:eye' fontSize='1.25rem' />
+                          </a>
+                        )}
+                        <a
+                          href={process.env.API_URL + "/file/download/" + value}
+                          download
+                          target='_blank'
+                          className='download-button w-[25px] h-[25px] bg-main-color rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                        >
+                          <Icon icon='tabler:download' fontSize='1.25rem' />
+                        </a>
+                        <button
+                          type='button'
+                          className='delete-button w-[25px] h-[25px] bg-red-500/70 rounded-full text-white hover:bg-red-500/90 transition-all duration-300 flex items-center justify-center'
+                          onClick={e => handleDelete(e)}
+                        >
+                          <BsTrash />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                </>
               )}
             </div>
             <input
@@ -752,46 +804,44 @@ const ViewInput = ({
           target='_blank'
           rel='noreferrer'
         >
-          {value && value?.slice(0, 30) ? (
+          {value?.slice(0, 30) ? (
             value.slice(0, 30) + '.' + value.split('.').pop()
           ) : (
             <></>
           )}
         </a>
-        {isDisable !== 'disabled' && (
-          <div className=''>
-            <Button
-              variant='outlined'
-              component='label'
-              className='!w-[30px] !h-[30px] !rounded-full  !max-w-[30px] !max-h-[30px]  !min-h-0 !p-0 !min-w-0 !flex !items-center !justify-center'
-            >
-              <Icon
-                icon={value ? value?.includes('/Uploads/') ? 'tabler:edit' : 'tabler:upload' : 'tabler:upload'}
-                width={25}
-                height={25}
-              />
-              <input
-                type='file'
-                disabled={isDisable == 'disabled'}
-                id={input.key}
-                hidden
-                onChange={onChangeFile}
-                onBlur={e => {
-                  if (onBlur) {
-                    const evaluatedFn = eval('(' + onBlur + ')')
+        <div className=''>
+          <Button
+            variant='outlined'
+            component='label'
+            className='!w-[30px] !h-[30px] !rounded-full  !max-w-[30px] !max-h-[30px]  !min-h-0 !p-0 !min-w-0 !flex !items-center !justify-center'
+          >
+            <Icon
+              icon={value?.split('/Uploads/')?.[1]?.slice(0, 30) ? 'tabler:edit' : 'tabler:upload'}
+              width={25}
+              height={25}
+            />
+            <input
+              type='file'
+              disabled={isDisable == 'disabled'}
+              id={input.key}
+              hidden
+              onChange={onChangeFile}
+              onBlur={e => {
+                if (onBlur) {
+                  const evaluatedFn = eval('(' + onBlur + ')')
 
-                    evaluatedFn(e)
-                  }
-                }}
-                accept={
-                  input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
-                    ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
-                    : undefined
+                  evaluatedFn(e)
                 }
-              />
-            </Button>
-          </div>
-        )}
+              }}
+              accept={
+                input?.options?.uiSchema?.xComponentProps?.fileTypes?.length
+                  ? input.options.uiSchema.xComponentProps.fileTypes.join(',')
+                  : undefined
+              }
+            />
+          </Button>
+        </div>
       </div>
     )
   }
@@ -813,6 +863,7 @@ const ViewInput = ({
       maxDate = new Date(roles?.afterDateValue)
     }
     const timeFormat = roles?.timeFormat == '12hrs' ? 'h:mm aa' : 'HH:mm'
+
 
     const datePicker = inline => {
       return (
@@ -983,7 +1034,7 @@ const ViewInput = ({
 
   if (input.kind == 'Table') {
     if (collectionData.loading) {
-      return <Skeleton variant="rectangular" width="100%" height={300} />
+      return <></>
     }
 
     const onChangeTable = e => {
@@ -1007,8 +1058,7 @@ const ViewInput = ({
       tableBorderColor: roles?.borderColor ?? 'rgba(224, 224, 224, 1)'
     }
 
-    console.log(isEntitiesData, value, "isEntitiesData");
-
+    
 
     return (
       <div className='w-full '>
@@ -1016,7 +1066,7 @@ const ViewInput = ({
           refErrorFromTable={refErrorFromTable}
           setValue={onChange}
           input={input}
-          data={{ ...tableData, ...(isEntitiesData ? { newRows: value } : {}) }}
+          data={tableData}
           reloadHight={setTriggerData}
           locale={locale}
           onChange={onChangeTable}
@@ -1035,4 +1085,4 @@ const ViewInput = ({
   }
 }
 
-export default memo(ViewInput)
+export default ViewInput
