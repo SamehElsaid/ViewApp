@@ -263,7 +263,7 @@ export const formatDate = (value, format) => {
 }
 
 
-const ReturnDataInProduction = (string, dev) => {
+const ReturnDataInProduction = (dev, string) => {
   return process.env.DEV_MODE ? dev : string
 }
 
@@ -271,6 +271,8 @@ export const getAppConfig = () => {
   const appType = process.env.APP_TYPE
   const formBuilderClientId = "SINGLECLIC.LOWCODE.UI"
   const formBuilderClientSecret = "901564A5-E7FE-42CB-B10D-61EF6A8F3658"
+  const redirectURLDev = "http://localhost:3000/"
+
 
 
 
@@ -278,19 +280,21 @@ export const getAppConfig = () => {
     "Form Builder": {
       "client_id": formBuilderClientId,
       "client_secret": formBuilderClientSecret,
-      redirect_uri: ReturnDataInProduction("https://form-bulider-seven.vercel.app/", "http://localhost:3000/")
+      redirect_uri: ReturnDataInProduction(redirectURLDev, "https://form-bulider-seven.vercel.app/")
     },
     "View as Admin": {
       "client_id": ReturnDataInProduction(formBuilderClientId, "SINGLECLIC.LOWCODE.INTERNAL.UI"),
       "client_secret": ReturnDataInProduction(formBuilderClientSecret, "901564A5-E7FE-42CB-B10D-61EF6A8F6654"),
-      redirect_uri: ReturnDataInProduction("https://view-as-admin.vercel.app/", "http://localhost:3000/")
+      redirect_uri: ReturnDataInProduction(redirectURLDev, "https://view-as-admin.vercel.app/")
     },
     "View as User": {
       "client_id": ReturnDataInProduction(formBuilderClientId, "VIEW.APP"),
       "client_secret": ReturnDataInProduction(formBuilderClientSecret, "901564A5-E7FE-42CB-B10D-61EF6A8F3658"),
-      redirect_uri: ReturnDataInProduction("https://view-app-omega.vercel.app/", "http://localhost:3000/")
+      redirect_uri: ReturnDataInProduction(redirectURLDev, "https://view-app-omega.vercel.app/")
     },
   }
+
+
 
 
 
