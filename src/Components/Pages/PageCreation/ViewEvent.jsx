@@ -146,7 +146,7 @@ function runEventHandlerFromDocument(fullCode, apiPayload, locale) {
 
 /** Live API row from Redux, then persisted `data.items` if store not ready yet (e.g. preview). */
 
-function resolveEventApiPayload(apiUrl, getApiData, storedItems) {
+function resolveEventApiPayload(apiUrl, getApiData, storedItems, row) {
 
   if (!apiUrl || !Array.isArray(getApiData)) {
 
@@ -154,7 +154,6 @@ function resolveEventApiPayload(apiUrl, getApiData, storedItems) {
 
   }
 
-  const row = getApiData.find(item => item.link === apiUrl)
 
   if (row && 'data' in row && row.data !== undefined) {
 
@@ -175,12 +174,13 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
   const { messages } = useIntl()
 
   const getApiData = useSelector(state => state.api.data)
+  const row = getApiData.find(item => item.link === data.api_url)
 
 
 
   const handleRunClick = () => {
 
-    const payload = resolveEventApiPayload(data.api_url, getApiData, data.items)
+    const payload = resolveEventApiPayload(data.api_url, getApiData, data.items, row)
 
     const apiData = payload
     const eventScript = data?.updatedCode
@@ -207,8 +207,10 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
   }
 
   useEffect(() => {
+    if (row && row.loading) {
+      return
+    }
     const payload = resolveEventApiPayload(data.api_url, getApiData, data.items)
-    console.log(payload)
 
     if (readOnly) {
 
@@ -218,7 +220,7 @@ export default function ViewEvent({ data, locale, readOnly, children }) {
 
       return () => clearTimeout(timer) // clean up if component unmounts
     }
-  }, []) // empty deps → run only once on mount
+  }, [row?.loading]) // empty deps → run only once on mount
 
 
 

@@ -518,5 +518,31 @@ export const progress_bar = `
   font-size: 14px;
   margin-right: 15px;
 }
+`
 
+export const collapse_section = `
+.collapse-header {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #1f3a5f;
+  background: linear-gradient(to bottom, #f8fafc, #eef3f9);
+  border: 1px solid #d6e0ef;
+  border-left: 4px solid #1f3a5f;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  cursor: pointer;
+  user-select: none;
+}
+.collapse-arrow {
+  font-size: 11px;
+  transition: transform 0.2s;
+}
 `

@@ -54,7 +54,7 @@
     "@react-page/editor": "^5.4.5",
     "@react-page/plugins-slate": "^5.4.5",
     "@react-page/plugins-spacer": "^5.4.5",
-    "@react-pdf/renderer": "^3.1.14",
+    "@react-pdf/renderer": "^3.4.5",
     "@reduxjs/toolkit": "1.9.5",
     "@rsuite/icons": "^1.3.0",
     "@stripe/react-stripe-js": "^3.7.0",
@@ -116,6 +116,7 @@
     "react-dom": "^18.2.0",
     "react-draft-wysiwyg": "1.15.0",
     "react-dropzone": "14.2.3",
+    "react-fast-marquee": "^1.6.5",
     "react-grid-layout": "^1.5.0",
     "react-hook-form": "7.43.9",
     "react-hot-toast": "2.4.1",
@@ -124,7 +125,6 @@
     "react-intersection-observer": "^9.6.0",
     "react-intl": "^6.5.5",
     "react-lazy-images": "^1.1.0",
-    "react-lazy-load-image-component": "^1.6.3",
     "react-otp-input": "^3.1.1",
     "react-perfect-scrollbar": "1.5.8",
     "react-phone-number-input": "^3.3.8",
@@ -153,6 +153,8 @@
     "@iconify/tools": "2.2.6",
     "@iconify/types": "2.0.0",
     "@iconify/utils": "2.1.5",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
     "autoprefixer": "^10.4.16",
     "eslint": "8.36.0",
     "eslint-config-next": "13.3.2",
@@ -161,23 +163,19 @@
     "eslint-import-resolver-typescript": "3.5.3",
     "eslint-plugin-import": "2.27.5",
     "postcss": "^8.4.32",
+    "postcss-nesting": "^14.0.0",
     "prettier": "2.8.4",
     "tailwindcss": "^3.4.0"
   },
   "resolutions": {
     "minipass": "5.0.0",
     "@mui/x-data-grid/@mui/system": "5.12.1",
-    "react-credit-cards/prop-types": "15.7.2",
-    "react-hot-toast/goober/csstype": "3.1.2",
-    "recharts/react-smooth/prop-types": "15.6.0",
-    "react-draft-wysiwyg/html-to-draftjs/immutable": "4.3.0",
-    "react-draft-wysiwyg/draftjs-utils/immutable": "4.3.0",
-    "@emotion/react/@emotion/babel-plugin/@babel/core": "7.21.5",
-    "@emotion/react/@emotion/babel-plugin/@babel/plugin-syntax-jsx/@babel/core": "7.21.5"
+    "react-credit-cards/prop-types": "15.7.2"
   },
   "overrides": {
     "react-credit-cards": {
       "react": "$react"
     }
-  }
+  },
+  "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8"
 }

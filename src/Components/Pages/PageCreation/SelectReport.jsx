@@ -17,7 +17,7 @@ import {
   DialogActions,
   Typography
 } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useIntl } from 'react-intl'
 import Collapse from '@kunukn/react-collapse'
 import { axiosGet, axiosPost } from 'src/Components/axiosCall'
@@ -38,6 +38,7 @@ import StatisticsSection from './StatisticsSection'
 function SelectReport({ onChange, data, type, buttonRef, title }) {
   const { locale, messages } = useIntl()
   const [collection, setCollection] = useState('')
+  const [collectionInputValue, setCollectionInputValue] = useState('')
   const [optionsCollection, setOptionsCollection] = useState([])
   const [loadingCollection, setLoadingCollection] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState([])
@@ -130,17 +131,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
     }
   }, [data.selected])
 
-  const handleInputChange = async (event, value) => {
-    try {
-      const res = await axiosGet(`collections/get/?dataSourceId=${data.data_source_id}`, locale)
-      if (res.status) {
-        setOptionsCollection(res.data ?? [])
-      } else {
-        setCollection('')
-      }
-    } finally {
-      setLoadingCollection(false)
-    }
+  const handleInputChange = (event, value) => {
+    setCollectionInputValue(value)
   }
 
   const handleChange = (event, fieldCategory, skipCheck, field) => {
@@ -184,6 +176,24 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
   // State for nested related collections (related collections for each related collection)
   const [nestedRelatedCollections, setNestedRelatedCollections] = useState({}) // { collectionKey: [] }
   const [nestedRelatedCollectionsFields, setNestedRelatedCollectionsFields] = useState({}) // { collectionKey: [{ collection, fields }] }
+
+  const tabsElement = useMemo(
+    () => (data.addMoreElement || []).find(ele => ele.key === 'tabs'),
+    [data.addMoreElement]
+  )
+
+  const tabs = useMemo(() => (Array.isArray(tabsElement?.data) ? tabsElement.data : []), [tabsElement])
+
+  const tabFieldMap = useMemo(() => {
+    const map = {}
+    tabs.forEach((tab, index) => {
+      ;(Array.isArray(tab?.fields) ? tab.fields : []).forEach(fieldKey => {
+        map[fieldKey] = index
+      })
+    })
+
+    return map
+  }, [tabs])
 
   useEffect(() => {
     if (data?.relatedCollections?.length > 0) {
@@ -919,9 +929,11 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
           getOptionLabel={option => option?.key || ''}
           loading={loadingCollection}
           onInputChange={handleInputChange}
+          inputValue={collectionInputValue}
           value={collection || ''}
           onChange={(e, value) => {
             setCollection(value)
+            setCollectionInputValue(value?.key || '')
             setRelatedCollections([])
             setRelatedCollectionsFields([])
             setNestedRelatedCollections({})
@@ -1019,14 +1031,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
                               }}
                             />
                             {(() => {
-                              const tabsElement = (data.addMoreElement || []).find(ele => ele.key === 'tabs')
                               if (!tabsElement) return null
-                              const tabs = Array.isArray(tabsElement?.data) ? tabsElement?.data : []
-
-                              const currentIndex = Math.max(
-                                -1,
-                                tabs.findIndex(t => Array.isArray(t.fields) && t.fields.includes(value.key))
-                              )
+                              const currentIndex = tabFieldMap[value.key] ?? -1
 
                               return (
                                 <span className='!ml-2 !flex !items-center !gap-1'>
@@ -1520,16 +1526,8 @@ function SelectReport({ onChange, data, type, buttonRef, title }) {
                                           }}
                                         />
                                         {(() => {
-                                          const tabsElement = (data.addMoreElement || []).find(
-                                            ele => ele.key === 'tabs'
-                                          )
                                           if (!tabsElement) return null
-                                          const tabs = Array.isArray(tabsElement?.data) ? tabsElement?.data : []
-
-                                          const currentIndex = Math.max(
-                                            -1,
-                                            tabs.findIndex(t => Array.isArray(t.fields) && t.fields.includes(value.key))
-                                          )
+                                          const currentIndex = tabFieldMap[value.key] ?? -1
 
                                           return (
                                             <span className='!ml-2 !flex !items-center !gap-1'>

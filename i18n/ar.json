@@ -139,6 +139,11 @@
   "OnUnmount": "عند إلغاء التحميل",
   "Add_Trigger": "إضافة محفز",
   "Triggers": "المحفزات",
+  "Add_Multi_Trigger": "إضافة محفز متعدد",
+  "Multi_Triggers": "المحفزات المتعددة",
+  "Add_Condition": "إضافة شرط",
+  "Conditions_AND": "الشروط (AND — يجب تحقق الجميع)",
+  "Any_Value": "أي قيمة",
   "Key": "المفتاح",
   "when": "عندما",
   "Update": "تحديث",
@@ -191,6 +196,7 @@
   },
   "Api": {
     "addApiData": "إضافة API",
+    "editApiData": "تعديل API",
     "link": "الرابط",
     "invalidLink": "الرابط غير صالح",
     "dynamicAPI": "API ديناميكية",
@@ -438,7 +444,40 @@
     "red": "أحمر",
     "purple": "أرجواني",
     "pink": "وردي",
-    "icon": "أيقونة"
+    "icon": "أيقونة",
+    "slide": "شريحة",
+    "slidesPerView": "عدد الشرائح المرئية",
+    "spaceBetween": "المسافة بين الشرائح (px)",
+    "sectionTitle_ar": "عنوان القسم (عربي)",
+    "sectionTitle_en": "عنوان القسم (إنجليزي)",
+    "sectionDescription_ar": "وصف القسم (عربي)",
+    "sectionDescription_en": "وصف القسم (إنجليزي)",
+    "seeMore": "زر اقرأ المزيد",
+    "seeMoreShow": "إظهار زر اقرأ المزيد",
+    "seeMoreUrl": "رابط اقرأ المزيد",
+    "seeMoreText_ar": "نص الزر (عربي)",
+    "seeMoreText_en": "نص الزر (إنجليزي)",
+    "seeMoreBgColor": "لون خلفية الزر",
+    "seeMoreTextColor": "لون نص الزر",
+    "titleDisplay": "عرض عنوان الكارد",
+    "cardTitle": "عنوان الكارد",
+    "itemClassName": "CSS Class",
+    "cardClassName": "CSS Class للكارد",
+    "imageClassName": "CSS Class للصورة",
+    "titleClassName": "CSS Class للعنوان",
+    "descriptionClassName": "CSS Class للوصف",
+    "priceClassName": "CSS Class للسعر",
+    "navButtons": "أزرار التنقل",
+    "navClassName": "CSS Class لأزرار التنقل",
+    "arrowColor": "لون أيقونة السهم",
+    "arrowBgColor": "لون خلفية السهم",
+    "cardLayout": "تخطيط الكارد",
+    "cardLayoutVertical": "عمودي (الصورة فوق)",
+    "cardLayoutHorizontal": "أفقي (الصورة جانب)",
+    "imagePosition": "موضع الصورة",
+    "imagePositionStart": "البداية",
+    "imagePositionEnd": "النهاية",
+    "imageWidthH": "عرض الصورة (أفقي)"
   },
   "useChart": {
     "title": "مخطط",
@@ -994,6 +1033,30 @@
     "textColor": "لون النص",
     "colorOrCss": "لون أو CSS (مثل linear-gradient(90deg, #4facfe 0%, #00f2fe 100%))"
   },
+  "portalNav": {
+    "title": "شريط التنقل",
+    "description": "شريط تنقل البوابة الحكومية مع الشعار والروابط وزر تسجيل الدخول"
+  },
+  "heroSlider": {
+    "title": "سلايدر رأس الصفحة",
+    "description": "سلايدر بعرض كامل مع شرائح ديناميكية من واجهة برمجة التطبيقات"
+  },
+  "servicesSlider": {
+    "title": "سلايدر الخدمات",
+    "description": "بطاقات خدمات قابلة للتمرير أفقياً من مجموعة البيانات"
+  },
+  "newsGrid": {
+    "title": "شبكة الأخبار",
+    "description": "بطاقة خبر كبيرة + 3 بطاقات صغيرة من مجموعة البيانات"
+  },
+  "logosCarousel": {
+    "title": "عرض الشعارات",
+    "description": "عرض تلقائي لشعارات الشركاء والجهات التابعة"
+  },
+  "portalFooter": {
+    "title": "تذييل البوابة",
+    "description": "تذييل متعدد الأعمدة مع روابط وشعار وحقوق نشر وأيقونات التواصل الاجتماعي"
+  },
   "translating": "جاري الترجمة",
   "columns": "الأعمدة",
   "type": "النوع",
@@ -1034,6 +1097,13 @@
     "stepIndicator": "الخطوة",
     "relationConfigured": "تم تكوين العلاقة"
   },
+  "itemsPath": "مسار العناصر",
+  "imageUrlPath": "مسار الصورة",
+  "titlePath": "مسار العنوان",
+  "subtitlePath": "مسار الاسم",
+  "example": "مثال",
+  "ctaLabelPath": "مسار الرابط",
+  "ctaUrlPath": "مسار الرابط",
   "createdAt": "تم الإنشاء في",
   "OneToOne": "واحد إلى واحد",
   "OneToMany": "واحد إلى كثير",
@@ -1063,6 +1133,10 @@
     "Resize blocks": "تغيير حجم العناصر",
     "Preview page": "معاينة الصفحة",
     "Add blocks to page": "إضافة العناصر إلى الصفحة"
+  },
+  "ministersTimeline": {
+    "title": "Ministers Timeline",
+    "description": "Interactive horizontal timeline of people with bio and photo"
   },
   "tasks": {
     "tasks": "المهمات",

@@ -225,10 +225,16 @@ function Index() {
           <Grid item xs={12} sm={4}>
             <ActionTile href={profileHref} icon='tabler:user' label={messages?.myProfile} />
           </Grid>
+          {process.env.APP_TYPE !== "Form Builder" && (
           <Grid item xs={12} sm={4}>
             <ActionTile href={startHref} icon='tabler:rocket' label={messages?.getStarted} emphasized />
           </Grid>
-     
+          )}
+          {process.env.APP_TYPE === "Form Builder" && (
+            <Grid item xs={12} sm={4}>
+              <ActionTile href={dashboardHref} icon='tabler:layout-dashboard' label={messages?.goToDashboard} />
+            </Grid>
+          )}
         </Grid>
       </Container>
     </Box>

@@ -9,13 +9,15 @@ import useTriggerError from 'src/@core/hooks/useTriggerError'
 import { toast } from 'react-toastify'
 import { useSettings } from 'src/@core/hooks/useSettings'
 import useFetchGlobalData from 'src/@core/hooks/useFetchGlobalData'
+import { getAppConfig } from './_Shared'
 
 function HomeApp({ children }) {
   const router = useRouter()
   const { locale } = useRouter()
   const patch = usePathname()
   const user = useSelector(rx => rx.auth.loading)
-  const fetchGlobalData = useFetchGlobalData()
+  useFetchGlobalData()
+
 
 
   const { login } = useInitialization()
@@ -40,7 +42,7 @@ function HomeApp({ children }) {
   }, [locale, router, user, patch])
   if (patch && '/' + patch.split('/')[1] === '/' && user !== 'loading' && user === 'no') {
     router.push(`/${locale}/login`)
-    
+
     return <LoadingMain login={true} />
   }
   if (patch && '/' + patch.split('/')[1] === '/setting' && user !== 'loading' && user === 'no') {

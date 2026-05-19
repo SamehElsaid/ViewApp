@@ -1,33 +1,243 @@
-import { Link, Rating } from '@mui/material'
-import { useEffect, useState } from 'react'
-import ImageLoad from 'src/Components/ImageLoad'
-import { Icon } from '@iconify/react'
+import { useEffect, useRef, useState } from 'react'
 import CardCard from './CardCard'
 import { useSelector } from 'react-redux'
 import download from 'src/Components/img/download.png'
 import CardAppleWatch from 'src/Components/analytics/CardAppleWatch'
-import { getData, getMaxLength } from 'src/Components/_Shared'
+import { getData } from 'src/Components/_Shared'
 import EcommerceStatistics from 'src/Components/analytics/EcommerceStatistics'
+import get from 'lodash/get'
+import SwiperCore, { Navigation, Scrollbar } from 'swiper'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import 'swiper/swiper-bundle.min.css'
+
+SwiperCore.use([Navigation, Scrollbar])
 
 export default function ViewCart({ data, locale, onChange, readOnly }) {
   const childrenView = data.childrenView ?? 'auto'
-  const top = `top-[5px]`
-  const left = `left-[5px]`
-  const right = `right-[5px]`
-  const bottom = `bottom-[5px]`
-  const topRight = 'top-[5px] end-[5px]'
-  const topLeft = 'top-[5px] start-[5px]'
-  const bottomRight = 'bottom-[5px] end-[5px]'
-  const center = 'top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]'
-  const bottomLeft = 'bottom-[5px] start-[5px]'
   const apiData = useSelector(state => state.api.data)
   const [items, setItems] = useState([])
+  const [verticalPage, setVerticalPage] = useState(0)
+  const prevRef = useRef(null)
+  const nextRef = useRef(null)
   useEffect(() => {
-    const findItems = apiData.find(item => item.link === data.api_url)
+    const findItems = apiData.find(item => item.id === data.api_url)
     if (findItems) {
-      setItems(findItems?.data ?? [])
+      const raw = findItems?.data ?? []
+      const result = data.key ? get(raw, data.key, []) : raw
+      setItems(Array.isArray(result) ? result : [])
+    } else {
+      setItems([])
     }
-  }, [apiData, data.api_url])
+  }, [apiData, data.api_url, data.key])
+
+  useEffect(() => { setVerticalPage(0) }, [data.slidesPerView, data.api_url, data.key])
+
+  if (data.cart_type === 'slide') {
+    const slideItems = data.api_url ? items : [{}]
+    const sectionTitle = data[`sectionTitle_${locale}`] || ''
+    const sectionDescription = data[`sectionDescription_${locale}`] || ''
+    const seeMoreLabel = data[`seeMoreText_${locale}`] || (locale === 'ar' ? 'عرض المزيد' : 'See More')
+
+    const isVertical = data.slideDirection === 'vertical'
+
+    if (isVertical) {
+      const perPage = Number(data.slidesPerView) || 3
+      const totalPages = Math.ceil(slideItems.length / perPage)
+      const visibleItems = slideItems.slice(verticalPage * perPage, verticalPage * perPage + perPage)
+
+      return (
+        <div className='w-full'>
+          {/* Section Header */}
+          {(sectionTitle || sectionDescription || (data.seeMoreShow !== 'none' && data.seeMoreUrl)) && (
+            <div className='flex items-start justify-between mb-4 px-1'>
+              <div>
+                {sectionTitle && <h2 className='text-xl font-bold text-gray-800'>{sectionTitle}</h2>}
+                {sectionDescription && <p className='text-sm text-gray-500 mt-1'>{sectionDescription}</p>}
+              </div>
+              {data.seeMoreShow !== 'none' && data.seeMoreUrl && (
+                <a
+                  href={data.seeMoreUrl}
+                  style={{
+                    backgroundColor: data.seeMoreBgColor || 'transparent',
+                    color: data.seeMoreTextColor || '#3b5bdb',
+                    borderColor: data.seeMoreTextColor || '#3b5bdb'
+                  }}
+                  className='border rounded-md px-4 py-1 text-sm font-medium shrink-0 transition-opacity hover:opacity-75'
+                >
+                  {seeMoreLabel}
+                </a>
+              )}
+            </div>
+          )}
+          {/* Items */}
+          <div className='flex flex-col' style={{ gap: `${Number(data.spaceBetween) || 20}px` }}>
+            {visibleItems.map((item, index) => (
+              <CardCard
+                key={verticalPage * perPage + index}
+                item={item}
+                data={data}
+                download={download}
+                locale={locale}
+                index={verticalPage * perPage + index}
+                onChangePerant={onChange}
+                readOnly={readOnly}
+                api={data.api_url}
+              />
+            ))}
+          </div>
+          {/* Up / Down Arrows */}
+          <div className={`flex gap-3 mt-4 ${locale === 'ar' ? 'justify-start' : 'justify-end'} ${data.navClassName || ''}`}>
+            {/* السابق / Previous */}
+            <button
+              onClick={() => setVerticalPage(p => Math.max(0, p - 1))}
+              disabled={verticalPage === 0}
+              className='flex  items-center gap-2 rounded-full px-4 py-2 transition-opacity hover:opacity-80 disabled:opacity-0 disabled:cursor-not-allowed select-none'
+              style={{
+                backgroundColor: data.arrowBgColor || '#1e3a6e',
+                color: data.arrowColor || '#ffffff',
+                direction: locale === 'ar' ? 'rtl' : 'ltr'
+              }}
+            >
+              <span className='text-sm font-medium leading-none'>
+                {locale === 'ar' ? 'السابق' : 'Prev'}
+              </span>
+              <span
+                className='w-7 h-7 flex items-center justify-center rounded-full text-lg font-bold leading-none'
+                style={{ background: 'rgba(255,255,255,0.18)' }}
+              >
+                &#8963;
+              </span>
+            </button>
+
+            {/* المزيد / Next */}
+            <button
+              onClick={() => setVerticalPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={verticalPage >= totalPages - 1}
+              className='flex items-center gap-2 rounded-full px-4 py-2 transition-opacity hover:opacity-80 disabled:opacity-0 disabled:cursor-not-allowed select-none'
+              style={{
+                backgroundColor: data.arrowBgColor || '#1e3a6e',
+                color: data.arrowColor || '#ffffff',
+                direction: locale === 'ar' ? 'rtl' : 'ltr'
+              }}
+            >
+              <span
+                className='w-7 h-7 flex items-center justify-center rounded-full text-lg font-bold leading-none'
+                style={{ background: 'rgba(255,255,255,0.18)' }}
+              >
+                &#8964;
+              </span>
+              <span className='text-sm font-medium leading-none'>
+                {locale === 'ar' ? 'المزيد' : 'More'}
+              </span>
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className='w-full'>
+        {/* Section Header */}
+        {(sectionTitle || sectionDescription || (data.seeMoreShow !== 'none' && data.seeMoreUrl)) && (
+          <div className='flex items-start justify-between mb-4 px-1'>
+            <div>
+              {sectionTitle && (
+                <h2 className='text-xl font-bold text-gray-800'>{sectionTitle}</h2>
+              )}
+              {sectionDescription && (
+                <p className='text-sm text-gray-500 mt-1'>{sectionDescription}</p>
+              )}
+            </div>
+            {data.seeMoreShow !== 'none' && data.seeMoreUrl && (
+              <a
+                href={data.seeMoreUrl}
+                style={{
+                  backgroundColor: data.seeMoreBgColor || 'transparent',
+                  color: data.seeMoreTextColor || '#3b5bdb',
+                  borderColor: data.seeMoreTextColor || '#3b5bdb'
+                }}
+                className='border rounded-md px-4 py-1 text-sm font-medium shrink-0 transition-opacity hover:opacity-75'
+              >
+                {seeMoreLabel}
+              </a>
+            )}
+          </div>
+        )}
+        {/* Swiper — horizontal only */}
+        <div className='relative'>
+          <Swiper
+            slidesPerView={Number(data.slidesPerView) || 3}
+            slidesPerGroup={Number(data.slidesPerView) || 3}
+            spaceBetween={Number(data.spaceBetween) || 20}
+            navigation={{ prevEl: prevRef.current, nextEl: nextRef.current }}
+            onBeforeInit={swiper => {
+              swiper.params.navigation.prevEl = prevRef.current
+              swiper.params.navigation.nextEl = nextRef.current
+            }}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+            key={`${locale}-${data.slidesPerView}-${data.spaceBetween}`}
+            style={{ paddingBottom: '8px' }}
+          >
+            {slideItems.map((item, index) => (
+              <SwiperSlide key={index} className='!h-auto'>
+                <CardCard
+                  item={item}
+                  data={data}
+                  download={download}
+                  locale={locale}
+                  index={index}
+                  onChangePerant={onChange}
+                  readOnly={readOnly}
+                  api={data.api_url}
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+          <div className={`flex gap-3 mt-4 ${locale === 'ar' ? 'justify-start' : 'justify-end'} ${data.navClassName || ''}`}>
+            {/* السابق / Previous */}
+            <button
+              ref={prevRef}
+              className='flex items-center gap-2  absolute top-1/2 start-0 -translate-y-1/2 z-20 rounded-e-full pe-4 ps-1.5 py-2 transition-opacity hover:opacity-80 disabled:opacity-0 disabled:cursor-not-allowed select-none'
+              style={{
+                backgroundColor: data.arrowBgColor || '#5370b6',
+                color: data.arrowColor || '#ffffff',
+                direction: locale === 'ar' ? 'rtl' : 'ltr'
+              }}
+            ><span
+              className='w-7 h-7 flex items-center justify-center border border-white rounded-full text-lg font-bold leading-none'
+            >
+                { '‹'}
+              </span>
+              <span className='text-sm font-medium leading-none'>
+                {locale === 'ar' ? 'السابق' : 'Prev'}
+              </span>
+
+            </button>
+
+            {/* المزيد / Next */}
+            <button
+              ref={nextRef}
+              className='flex items-center absolute top-1/2 -translate-y-1/2 z-20 end-0  gap-2 rounded-s-full ps-4 pe-1.5 py-2 transition-opacity hover:opacity-80 disabled:opacity-0 disabled:cursor-not-allowed select-none'
+              style={{
+                backgroundColor: data.arrowBgColor || '#5370b6',
+                color: data.arrowColor || '#ffffff',
+                direction: locale === 'ar' ? 'rtl' : 'ltr'
+              }}
+            ><span className='text-sm font-medium leading-none'>
+                {locale === 'ar' ? 'المزيد' : 'More'}
+              </span>
+              <span
+                className='w-7 h-7 flex items-center justify-center border border-white rounded-full text-lg font-bold leading-none'
+              >
+                {'›'}
+              </span>
+
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className=''>
@@ -49,7 +259,7 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
               <CardAppleWatch
                 key={index}
                 data={{
-                  title: getData(item, data?.[`title_${locale}`], 'Customer Onboarding'),
+                  title: getData(item, data.newItems?.find(ni => ni.type === 'title')?.[`title_${locale}`] ?? data?.[`title_${locale}`], 'Customer Onboarding'),
                   progress: getData(item, data?.progress, 0),
                   tasksRemaining: getData(item, data?.tasksRemaining, 0),
                   status: getData(item, data?.status, 'active')
@@ -58,7 +268,7 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
             ) : data.cart_type === 'statistic' ? (
               <EcommerceStatistics
                 data={{
-                  title: getData(item, data?.[`title_${locale}`], 'title'),
+                  title: getData(item, data.newItems?.find(ni => ni.type === 'title')?.[`title_${locale}`] ?? data?.[`title_${locale}`], 'title'),
                   value: getData(item, data?.value, '125k'),
                   color: getData(item, data?.color, 'primary'),
                   icon: getData(item, data?.icon, 'tabler:chart-pie-2')
@@ -78,13 +288,18 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
               />
             )
           )}
+          {items.length === 0 && (
+            <div className='flex justify-center items-center h-full'>
+              <p className='text-gray-500'>No items found</p>
+            </div>
+          )}
         </div>
       ) : (
-        <div className='relative ||  h-full w-full '>
+        <div className={`relative h-full w-full ${data.cardClassName || ''}`}>
           {data.cart_type === 'analytic' ? (
             <CardAppleWatch
               data={{
-                title: data?.[`title_${locale}`] ?? 'title',
+                title: data.newItems?.find(ni => ni.type === 'title')?.[`title_${locale}`] ?? data?.[`title_${locale}`] ?? 'title',
                 progress: data.progress,
                 tasksRemaining: data.tasksRemaining,
                 status: data.status
@@ -93,228 +308,20 @@ export default function ViewCart({ data, locale, onChange, readOnly }) {
           ) : data.cart_type === 'statistic' ? (
             <EcommerceStatistics
               data={{
-                title: data?.[`title_${locale}`] ?? 'title',
+                title: data.newItems?.find(ni => ni.type === 'title')?.[`title_${locale}`] ?? data?.[`title_${locale}`] ?? 'title',
                 value: data.value || '125k',
                 color: data.color || 'primary',
                 icon: data.icon || 'tabler:chart-pie-2'
               }}
             />
           ) : (
-            <Link
-              href={`${locale}/${data.href ?? ''}`}
-              className='border h-full relative  || border-gray-200 || rounded-md || overflow-hidden || flex || flex-col || hover:shadow-lg || hover:cursor-pointer || transition-all || hover:translate-y-[-5px] || duration-300'
-            >
-              <ImageLoad
-                alt={data.title ?? 'Product'}
-                className='w-full'
-                src={data?.image ?? download.src}
-                style={{
-                  width: '100%',
-                  height: data.imageHeight ? data.imageHeight + (data.imageHeightUnit ?? 'px') : '250px',
-                  objectFit: data.objectFit ?? 'cover',
-                  borderRadius: data.borderRadius ? data.borderRadius + (data.borderRadiusUnit ?? 'px') : '0px',
-                  display: data.imageDisplay ?? 'block'
-                }}
-              />
-              <div className='px-3 flex-1 || flex || flex-col '>
-                <h2
-                  style={{
-                    color: data.titleColor,
-                    fontSize: data.fontSize ? data.fontSize + (data.fontSizeUnit ?? 'px') : '16px',
-                    fontWeight: data.fontWeight,
-                    fontFamily: data.fontFamily,
-                    marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
-                    textAlign: data.titleTextAlign ?? 'start'
-                  }}
-                  className='text-lg || font-semibold || mt-2 || flex-1 overLapP truncate-text'
-                >
-                  {getMaxLength(data?.[`title_${locale}`] ?? 'Product Name', data.maxLength)}
-                </h2>
-                <p
-                  style={{
-                    color: data.descriptionColor,
-                    fontSize: data.descriptionFontSize
-                      ? data.descriptionFontSize + (data.descriptionFontSizeUnit ?? 'px')
-                      : '16px',
-                    fontWeight: data.descriptionFontWeight,
-                    fontFamily: data.descriptionFontFamily,
-                    marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
-                    textAlign: data.descriptionTextAlign ?? 'start',
-                    display: (data.descriptionDisplay ?? 'block') === 'block' ? 'block' : 'none'
-                  }}
-                  className='text-sm || text-gray-500 || mt-1 || overLapP truncate-text'
-                >
-                  {getMaxLength(data?.[`description_${locale}`] ?? 'Product Description', data.descriptionMaxLength)}
-                </p>
-                <p
-                  style={{
-                    color: data.priceColor,
-                    fontSize: data.priceFontSize ? data.priceFontSize + (data.priceFontSizeUnit ?? 'px') : '16px',
-                    fontWeight: data.priceFontWeight,
-                    fontFamily: data.priceFontFamily,
-                    marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
-                    display: (data.priceDisplay ?? 'block') === 'block' ? 'block' : 'none',
-                    textAlign: data.priceTextAlign ?? 'end'
-                  }}
-                  className='text-lg || font-semibold || mt-2 || text-end '
-                >
-                  {data.price ?? 0}$
-                </p>
-                {data.newItems?.map((newitem, index) =>
-                  newitem.type === 'text' ? (
-                    <div
-                      key={index}
-                      style={{
-                        borderRadius: newitem?.rounded + '%',
-                        background: newitem?.backgroundColor,
-                        marginInlineStart: newitem?.textAlign === 'end' ? 'auto' : 'inherit',
-                        marginInlineEnd: newitem?.textAlign === 'start' ? 'auto' : 'inherit',
-                        marginInline: newitem?.textAlign === 'center' ? 'auto' : 'inherit',
-                        position:
-                          newitem.position === 'auto'
-                            ? 'inherit'
-                            : newitem.position === 'none'
-                            ? 'inherit'
-                            : 'absolute',
-                        marginBottom: newitem?.marginBottom
-                          ? newitem?.marginBottom + (newitem?.marginBottomUnit ?? 'px')
-                          : '0px',
-                        zIndex: newitem.zIndex,
-                        display: (newitem?.display ?? 'block') === 'block' ? 'block' : 'none'
-                      }}
-                      className={`flex justify-center items-center w-fit ${
-                        newitem.position === 'topRight'
-                          ? topRight
-                          : newitem.position === 'topLeft'
-                          ? topLeft
-                          : newitem.position === 'bottomRight'
-                          ? bottomRight
-                          : newitem.position === 'bottomLeft'
-                          ? bottomLeft
-                          : newitem.position == 'top'
-                          ? top
-                          : newitem.position == 'bottom'
-                          ? bottom
-                          : newitem.position == 'left'
-                          ? left
-                          : newitem.position == 'right'
-                          ? right
-                          : newitem.position == 'center'
-                          ? center
-                          : ''
-                      }`}
-                    >
-                      {newitem?.[`text_${locale}`] ?? ''}
-                    </div>
-                  ) : newitem.type === 'icon' ? (
-                    <div
-                      key={index}
-                      style={{
-                        width: newitem?.width + 'px',
-                        height: newitem?.height + 'px',
-                        borderRadius: newitem?.rounded + '%',
-                        background: newitem?.backgroundColor,
-                        display: (newitem?.display ?? 'block') === 'block' ? 'block' : 'none',
-                        marginInlineStart: newitem?.textAlign === 'end' ? 'auto' : 'inherit',
-                        marginInlineEnd: newitem?.textAlign === 'start' ? 'auto' : 'inherit',
-                        marginInline: newitem?.textAlign === 'center' ? 'auto' : 'inherit',
-                        position:
-                          newitem.position === 'auto'
-                            ? 'inherit'
-                            : newitem.position === 'none'
-                            ? 'inherit'
-                            : 'absolute',
-                        marginBottom: newitem?.marginBottom
-                          ? newitem?.marginBottom + (newitem?.marginBottomUnit ?? 'px')
-                          : '0px',
-                        zIndex: newitem.zIndex
-                      }}
-                      className={`flex justify-center items-center w-fit ${
-                        newitem.position === 'topRight'
-                          ? topRight
-                          : newitem.position === 'topLeft'
-                          ? topLeft
-                          : newitem.position === 'bottomRight'
-                          ? bottomRight
-                          : newitem.position === 'bottomLeft'
-                          ? bottomLeft
-                          : newitem.position == 'top'
-                          ? top
-                          : newitem.position == 'bottom'
-                          ? bottom
-                          : newitem.position == 'left'
-                          ? left
-                          : newitem.position == 'right'
-                          ? right
-                          : newitem.position == 'center'
-                          ? center
-                          : ''
-                      }`}
-                    >
-                      <Icon
-                        style={{
-                          color: newitem?.color,
-                          fontSize: newitem?.fontSize ? newitem?.fontSize + (newitem?.fontSizeUnit ?? 'px') : '30px'
-                        }}
-                        icon={newitem?.text_en ? newitem?.text_en : 'ph:binary-duotone'}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      key={index}
-                      style={{
-                        borderRadius: newitem?.rounded + '%',
-                        background: newitem?.backgroundColor,
-                        marginInlineStart: newitem?.textAlign === 'end' ? 'auto' : 'inherit',
-                        marginInlineEnd: newitem?.textAlign === 'start' ? 'auto' : 'inherit',
-                        marginInline: newitem?.textAlign === 'center' ? 'auto' : 'inherit',
-                        position:
-                          newitem.position === 'auto'
-                            ? 'inherit'
-                            : newitem.position === 'none'
-                            ? 'inherit'
-                            : 'absolute',
-                        marginBottom: newitem?.marginBottom
-                          ? newitem?.marginBottom + (newitem?.marginBottomUnit ?? 'px')
-                          : '0px',
-                        zIndex: newitem.zIndex,
-                        display: (newitem?.display ?? 'block') === 'block' ? 'block' : 'none'
-                      }}
-                      className={`flex justify-center items-center w-fit ${
-                        newitem.position === 'topRight'
-                          ? topRight
-                          : newitem.position === 'topLeft'
-                          ? topLeft
-                          : newitem.position === 'bottomRight'
-                          ? bottomRight
-                          : newitem.position === 'bottomLeft'
-                          ? bottomLeft
-                          : newitem.position == 'top'
-                          ? top
-                          : newitem.position == 'bottom'
-                          ? bottom
-                          : newitem.position == 'left'
-                          ? left
-                          : newitem.position == 'right'
-                          ? right
-                          : newitem.position == 'center'
-                          ? center
-                          : ''
-                      }`}
-                    >
-                      <Rating
-                        sx={{
-                          color: newitem?.color,
-                          fontSize: newitem?.fontSize ? newitem?.fontSize + (newitem?.fontSizeUnit ?? 'px') : '30px'
-                        }}
-                        readOnly={true}
-                        value={newitem.text_en ?? 0}
-                      />
-                    </div>
-                  )
-                )}
-              </div>
-            </Link>
+            <CardCard
+              item={null}
+              data={data}
+              download={download}
+              locale={locale}
+              readOnly={readOnly}
+            />
           )}
         </div>
       )}

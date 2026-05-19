@@ -165,7 +165,6 @@ const TableHeader = memo(({ filterWithSelect, locale, showActionsColumn, message
       {filterWithSelect.map(column => {
         let roles = data?.additional_fields?.find(el => el?.key === column?.id)?.roles
 
-        console.log(filterWithSelect);
 
 
 

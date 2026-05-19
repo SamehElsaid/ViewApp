@@ -3,7 +3,7 @@ import Cookies from 'js-cookie'
 import { decryptData } from './encryption'
 import { toast } from 'react-toastify'
 
-const staticToken = false
+export const staticToken = false
 
 export const axiosGet = async (url, locale, token, params = {}, close) => {
   const authToken = Cookies.get('sub')

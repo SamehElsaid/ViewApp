@@ -12,6 +12,7 @@ import CloseNav from './CloseNav'
 import { axiosPost, axiosDelete } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
 
+
 export default function Background({ data, onChange, buttonRef }) {
   const [selectedOption, setSelectedOption] = useState(data?.backgroundImage ? 'image' : 'color')
   const { locale, messages } = useIntl()
@@ -21,51 +22,51 @@ export default function Background({ data, onChange, buttonRef }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const handleFileUpload = event => {
-      const file = event.target.files[0]
-      if (!file) return
+    const file = event.target.files[0]
+    if (!file) return
 
-      const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-      if (!allowedImageTypes.includes(file.type)) {
-        toast.error((messages.useUploadImage && messages.useUploadImage.imageFormatError) || 'Unsupported image format. Please upload png, jpg, or jpeg.')
-        event.target.value = ''
-        
-        return
-      }
+    const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    if (!allowedImageTypes.includes(file.type)) {
+      toast.error((messages.useUploadImage && messages.useUploadImage.imageFormatError) || 'Unsupported image format. Please upload png, jpg, or jpeg.')
+      event.target.value = ''
 
-      // Remove all spaces from filename and replace with underscores
-      const fileName = file.name.replace(/\s+/g, '_')
-      const loading = toast.loading(messages.dialogs.uploading)
+      return
+    }
 
-      // Create FormData to properly handle filenames with spaces
-      const formData = new FormData()
-      formData.append('file', file, fileName)
+    // Remove all spaces from filename and replace with underscores
+    const fileName = file.name.replace(/\s+/g, '_')
+    const loading = toast.loading(messages.dialogs.uploading)
 
-      axiosPost(
-        'file/upload',
-        'en',
-        formData,
-        true
-      )
-        .then(res => {
-          if (res.status) {
-            onChange({ ...data, backgroundImage: res.filePath })
-            toast.success(messages.dialogs.uploadSuccess || 'Uploaded successfully')
-          } else {
-            toast.error(messages.dialogs.uploadError || 'Upload failed')
-          }
-        })
-        .catch(() => {
+    // Create FormData to properly handle filenames with spaces
+    const formData = new FormData()
+    formData.append('file', file, fileName)
+
+    axiosPost(
+      'file/upload',
+      'en',
+      formData,
+      true
+    )
+      .then(res => {
+        if (res.status) {
+          onChange({ ...data, backgroundImage: res.filePath })
+          toast.success(messages.dialogs.uploadSuccess || 'Uploaded successfully')
+        } else {
           toast.error(messages.dialogs.uploadError || 'Upload failed')
-        })
-        .finally(() => {
-          toast.dismiss(loading)
-          event.target.value = ''
-        })
-   }
+        }
+      })
+      .catch(() => {
+        toast.error(messages.dialogs.uploadError || 'Upload failed')
+      })
+      .finally(() => {
+        toast.dismiss(loading)
+        event.target.value = ''
+      })
+  }
 
   const resolveImageUrl = path => {
     if (!path) return ''
-    
+
     return process.env.API_URL + "/file/download/" + path
   }
 
@@ -135,7 +136,14 @@ export default function Background({ data, onChange, buttonRef }) {
   return (
     <div>
       <CloseNav text={messages.dialogs.background} buttonRef={buttonRef} />
-
+      <TextField
+        fullWidth
+        value={data.backgroundClassName || ''}
+        variant='filled'
+        label={messages.dialogs.customClassName || 'CSS Class Name'}
+        placeholder='e.g. my-class another-class'
+        onChange={e => onChange({ ...data, backgroundClassName: e.target.value })}
+      />
       <TextField
         fullWidth
         type='number'
@@ -159,7 +167,8 @@ export default function Background({ data, onChange, buttonRef }) {
             </InputAdornment>
           )
         }}
-      />
+      />  
+     
 
       <TextField
         fullWidth
@@ -262,19 +271,19 @@ export default function Background({ data, onChange, buttonRef }) {
             </div>
           </div>
         </Collapse>
-      {/* Image Preview Dialog */}
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth='md'>
-        <DialogTitle>{messages.dialogs.view || 'View'}</DialogTitle>
-        <DialogContent>
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt='background-preview'
-              style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 8 }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        {/* Image Preview Dialog */}
+        <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} fullWidth maxWidth='md'>
+          <DialogTitle>{messages.dialogs.view || 'View'}</DialogTitle>
+          <DialogContent>
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt='background-preview'
+                style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 8 }}
+              />
+            ) : null}
+          </DialogContent>
+        </Dialog>
         <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(!obj)}>
           <Button
             variant='outlined'
@@ -309,28 +318,28 @@ export default function Background({ data, onChange, buttonRef }) {
             </div>
           )}
         </Collapse>
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>{messages.dialogs.delete || 'Delete'}</DialogTitle>
-        <DialogContent>
-          {(messages.dialogs.deleteConfirm || 'Are you sure you want to delete this image?')}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} color='secondary' variant='contained'>
-            {messages.dialogs.cancel}
-          </Button>
-          <Button
-            onClick={async () => {
-              setConfirmOpen(false)
-              await handleClearImage()
-            }}
-            color='error'
-            variant='contained'
-          >
-            {messages.dialogs.delete || 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+          <DialogTitle>{messages.dialogs.delete || 'Delete'}</DialogTitle>
+          <DialogContent>
+            {(messages.dialogs.deleteConfirm || 'Are you sure you want to delete this image?')}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)} color='secondary' variant='contained'>
+              {messages.dialogs.cancel}
+            </Button>
+            <Button
+              onClick={async () => {
+                setConfirmOpen(false)
+                await handleClearImage()
+              }}
+              color='error'
+              variant='contained'
+            >
+              {messages.dialogs.delete || 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Collapse>
       <Collapse transition={`height 300ms cubic-bezier(.4, 0, .2, 1)`} isOpen={Boolean(selectedOption !== 'color')}>
         <TextField
@@ -388,6 +397,7 @@ export default function Background({ data, onChange, buttonRef }) {
           <MenuItem value='local'>{messages.dialogs.local}</MenuItem>
         </TextField>
       </Collapse>
+
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { Delete } from '@mui/icons-material'
+import { Delete, Edit } from '@mui/icons-material'
 import {
   Button,
   Dialog,
@@ -16,19 +16,45 @@ import { useState, useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { useDispatch } from 'react-redux'
 import { replacePlaceholders } from 'src/Components/_Shared'
+import { staticToken } from 'src/Components/axiosCall'
 import { decryptData } from 'src/Components/encryption'
 import JsonEditor from 'src/Components/JsonEditor'
-import { setApiData } from 'src/store/apps/apiSlice/apiSlice'
+import { removeWithLink, setApiData } from 'src/store/apps/apiSlice/apiSlice'
+
+function generateId() {
+  return `api_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+}
+
+function ensureId(item) {
+  return item.id ? item : { ...item, id: generateId() }
+}
+
+function headersToEditorString(h) {
+  if (h == null || h === '') return '{}'
+  if (typeof h === 'string') {
+    try {
+      JSON.parse(h)
+
+      return h
+    } catch {
+      return '{}'
+    }
+  }
+  if (typeof h === 'object') return JSON.stringify(h, null, 2)
+
+  return '{}'
+}
 
 export default function ApiData({ open, setOpen, initialDataApi }) {
   const { messages } = useIntl()
   const [links, setLinks] = useState([])
   const [link, setLink] = useState('')
+  const [editingIndex, setEditingIndex] = useState(null)
   const dispatch = useDispatch()
 
 
   useEffect(() => {
-    setLinks(initialDataApi ?? [])
+    setLinks((initialDataApi ?? []).map(ensureId))
   }, [initialDataApi])
 
   const replaceVars = value => {
@@ -51,16 +77,22 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
   }
 
   useEffect(() => {
-    if (!links) return
-    const linksToFetch =  links?.filter(link => link.loading)
+    if (!links || links.length === 0) return
+
+    // Immediately sync links (with their IDs) to Redux so IDs are always
+    // persisted in the store before any save, regardless of fetch status.
+    dispatch(setApiData(links))
+
+    const linksToFetch = links?.filter(link => link.loading)
 
     const authToken = Cookies.get('sub')
     const apiHeaders = {}
     if (authToken) {
-      apiHeaders.Authorization = `Bearer ${decryptData(authToken)?.token?.trim()}`
+      apiHeaders.Authorization = staticToken || `Bearer ${decryptData(authToken)?.token?.trim()}`
     }
 
     if (linksToFetch.length > 0) {
+      const snapshotLinks = links
       Promise.all(
         linksToFetch.map(linkObj => {
           const resolvedLink = replacePlaceholders(linkObj.link, window.location)
@@ -96,14 +128,16 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
             .catch(error => ({
               ...linkObj,
               data: null,
-              loading: true,
+              loading: false,
               headers: linkObj.headers ?? {},
               method: linkObj.method,
               error: error.message
             }))
         })
-      ).then(updatedLinks => {
-        dispatch(setApiData(updatedLinks))
+      ).then(fetchedResults => {
+        const fetchedById = Object.fromEntries(fetchedResults.map(r => [r.id, r]))
+        const merged = snapshotLinks.map(l => fetchedById[l.id] ?? l)
+        dispatch(setApiData(merged))
       })
     }
 
@@ -111,6 +145,13 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
 
   const [apiHeaders, setApiHeaders] = useState('{}')
   const [method, setMethod] = useState('GET')
+
+  const resetForm = () => {
+    setLink('')
+    setApiHeaders('{}')
+    setMethod('GET')
+    setEditingIndex(null)
+  }
 
   const headersParsed = useMemo(() => {
     try {
@@ -120,12 +161,63 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
     }
   }, [apiHeaders])
 
-  const linkRegex =
-    /^(https?:\/\/)?(www\.)?[a-zA-Z0-9@:%._+~#?&//=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)?(\{[a-zA-Z0-9_]+\})?/i
+  const applyAddOrEdit = () => {
+    if (headersParsed === null) return
+    const trimmed = link.trim()
+    if (!trimmed) return
 
+    if (editingIndex !== null) {
+      setLinks(prev => {
+        const old = prev[editingIndex]
+        if (old?.link && old.link !== trimmed) {
+          dispatch(removeWithLink(old.link))
+        }
+
+        return prev.map((item, i) =>
+          i === editingIndex
+            ? {
+                ...item,
+                link: trimmed,
+                method,
+                headers: apiHeaders,
+                data: null,
+                loading: true,
+                error: undefined
+              }
+            : item
+        )
+      })
+      resetForm()
+    } else {
+      setLinks(prev => [
+        ...prev,
+        {
+          id: generateId(),
+          data: null,
+          headers: apiHeaders,
+          method,
+          link: trimmed,
+          loading: true
+        }
+      ])
+      setLink('')
+      setApiHeaders('{}')
+      setMethod('GET')
+    }
+  }
+
+
+  
   return (
-    <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
-      <DialogTitle>{messages.Api.addApiData}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={() => {
+        setOpen(false)
+        resetForm()
+      }}
+      fullWidth
+    >
+      <DialogTitle>{editingIndex !== null ? messages.Api.editApiData : messages.Api.addApiData}</DialogTitle>
       <DialogContent>
         <div className='mt-3'></div>
         <TextField
@@ -155,41 +247,50 @@ export default function ApiData({ open, setOpen, initialDataApi }) {
         </div>
         <div className='flex flex-col gap-2 mt-4'>
           {links && links?.map((link, index) => (
-            <div className='p-2 rounded-md border border-dashed border-main-color' key={index}>
+            <div className='p-2 rounded-md border border-dashed border-main-color' key={link.id ?? index}>
               <div className='flex justify-between items-center'>
                 <div className='text-main-color break-all'>{link.link}</div>
-                <IconButton onClick={() => setLinks(prev => prev.filter((_, i) => i !== index))}>
-                  <Delete />
-                </IconButton>
+                <div className='flex items-center shrink-0'>
+                  <IconButton
+                    aria-label={messages.edit}
+                    onClick={() => {
+                      setLink(link.link ?? '')
+                      setMethod(link.method ?? 'GET')
+                      setApiHeaders(headersToEditorString(link.headers))
+                      setEditingIndex(index)
+                    }}
+                  >
+                    <Edit />
+                  </IconButton>
+                  <IconButton
+                    aria-label={messages.delete}
+                    onClick={() => {
+                      dispatch(removeWithLink(link.link))
+                      setLinks(prev => prev.filter((_, i) => i !== index))
+                      setEditingIndex(ei => {
+                        if (ei === null) return null
+                        if (ei === index) return null
+                        if (ei > index) return ei - 1
+
+                        return ei
+                      })
+                    }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </div>
               </div>
             </div>
           ))}
         </div>
-        <div className='flex justify-end'>
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={() => {
-              // if (!linkRegex.test(link.trim())) {
-              //   return toast.error(messages.Api.invalidLink)
-              // }
-
-              setLinks(prev => [
-                ...prev,
-                {
-                  data: null,
-                  headers: apiHeaders,
-                  method: method,
-                  link: link.trim(),
-                  loading: true
-                }
-              ])
-              setLink('')
-              setApiHeaders('{}')
-              setMethod('GET')
-            }}
-          >
-            {messages.add}
+        <div className='flex justify-end gap-2 mt-4'>
+          {editingIndex !== null && (
+            <Button variant='outlined' color='secondary' onClick={resetForm}>
+              {messages.cancel}
+            </Button>
+          )}
+          <Button variant='contained' color='primary' onClick={applyAddOrEdit}>
+            {editingIndex !== null ? messages.save : messages.add}
           </Button>
         </div>
       </DialogContent>

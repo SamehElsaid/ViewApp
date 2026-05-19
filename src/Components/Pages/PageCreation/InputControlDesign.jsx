@@ -36,6 +36,8 @@ import { toast } from 'react-toastify'
 import Trigger from '../ControlDesignAndValidation/Trigger'
 import SwitchView from '../ControlDesignAndValidation/SwitchView'
 import TriggerControl from '../ControlDesignAndValidation/TriggerControl'
+import MultiTrigger from '../ControlDesignAndValidation/MultiTrigger'
+import MultiTriggerControl from '../ControlDesignAndValidation/MultiTriggerControl'
 import PrintSetting from './PrintSetting'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DatePicker from 'react-datepicker'
@@ -87,6 +89,8 @@ export default function InputControlDesign({
   const [writeValue, setWriteValue] = useState(roles?.onMount?.value ?? '')
   const [mountDateDialogOpen, setMountDateDialogOpen] = useState(false)
   const [openTrigger, setOpenTrigger] = useState(false)
+  const [openMultiTrigger, setOpenMultiTrigger] = useState(false)
+  const [showMultiTrigger, setShowMultiTrigger] = useState(false)
   const [currentFields, setCurrentFields] = useState([])
   const [parentFields, setParentFields] = useState([])
   const [parentKey, setParentKey] = useState(null)
@@ -109,7 +113,7 @@ export default function InputControlDesign({
   const [controlTrigger, setControlTrigger] = useState(false)
   useEffect(() => {
     if (roles.api_url) {
-      const items = getApiData.find(item => item.link === roles.api_url)?.data
+      const items = getApiData.find(item => item.id === roles.api_url)?.data
       if (items) {
         setObj(items)
       }
@@ -365,6 +369,20 @@ export default function InputControlDesign({
         objectToCss={objectToCss}
       />
 
+      <MultiTrigger
+        openMultiTrigger={openMultiTrigger}
+        messages={messages}
+        locale={locale}
+        fields={fields ?? []}
+        data={data}
+        onChange={onChange}
+        open={open}
+        setOpenMultiTrigger={setOpenMultiTrigger}
+        roles={roles}
+        design={design}
+        type={type}
+      />
+
       <Drawer
         open={Boolean(open)}
         anchor='right'
@@ -508,6 +526,90 @@ export default function InputControlDesign({
                               label={messages.dialogs.warningMessageInPopupArabic}
                             />
                           </>
+                        )}
+
+                        {open.key === 'collapse_section' && (
+                          <div className='flex flex-col gap-3 p-3 mt-2 rounded-md border border-dashed border-main-color'>
+                            <div className='text-sm font-semibold text-gray-700'>
+                              {locale === 'ar' ? 'إعدادات القسم القابل للطي' : 'Collapse Section Settings'}
+                            </div>
+
+                            {/* Default Open Toggle */}
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={findMyInput?.data?.defaultOpen ?? true}
+                                  onChange={e => {
+                                    const newData = {
+                                      ...findMyInput,
+                                      data: { ...(findMyInput?.data || {}), defaultOpen: e.target.checked }
+                                    }
+
+                                    const newAddMoreElement = addMoreElement.map(inp =>
+                                      inp.id === open.id ? newData : inp
+                                    )
+                                    onChange({ ...data, addMoreElement: newAddMoreElement })
+                                  }}
+                                />
+                              }
+                              label={locale === 'ar' ? 'مفتوح بشكل افتراضي' : 'Open by default'}
+                            />
+
+                            {/* Field Assignment */}
+                            <div className='p-2 rounded-md border border-gray-200 bg-gray-50/50'>
+                              <div className='mb-2 text-xs font-medium text-gray-600'>
+                                {locale === 'ar' ? 'الحقول والعناصر داخل القسم' : 'Fields & elements inside section'}
+                              </div>
+                              <div className='flex flex-col gap-0.5 max-h-[280px] overflow-y-auto'>
+                                {[
+                                  ...(fields || []),
+                                  ...(data.addMoreElement || []).filter(
+                                    e => e.key !== 'collapse_section' && e.id !== open.id
+                                  )
+                                ].map(field => {
+                                  const fieldId = field.id
+
+                                  const fieldName =
+                                    locale === 'ar'
+                                      ? field.nameAr || field.name_ar || field.nameEn || field.name_en || field.key || fieldId
+                                      : field.nameEn || field.name_en || field.nameAr || field.name_ar || field.key || fieldId
+                                  const isInSection = (findMyInput?.data?.fields || []).includes(fieldId)
+
+                                  return (
+                                    <FormControlLabel
+                                      key={fieldId}
+                                      sx={{ margin: 0 }}
+                                      control={
+                                        <Checkbox
+                                          size='small'
+                                          checked={isInSection}
+                                          onChange={e => {
+                                            const currentFields = findMyInput?.data?.fields || []
+
+                                            const newFields = e.target.checked
+                                              ? [...currentFields, fieldId]
+                                              : currentFields.filter(id => id !== fieldId)
+
+                                            const newData = {
+                                              ...findMyInput,
+                                              data: { ...(findMyInput?.data || {}), fields: newFields }
+                                            }
+
+                                            const newAddMoreElement = addMoreElement.map(inp =>
+                                              inp.id === open.id ? newData : inp
+                                            )
+
+                                            onChange({ ...data, addMoreElement: newAddMoreElement })
+                                          }}
+                                        />
+                                      }
+                                      label={<span className='text-sm'>{fieldName}</span>}
+                                    />
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -908,7 +1010,7 @@ export default function InputControlDesign({
                           </FormControl>
                         )}
                         <FormControl fullWidth margin='normal'>
-                          <div className='flex items-center gap-2'>
+                          <div className='flex gap-2 items-center'>
                             <InputLabel> {messages.dialogs.beforeDateType}</InputLabel>
 
                             <Select
@@ -940,7 +1042,7 @@ export default function InputControlDesign({
                             </Select>
                             <button
                               type='button'
-                              className='px-2 py-1 text-xs border rounded'
+                              className='px-2 py-1 text-xs rounded border'
                               onClick={() => {
                                 const additional_fields = data.additional_fields ?? []
                                 const findMyInput = additional_fields.find(inp => inp.key === open.id)
@@ -1010,7 +1112,7 @@ export default function InputControlDesign({
                         </FormControl>
                         <FormControl fullWidth margin='normal'>
                           <InputLabel> {messages.dialogs.afterDateType}</InputLabel>
-                          <div className='flex items-center gap-2'>
+                          <div className='flex gap-2 items-center'>
                             <Select
                               className='flex-1'
                               variant='filled'
@@ -1040,7 +1142,7 @@ export default function InputControlDesign({
                             </Select>
                             <button
                               type='button'
-                              className='px-2 py-1 text-xs border rounded'
+                              className='px-2 py-1 text-xs rounded border'
                               onClick={() => {
                                 const additional_fields = data.additional_fields ?? []
                                 const findMyInput = additional_fields.find(inp => inp.key === open.id)
@@ -1986,10 +2088,9 @@ export default function InputControlDesign({
                                         )?.roles?.onMount?.type || ''
                                       }
                                       onChange={e => {
-                                        console.log(data);
 
                                         const value = e.target.value
-                                        
+
                                         const map = new Map(
                                           (data.rowValidation ?? []).map(item => [
                                             `${item.key}_${item.rowId}`,
@@ -2089,6 +2190,7 @@ export default function InputControlDesign({
                                       <MenuItem value="hide">{messages.Hide}</MenuItem>
                                     </Select>
                                   )}
+                                  {console.log(getApiData, "getApiData")}
                                   {open.type !== 'new_element' && (
                                     <>
                                       {getApiData.length > 0 && (
@@ -2119,12 +2221,12 @@ export default function InputControlDesign({
                                           variant='filled'
                                         >
                                           {getApiData.map(
-                                            ({ link, data }, index) =>
-                                              !Array.isArray(data) && (
-                                                <MenuItem key={link + index} value={link}>
-                                                  {link}
-                                                </MenuItem>
-                                              )
+                                            ({ link, id, data }, index) =>
+                                            (
+                                              <MenuItem key={id ?? link + index} value={id ?? link}>
+                                                {link}
+                                              </MenuItem>
+                                            )
                                           )}
                                         </TextField>
                                       )}
@@ -2161,8 +2263,8 @@ export default function InputControlDesign({
                                       </SyntaxHighlighter>
                                     </div>
                                   </Collapse>
-                                  {open.type === 'Date' ? (
-                                    <div className='w-full mt-2'>
+                                  {open.type === 'Date' && !roles.api_url ? (
+                                    <div className='mt-2 w-full'>
                                       <Typography variant='body2' className='mb-1 text-gray-600'>
                                         {messages.Value}
                                       </Typography>
@@ -2229,7 +2331,7 @@ export default function InputControlDesign({
                                                 aria-describedby='alert-dialog-description'
                                                 className='bg-transparent-popup'
                                               >
-                                                <div className='absolute top-0 end-0 py-0 z-10'>
+                                                <div className='absolute top-0 z-10 py-0 end-0'>
                                                   <IconButton
                                                     size='small'
                                                     color='error'
@@ -2238,7 +2340,7 @@ export default function InputControlDesign({
                                                     <Icon icon='tabler:x' fontSize='1.25rem' />
                                                   </IconButton>
                                                 </div>
-                                                <DatePickerWrapper className='w-full mx-auto flex justify-center items-center '>
+                                                <DatePickerWrapper className='flex justify-center items-center mx-auto w-full'>
                                                   {datePicker(true)}
                                                 </DatePickerWrapper>
                                               </Dialog>
@@ -2326,7 +2428,7 @@ export default function InputControlDesign({
                                                 aria-describedby='alert-dialog-description'
                                                 className='bg-transparent-popup'
                                               >
-                                                <div className='absolute top-0 end-2 py-2 z-10'>
+                                                <div className='absolute top-0 z-10 py-2 end-2'>
                                                   <IconButton
                                                     size='small'
                                                     color='error'
@@ -2335,7 +2437,7 @@ export default function InputControlDesign({
                                                     <Icon icon='tabler:x' fontSize='1.25rem' />
                                                   </IconButton>
                                                 </div>
-                                                <DatePickerWrapper className='w-full mx-auto flex  justify-center items-center '>
+                                                <DatePickerWrapper className='flex justify-center items-center mx-auto w-full'>
                                                   {datePicker(true)}
                                                 </DatePickerWrapper>
                                               </Dialog>
@@ -2627,6 +2729,24 @@ export default function InputControlDesign({
                         Css={Css}
                       />
                     </SwitchView>
+
+                    <SwitchView
+                      title={messages.Multi_Triggers ?? 'Multi Triggers'}
+                      show={showMultiTrigger}
+                      setShow={setShowMultiTrigger}
+                    >
+                      <MultiTriggerControl
+                        roles={roles}
+                        setOpenMultiTrigger={setOpenMultiTrigger}
+                        messages={messages}
+                        data={data}
+                        onChange={onChange}
+                        open={open}
+                        objectToCss={objectToCss}
+                        Css={Css}
+                      />
+                    </SwitchView>
+
                     {open.type === 'new_element' && (
                       <div className='mt-2 rounded-md border-2 border-main-color'>
                         <h2
@@ -2908,7 +3028,7 @@ export default function InputControlDesign({
                     </Box>
                     {(roles?.progressBarSegments ?? []).length === 0 ? (
                       <Box
-                        className='rounded-lg border-2 border-dashed p-6 text-center'
+                        className='p-6 text-center rounded-lg border-2 border-dashed'
                         sx={{ borderColor: 'divider', backgroundColor: 'action.hover' }}
                       >
                         <Icon icon='tabler:chart-donut' className='mx-auto text-gray-400' fontSize='2.5rem' />
@@ -2937,16 +3057,16 @@ export default function InputControlDesign({
                           return (
                             <Box
                               key={index}
-                              className='flex flex-col gap-3 rounded-lg p-3'
+                              className='flex flex-col gap-3 p-3 rounded-lg'
                               sx={{
                                 backgroundColor: 'grey.50',
                                 border: '1px solid',
                                 borderColor: 'divider'
                               }}
                             >
-                              <Box className='flex flex-wrap items-center gap-3'>
+                              <Box className='flex flex-wrap gap-3 items-center'>
                                 <Box
-                                  className='flex items-center justify-center rounded-full shrink-0'
+                                  className='flex justify-center items-center rounded-full shrink-0'
                                   sx={{
                                     width: 28,
                                     height: 28,
@@ -2990,7 +3110,7 @@ export default function InputControlDesign({
                                 <Typography variant='caption' color='text.secondary' fontWeight={500}>
                                   {messages.dialogs.backgroundColor}
                                 </Typography>
-                                <Box className='flex flex-wrap items-center gap-2'>
+                                <Box className='flex flex-wrap gap-2 items-center'>
                                   <Box
                                     className='rounded border shrink-0'
                                     sx={{
@@ -3029,7 +3149,7 @@ export default function InputControlDesign({
                             </Box>
                           )
                         })}
-                        <Box className='flex items-center justify-between gap-2 flex-wrap'>
+                        <Box className='flex flex-wrap gap-2 justify-between items-center'>
                           <Typography variant='caption' color='text.secondary' component='span' sx={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
                             {locale === 'ar' ? 'المجموع: ' : 'Total: '}
                             <strong>

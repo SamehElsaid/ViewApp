@@ -85,7 +85,6 @@ function ViewInputInTable({
       className='relative w-full'
       onBlur={() => {
 
-        console.log(dataRef, "dataRefdataRefdataRef");
 
         setChangedValue(prev => {
           const newPrev = [...prev]
@@ -132,8 +131,7 @@ function ViewInputInTable({
 
       }}
     >
-      {console.log(loadingAssociationsInput && ele.fieldCategory)
-      }
+     
       <div className="flex items-center gap-2">
 
         {!readOnly && (

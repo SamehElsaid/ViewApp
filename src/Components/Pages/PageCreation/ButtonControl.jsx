@@ -48,6 +48,20 @@ export default function ButtonControl({ data, onChange, buttonRef, type }) {
             variant='filled'
             label={messages.useButton.href}
           />
+          <TextField
+            fullWidth
+            type='text'
+            value={data.elementId || ''}
+            onChange={e => onChange({ ...data, elementId: e.target.value })}
+            variant='filled'
+            label={messages.useButton?.elementId || (locale === 'ar' ? 'المعرّف (HTML id)' : 'Element ID (HTML id)')}
+            helperText={
+              messages.useButton?.elementIdHelp ||
+              (locale === 'ar'
+                ? 'معرّف اختياري للعنصر (مفيد للروابط # أو JavaScript/CSS)'
+                : 'Optional HTML id (for anchor links # or JavaScript/CSS)')
+            }
+          />
 
           <TextField
             fullWidth

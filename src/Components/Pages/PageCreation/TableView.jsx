@@ -18,6 +18,7 @@ import { resolveTableApiQueryFilter } from './TableReport'
 import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
 import { useSelector } from 'react-redux'
+import get from 'lodash/get'
 
 
 function TableView({
@@ -78,8 +79,46 @@ function TableView({
   })
   const [totalCount, setTotalCount] = useState(0)
   const user = useSelector(state => state.auth.data)
+  const apiData = useSelector(state => state.api.data)
+  const isApiMode = data.dataSourceType === 'api'
+
+  // ── API mode: build rows + synthetic columns from redux apiData ──
+  useEffect(() => {
+    if (!isApiMode) return
+
+    const apiResponse = apiData.find(item => item.link === data.api_url)?.data
+    const items = data.itemsPath ? get(apiResponse, data.itemsPath) : apiResponse
+    const rows = Array.isArray(items) ? items : items ? [items] : []
+
+    const rowsWithId = rows.map((row, i) => ({
+      ...row,
+      Id: row.Id ?? row.id ?? 'api-row-' + i
+    }))
+
+    setGetFields(rowsWithId)
+    setTotalCount(rowsWithId.length)
+    setLoading(false)
+    setLoadingHeader(false)
+
+    const selected = data.selected || []
+
+    const syntheticFields = selected.map(key => ({
+      id: key,
+      key,
+      nameAr: key,
+      nameEn: key,
+      type: 'Text',
+      fieldCategory: '',
+      validationData: [],
+      options: {}
+    }))
+
+    setCollectionFields(syntheticFields)
+    setFilterWithSelect(syntheticFields)
+  }, [isApiMode, data.api_url, data.itemsPath, data.selected?.join(','), apiData])
 
   useEffect(() => {
+    if (isApiMode) return
     setLoading(true)
     const getOldRows = data.newRows || []
 
@@ -151,6 +190,7 @@ function TableView({
 
   const [loadingHeader, setLoadingHeader] = useState(true)
   useEffect(() => {
+    if (isApiMode) return
 
     setLoadingHeader(true)
     if (data.collectionId) {
@@ -232,6 +272,7 @@ function TableView({
 
 
   useEffect(() => {
+    if (isApiMode) return
     if (collectionFields.length === 0) return
     let filteredFields = collectionFields.filter(ele => data.selected.includes(ele.key))
 

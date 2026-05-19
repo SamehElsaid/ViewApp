@@ -19,6 +19,7 @@ import {
 import AssociationsSetup from 'src/Components/Popup/AssociationsSetup'
 import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
+import { useSelector } from 'react-redux'
 import Collapse from '@kunukn/react-collapse'
 import { axiosGet } from 'src/Components/axiosCall'
 import { toast } from 'react-toastify'
@@ -27,11 +28,15 @@ import CloseNav from './CloseNav'
 import IconifyIcon from 'src/Components/icon'
 import { MdDeleteOutline } from 'react-icons/md'
 import JsEditorOnSubmit from 'src/Components/FormCreation/PageCreation/jsEditorOnSubmit'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { docco } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import get from 'lodash/get'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
 function Select({ onChange, data, buttonRef, title, tableType }) {
   const { locale, messages } = useIntl()
+  const apiData = useSelector(state => state.api.data)
   const [collection, setCollection] = useState('')
   const [optionsCollection, setOptionsCollection] = useState([])
   const [loadingCollection, setLoadingCollection] = useState(false)
@@ -39,6 +44,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
   const [getFields, setGetFields] = useState([])
   const [SelectedRelatedCollectionsFields, setSelectedRelatedCollectionsFields] = useState([])
   const [type, setType] = useState()
+  const [apiObj, setApiObj] = useState(false)
 
   useEffect(() => {
     setLoadingCollection(true)
@@ -181,6 +187,7 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
     { name_ar: 'التبويبات', name_en: 'Tabs', key: 'tabs' },
     { name_ar: 'نص', name_en: 'Text', key: 'text' },
     { name_ar: 'السابق', name_en: 'Previous', key: 'prev' },
+    { name_ar: 'قسم قابل للطي', name_en: 'Collapse Section', key: 'collapse_section' },
   ])
 
   const [moreElement, setMoreElement] = useState('')
@@ -233,6 +240,22 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
   useEffect(() => {
     setSelectedRelatedCollectionsFields(data.SelectedRelatedCollectionsFields ?? [])
   }, [data.SelectedRelatedCollectionsFields])
+
+  useEffect(() => {
+    if (data.dataSourceType === 'api' && data.api_url) {
+      const apiResponse = apiData.find(item => item.link === data.api_url)?.data
+      const items = data.itemsPath ? get(apiResponse, data.itemsPath) : apiResponse
+      if (items) {
+        setApiObj(items)
+      } else {
+        setApiObj(false)
+      }
+    } else {
+      setApiObj(false)
+    }
+  }, [data.api_url, data.itemsPath, data.dataSourceType])
+
+  const dataSourceType = data.dataSourceType || 'data_model'
 
   return (
     <div>
@@ -405,6 +428,30 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
         }}
       >
         <div className='mb-4'></div>
+
+        {/* Source type picker – table only */}
+        {tableType && (
+          <TextField
+            select
+            fullWidth
+            value={dataSourceType}
+            onChange={e => {
+              onChange({ ...data, dataSourceType: e.target.value, selected: [], api_url: '', itemsPath: '' })
+              setApiObj(false)
+            }}
+            label={locale === 'ar' ? 'جلب من' : 'Fetch From'}
+            variant='filled'
+          >
+            <MenuItem value='data_model'>{locale === 'ar' ? 'اختيار Data Model' : 'Select Data Model'}</MenuItem>
+            <MenuItem value='api'>{locale === 'ar' ? 'جلب من API' : 'Get from API'}</MenuItem>
+          </TextField>
+        )}
+
+        <div className='mt-3'></div>
+
+        {/* ─── Data Model mode ─── */}
+        {dataSourceType === 'data_model' && (
+          <>
         <Autocomplete
           options={loadingCollection ? [] : optionsCollection}
           getOptionLabel={option => option?.key || ''}
@@ -1190,6 +1237,28 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                             })
                             setMoreElement('')
                           }
+                          if (moreElement === 'collapse_section') {
+                            const oldAddMoreElement = data?.addMoreElement ?? []
+                            onChange({
+                              ...data,
+                              addMoreElement: [
+                                ...oldAddMoreElement,
+                                {
+                                  name_ar: 'قسم قابل للطي',
+                                  name_en: 'Collapse Section',
+                                  key: 'collapse_section',
+                                  type: 'new_element',
+                                  kind: 'collapse_section',
+                                  data: {
+                                    defaultOpen: true,
+                                    fields: []
+                                  },
+                                  id: 's' + new Date().getTime()
+                                }
+                              ]
+                            })
+                            setMoreElement('')
+                          }
                           toast.success(messages.dialogs.elementAdded)
                         }
                       }}
@@ -1560,6 +1629,28 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
                               })
                               setMoreElement('')
                             }
+                            if (moreElement === 'collapse_section') {
+                              const oldAddMoreElement = data?.addMoreElement ?? []
+                              onChange({
+                                ...data,
+                                addMoreElement: [
+                                  ...oldAddMoreElement,
+                                  {
+                                    name_ar: 'قسم قابل للطي',
+                                    name_en: 'Collapse Section',
+                                    key: 'collapse_section',
+                                    type: 'new_element',
+                                    kind: 'collapse_section',
+                                    data: {
+                                      defaultOpen: true,
+                                      fields: []
+                                    },
+                                    id: 's' + new Date().getTime()
+                                  }
+                                ]
+                              })
+                              setMoreElement('')
+                            }
                             toast.success(messages.dialogs.elementAdded)
                           }
                         }}
@@ -1701,6 +1792,209 @@ function Select({ onChange, data, buttonRef, title, tableType }) {
             </>
           )}
         </Collapse>
+          </>
+        )}
+
+        {/* ─── API mode (table view only) ─── */}
+        {dataSourceType === 'api' && (
+          <div className='space-y-4'>
+            {/* API URL selector */}
+            <TextField
+              select
+              fullWidth
+              value={data.api_url || ''}
+              onChange={e => {
+                setApiObj(false)
+                onChange({ ...data, api_url: e.target.value, itemsPath: '', selected: [] })
+              }}
+              label={locale === 'ar' ? 'رابط الـ API' : 'API URL'}
+              variant='filled'
+            >
+              {apiData.map(({ link }, index) => (
+                <MenuItem key={link + index} value={link}>
+                  {link}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {data.api_url && (
+              <div className='flex justify-center'>
+                <Button
+                  variant='contained'
+                  color='error'
+                  onClick={() => {
+                    setApiObj(false)
+                    onChange({ ...data, api_url: '', itemsPath: '', selected: [] })
+                  }}
+                >
+                  {locale === 'ar' ? 'مسح البيانات' : 'Clear Data'}
+                </Button>
+              </div>
+            )}
+
+            <Collapse transition='height 300ms cubic-bezier(.4, 0, .2, 1)' isOpen={Boolean(apiObj)}>
+              {/* JSON preview */}
+              <div className='p-2 my-2 rounded border border-dashed border-main-color'>
+                <h2 className='mb-2 text-xl text-main-color'>
+                  {locale === 'ar' ? 'معاينة البيانات' : 'Data Preview'}
+                </h2>
+                <SyntaxHighlighter language='json' style={docco}>
+                  {JSON.stringify(Array.isArray(apiObj) ? apiObj.slice(0, 2) : apiObj, null, 2)}
+                </SyntaxHighlighter>
+
+                <TextField
+                  fullWidth
+                  className='!mt-3'
+                  value={data.itemsPath || ''}
+                  variant='filled'
+                  label={locale === 'ar' ? 'مسار العناصر (Items Path)' : 'Items Path'}
+                  helperText={locale === 'ar' ? 'مثال: data.items أو results' : 'e.g. data.items or results'}
+                  onChange={e => onChange({ ...data, itemsPath: e.target.value })}
+                />
+              </div>
+
+              {/* Column selection from first item keys */}
+              {(() => {
+                const firstItem = Array.isArray(apiObj)
+                  ? apiObj[0]
+                  : apiObj && typeof apiObj === 'object'
+                  ? apiObj
+                  : null
+                const fields = firstItem ? Object.keys(firstItem) : []
+                if (fields.length === 0) return null
+
+                return (
+                  <div className='p-3 rounded border border-dashed border-main-color'>
+                    <FormLabel component='legend' className='!mb-2 !block'>
+                      {locale === 'ar' ? 'اختر الأعمدة' : 'Select Columns'}
+                    </FormLabel>
+                    <div className='flex flex-row flex-wrap gap-2'>
+                      {fields.map(field => (
+                        <FormControlLabel
+                          key={field}
+                          className='!w-fit capitalize'
+                          control={
+                            <Checkbox
+                              value={field}
+                              checked={(data.selected || []).includes(field)}
+                              onChange={e => {
+                                const prev = data.selected || []
+
+                                const next = e.target.checked
+                                  ? [...prev, field]
+                                  : prev.filter(f => f !== field)
+                                onChange({ ...data, selected: next })
+                              }}
+                            />
+                          }
+                          label={field}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+            </Collapse>
+
+            {/* Table-view settings (same as data-model tableType block) */}
+            <div className='space-y-3 mt-2'>
+              <TextField
+                fullWidth
+                type='color'
+                defaultValue={data.borderColor || ''}
+                onBlur={e => onChange({ ...data, borderColor: e.target.value })}
+                label={messages.dialogs.borderColor || 'Border Color'}
+                variant='filled'
+              />
+              <TextField
+                fullWidth
+                type='color'
+                defaultValue={data.headerBackgroundColor || ''}
+                onBlur={e => onChange({ ...data, headerBackgroundColor: e.target.value })}
+                label={messages.dialogs.headerBackgroundColor || 'Header Background Color'}
+                variant='filled'
+              />
+              <TextField
+                fullWidth
+                type='color'
+                defaultValue={data.headerTextColor || ''}
+                onBlur={e => onChange({ ...data, headerTextColor: e.target.value })}
+                label={messages.dialogs.headerTextColor || 'Header Text Color'}
+                variant='filled'
+              />
+
+              <TextField
+                fullWidth
+                className='mb-3'
+                label={locale === 'ar' ? 'فلتر الاستعلام (Query filter)' : 'Query filter'}
+                placeholder='name=sameh&age={age}'
+                value={data.tableApiQueryFilter || ''}
+                onChange={e => onChange({ ...data, tableApiQueryFilter: e.target.value })}
+                variant='filled'
+                size='small'
+                helperText={
+                  locale === 'ar'
+                    ? 'استخدم {اسم_المعامل} لقراءة القيمة من رابط الصفحة (?age=25).'
+                    : 'Use {paramName} to read from the page URL (?age=25).'
+                }
+              />
+
+              <h2 className='text-lg font-bold'>{messages.dialogs.actions}</h2>
+              <FormControlLabel
+                className='!w-fit capitalize'
+                control={
+                  <Checkbox
+                    checked={data.edit || false}
+                    onChange={() => onChange({ ...data, edit: !data.edit })}
+                  />
+                }
+                label={messages.dialogs.editData}
+              />
+              <FormControlLabel
+                className='!w-fit capitalize'
+                control={
+                  <Checkbox
+                    checked={data.details || false}
+                    onChange={() => onChange({ ...data, details: !data.details })}
+                  />
+                }
+                label={messages.dialogs.showDetails}
+              />
+              <FormControlLabel
+                className='!w-fit capitalize'
+                control={
+                  <Checkbox
+                    checked={data.delete || false}
+                    onChange={() => onChange({ ...data, delete: !data.delete })}
+                  />
+                }
+                label={messages.dialogs.deleteData}
+              />
+
+              {data.edit && (
+                <TextField
+                  fullWidth
+                  type='text'
+                  value={data.editPageNameRedirect ?? ''}
+                  onChange={e => onChange({ ...data, editPageNameRedirect: e.target.value })}
+                  label={messages.dialogs.editPageNameRedirect}
+                  variant='filled'
+                />
+              )}
+              {data.details && (
+                <TextField
+                  fullWidth
+                  type='text'
+                  value={data.detailsPageNameRedirect ?? ''}
+                  onChange={e => onChange({ ...data, detailsPageNameRedirect: e.target.value })}
+                  label={messages.dialogs.detailsPageNameRedirect}
+                  variant='filled'
+                />
+              )}
+            </div>
+          </div>
+        )}
+
       </form>
     </div>
   )

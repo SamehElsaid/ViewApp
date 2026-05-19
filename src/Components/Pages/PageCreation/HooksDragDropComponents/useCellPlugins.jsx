@@ -28,6 +28,14 @@ import useIFrame from './useIframe'
 import useMenuItem from './useMenuItem'
 import usePopup from './usePopup'
 import useRenderPage from './useRenderPage'
+import useStyle from './useStyle'
+import usePortalNav from './usePortalNav'
+import useHeroSlider from './useHeroSlider'
+import useServicesSlider from './useServicesSlider'
+import useNewsGrid from './useNewsGrid'
+import useLogosCarousel from './useLogosCarousel'
+import usePortalFooter from './usePortalFooter'
+import useMinistersTimeline from './useMinistersTimeline'
 
 export default function useCellPlugins({
   advancedEdit,
@@ -83,6 +91,14 @@ export default function useCellPlugins({
   const { menuItem } = useMenuItem({ locale, buttonRef })
   const { popup } = usePopup({ locale, buttonRef, readOnly })
   const { renderPage } = useRenderPage({ locale, buttonRef, layoutComponent, FormType })
+  const { stylePlugin } = useStyle({ locale, buttonRef, readOnly })
+  const { PortalNav } = usePortalNav({ locale, buttonRef })
+  const { HeroSlider } = useHeroSlider({ locale, buttonRef, advancedEdit })
+  const { ServicesSlider } = useServicesSlider({ locale, buttonRef, advancedEdit })
+  const { NewsGrid } = useNewsGrid({ locale, buttonRef, advancedEdit })
+  const { LogosCarousel } = useLogosCarousel({ locale, buttonRef })
+  const { PortalFooter } = usePortalFooter({ locale, buttonRef })
+  const { MinistersTimeline } = useMinistersTimeline({ locale, buttonRef, advancedEdit })
 
   const cellPlugins = useMemo(
     () => [
@@ -114,6 +130,12 @@ export default function useCellPlugins({
       menuItem,
       popup,
       renderPage,
+      stylePlugin, PortalNav,
+      HeroSlider,
+      ServicesSlider,
+      NewsGrid,
+      LogosCarousel,
+      PortalFooter, MinistersTimeline
     ],
     [
       backgroundPlugin,
@@ -143,6 +165,12 @@ export default function useCellPlugins({
       menuItem,
       popup,
       renderPage,
+      stylePlugin, PortalNav,
+      HeroSlider,
+      ServicesSlider,
+      NewsGrid,
+      LogosCarousel,
+      PortalFooter, MinistersTimeline
     ]
   )
 

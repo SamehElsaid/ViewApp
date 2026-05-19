@@ -3,229 +3,300 @@ import React from 'react'
 import ImageLoad from 'src/Components/ImageLoad'
 import { getData } from 'src/Components/_Shared'
 import { Icon } from '@iconify/react'
+import moment from 'moment'
+
+function formatDate(rawValue, dateFormat, dateCustomFormat) {
+  if (!rawValue) return ''
+  const m = moment(rawValue)
+  if (!m.isValid()) return String(rawValue)
+  if (dateFormat === 'relative') return m.fromNow()
+  if (dateFormat === 'custom') return dateCustomFormat ? m.format(dateCustomFormat) : m.format('DD/MM/YYYY')
+
+  return m.format(dateFormat || 'DD/MM/YYYY')
+}
+
+function resolveImageUrl(raw) {
+  if (!raw || typeof raw !== 'string') return ''
+  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('blob:') || raw.startsWith('data:')) return raw
+
+  return `${process.env.API_URL}/file/download/${raw}`
+}
+
+function renderNewItem(newitem, index, apiItem, locale, download) {
+  if (newitem.type === 'image') {
+    const src = (() => {
+      if (!apiItem) return newitem.imageBlob || newitem.image || download?.src
+      const template = newitem.image || ''
+      if (!template) return download?.src
+      if (template.includes('{')) {
+        return template.replace(/\{([^}]+)\}/g, (_, key) => getData(apiItem, key.trim(), '') ?? '')
+      }
+      const resolved = getData(apiItem, template, '')
+
+      return resolveImageUrl(typeof resolved === 'string' ? resolved : String(resolved ?? '')) || download?.src
+    })()
+
+    const imgHeight = newitem.imageHeight ? `${newitem.imageHeight}px` : '180px'
+
+    return (
+      <ImageLoad
+        key={index}
+        alt='product'
+        className={`w-full ${newitem.className || ''}`}
+        src={src}
+        stop={true}
+        style={{ width: '100%', height: imgHeight, minHeight: imgHeight, objectFit: 'cover' }}
+      />
+    )
+  }
+
+  if (newitem.type === 'title') {
+    const titleKey = `title_${locale}`
+
+    const text = apiItem
+      ? (getData(apiItem, newitem[titleKey], null) ?? 'Product Name')
+      : (newitem[titleKey] || 'Product Name')
+
+    const titleLines = newitem.titleLines ? Number(newitem.titleLines) : undefined
+
+    return (
+      <h2
+        key={index}
+        style={{
+          color: newitem.titleColor,
+          fontSize: newitem.fontSize ? newitem.fontSize + 'px' : undefined,
+          fontWeight: newitem.fontWeight || undefined,
+          ...(titleLines ? {
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: titleLines,
+            WebkitBoxOrient: 'vertical'
+          } : {})
+        }}
+        className={`text-lg font-semibold mt-2 px-3 ${newitem.className || ''}`}
+      >
+        {text}
+      </h2>
+    )
+  }
+
+  if (newitem.type === 'description') {
+    const descKey = `description_${locale}`
+
+    const text = apiItem
+      ? (getData(apiItem, newitem[descKey], null) ?? 'Product Description')
+      : (newitem[descKey] || 'Product Description')
+
+    const descLines = newitem.descriptionLines ? Number(newitem.descriptionLines) : undefined
+
+    return (
+      <p
+        key={index}
+        style={{
+          color: newitem.descriptionColor,
+          fontSize: newitem.fontSize ? newitem.fontSize + 'px' : undefined,
+          fontWeight: newitem.fontWeight || undefined,
+          ...(descLines ? {
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: descLines,
+            WebkitBoxOrient: 'vertical'
+          } : {})
+        }}
+        className={`text-sm text-gray-500 mt-1 px-3 ${newitem.className || ''}`}
+      >
+        {text}
+      </p>
+    )
+  }
+
+  if (newitem.type === 'price') {
+    const text = apiItem
+      ? (getData(apiItem, newitem.price, '0') ?? '0')
+      : (newitem.price || '0')
+
+    return (
+      <p
+        key={index}
+        style={{ color: newitem.priceColor }}
+        className={`text-lg font-semibold mt-2 text-end px-3 pb-2 ${newitem.className || ''}`}
+      >
+        {text}$
+      </p>
+    )
+  }
+
+  if (newitem.type === 'text') {
+    const text = apiItem
+      ? (getData(apiItem, newitem.text_en, null) ?? newitem[`text_${locale}`] ?? '')
+      : (newitem[`text_${locale}`] || newitem.text_en || '')
+
+    const textLines = newitem.textLines ? Number(newitem.textLines) : undefined
+
+    return (
+      <div
+        key={index}
+        style={{
+          color: newitem.color,
+          background: newitem.backgroundColor,
+          fontSize: newitem.fontSize ? newitem.fontSize + 'px' : undefined,
+          fontWeight: newitem.fontWeight || undefined,
+          ...(textLines ? {
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: textLines,
+            WebkitBoxOrient: 'vertical'
+          } : {})
+        }}
+        className={`px-3 ${newitem.className || ''}`}
+      >
+        {text}
+      </div>
+    )
+  }
+
+  if (newitem.type === 'icon') {
+    return (
+      <div key={index} className={`flex items-center px-3 ${newitem.className || ''}`}>
+        <Icon
+          style={{
+            color: newitem.color,
+            fontSize: newitem.fontSize ? newitem.fontSize + 'px' : '1.5rem'
+          }}
+          icon={newitem.text_en || 'ph:binary-duotone'}
+        />
+      </div>
+    )
+  }
+
+  if (newitem.type === 'rating') {
+    const value = apiItem
+      ? Number(getData(apiItem, newitem.text_en, 0) ?? 0)
+      : Number(newitem.text_en || 0)
+
+    return (
+      <div key={index} className={`flex items-center px-3 ${newitem.className || ''}`}>
+        <Rating sx={{ color: newitem.color }} readOnly value={value} />
+      </div>
+    )
+  }
+
+  if (newitem.type === 'date') {
+    const rawValue = apiItem
+      ? (getData(apiItem, newitem.dateKey, '') ?? '')
+      : (newitem.dateKey || '')
+
+    const formatted = formatDate(rawValue, newitem.dateFormat, newitem.dateCustomFormat)
+
+    return (
+      <p
+        key={index}
+        style={{
+          color: newitem.color,
+          fontSize: newitem.fontSize ? newitem.fontSize + 'px' : undefined,
+          fontWeight: newitem.fontWeight || undefined
+        }}
+        className={`px-3 ${newitem.className || ''}`}
+      >
+        {formatted}
+      </p>
+    )
+  }
+
+  return null
+}
+
+export const resolveHref = (template, apiItem) => {
+  if (!template) return ''
+  if (!apiItem) return template
+
+  return template.replace(/\{([^}]+)\}/g, (_, key) => {
+    const val = getData(apiItem, key.trim(), '')
+
+    return val !== null && val !== undefined ? val : ''
+  })
+}
 
 export default function CardCard({ item, data, locale, readOnly, download }) {
-  const top = `top-[5px]`
-  const left = `left-[5px]`
-  const right = `right-[5px]`
-  const bottom = `bottom-[5px]`
-  const topRight = 'top-[5px] end-[5px]'
-  const center = 'top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]'
-  const topLeft = 'top-[5px] start-[5px]'
-  const bottomRight = 'bottom-[5px] end-[5px]'
-  const bottomLeft = 'bottom-[5px] start-[5px]'
+  const newItems = data.newItems || []
+  const isHorizontal = data.cardLayout === 'horizontal'
 
-  return (
-    <div className={`relative ||  ${readOnly ? '' : ''} overflow-hidden`}>
-      <Link
-        href={`${locale}/${data.href ?? ''}`}
-        className=' h-full  ||  || rounded-md || overflow-hidden || flex || flex-col || hover:shadow-lg || hover:cursor-pointer || transition-all || hover:translate-y-[-5px] || duration-300'
+  const firstSectionWidth = data.firstSectionWidth
+    ? data.firstSectionWidth + (data.firstSectionWidthUnit || '%')
+    : '40%'
+
+
+
+  const hrefValue = (() => {
+    if (item && data.hrefKey) {
+      const fromApi = getData(item, data.hrefKey, '')
+
+      return fromApi ? String(fromApi) : resolveHref(data.href, item)
+    }
+
+    return resolveHref(data.href, item)
+  })()
+  console.log(hrefValue, "hrefValue");
+  const cardClassName = data.cardClassName || ''
+
+  const validItems = newItems.filter(Boolean)
+
+  let cardContent
+
+  if (isHorizontal && validItems.length > 0) {
+    const firstItem = validItems[0]
+    const restItems = validItems.slice(1)
+
+    cardContent = (
+      <div
+        className={`relative overflow-hidden rounded-md border border-gray-200 hover:shadow-lg hover:translate-y-[-5px] transition-all duration-300 flex flex-row w-full h-full ${cardClassName}`}
       >
-        {data.imageDisplay !== 'none' && (
-          <ImageLoad
-            alt={item?.[data?.[`title_${locale}`]] ?? 'Product'}
-            className='w-full'
-            src={getData(item, data.image, download.src) ?? download.src}
-            style={{
-              width: '100%',
-              height: data.imageHeight ? data.imageHeight + (data.imageHeightUnit ?? 'px') : '250px',
-              objectFit: data.objectFit ?? 'cover',
-              borderRadius: data.borderRadius ? data.borderRadius + (data.borderRadiusUnit ?? 'px') : '0px'
-            }}
-          />
-        )}
-        <div className='px-3 flex-1 || flex || flex-col '>
-          <h2
-            style={{
-              color: data.titleColor,
-              fontSize: data.fontSize ? data.fontSize + (data.fontSizeUnit ?? 'px') : '16px',
-              fontWeight: data.fontWeight,
-              fontFamily: data.fontFamily,
-              marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
-              textAlign: data.titleTextAlign ?? 'start'
-            }}
-            className='text-lg || font-semibold || mt-2 ||  overLapP'
-          >
-            {getData(item, data?.[`title_${locale}`], 'Product Name') ?? 'Product Name'}
-          </h2>
-          {data.descriptionDisplay !== 'none' && (
-            <p
-              style={{
-                color: data.descriptionColor,
-                fontSize: data.descriptionFontSize
-                  ? data.descriptionFontSize + (data.descriptionFontSizeUnit ?? 'px')
-                  : '16px',
-                fontWeight: data.descriptionFontWeight,
-                fontFamily: data.descriptionFontFamily,
-                marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
-                textAlign: data.descriptionTextAlign ?? 'start'
-              }}
-              className='text-sm || text-gray-500 || mt-1 || overLapP flex-1'
-            >
-              {getData(item, data?.[`description_${locale}`], 'Product Description') ?? 'Product Description'}
-            </p>
-          )}
-          {data.priceDisplay !== 'none' && (
-            <p
-              style={{
-                color: data.priceColor,
-                fontSize: data.priceFontSize ? data.priceFontSize + (data.priceFontSizeUnit ?? 'px') : '16px',
-                fontWeight: data.priceFontWeight,
-                fontFamily: data.priceFontFamily,
-                marginBottom: data.marginBottom ? data.marginBottom + (data.marginBottomUnit ?? 'px') : '0px',
-                display: (data.priceDisplay ?? 'block') === 'block' ? 'block' : 'none',
-                textAlign: data.priceTextAlign ?? 'end'
-              }}
-              className='text-lg || font-semibold || mt-2 || text-end '
-            >
-              {getData(item, data.price, '0') ?? '0'}$
-            </p>
-          )}
-          {data.newItems?.map(
-            (newitem, index) =>
-              newitem?.display !== 'none' &&
-              (newitem.type === 'text' ? (
-                <div
-                  key={index}
-                  style={{
-                    borderRadius: newitem?.rounded + '%',
-                    background: newitem?.backgroundColor,
-                    marginInlineStart: newitem?.textAlign === 'end' ? 'auto' : 'inherit',
-                    marginInlineEnd: newitem?.textAlign === 'start' ? 'auto' : 'inherit',
-                    marginInline: newitem?.textAlign === 'center' ? 'auto' : 'inherit',
-                    position:
-                      newitem.position === 'auto' ? 'inherit' : newitem.position === 'none' ? 'inherit' : 'absolute',
-                    marginBottom: newitem?.marginBottom
-                      ? newitem?.marginBottom + (newitem?.marginBottomUnit ?? 'px')
-                      : '0px',
-                    zIndex: newitem.zIndex,
-                    display: (newitem?.display ?? 'block') === 'block' ? 'block' : 'none'
-                  }}
-                  className={`flex justify-center items-center w-fit ${
-                    newitem.position === 'topRight'
-                      ? topRight
-                      : newitem.position === 'topLeft'
-                      ? topLeft
-                      : newitem.position === 'bottomRight'
-                      ? bottomRight
-                      : newitem.position === 'bottomLeft'
-                      ? bottomLeft
-                      : newitem.position == 'top'
-                      ? top
-                      : newitem.position == 'bottom'
-                      ? bottom
-                      : newitem.position == 'left'
-                      ? left
-                      : newitem.position == 'right'
-                      ? right
-                      : newitem.position == 'center'
-                      ? center
-                      : ''
-                  }`}
-                >
-                  {getData(item, newitem.text_en, newitem.text_en) ?? ''}
-                </div>
-              ) : newitem.type === 'icon' ? (
-                <div
-                  key={index}
-                  style={{
-                    width: newitem?.width + 'px',
-                    height: newitem?.height + 'px',
-                    borderRadius: newitem?.rounded + '%',
-                    background: newitem?.backgroundColor,
-                    display: (newitem?.display ?? 'block') === 'block' ? 'block' : 'none',
-                    marginInlineStart: newitem?.textAlign === 'end' ? 'auto' : 'inherit',
-                    marginInlineEnd: newitem?.textAlign === 'start' ? 'auto' : 'inherit',
-                    marginInline: newitem?.textAlign === 'center' ? 'auto' : 'inherit',
-                    position:
-                      newitem.position === 'auto' ? 'inherit' : newitem.position === 'none' ? 'inherit' : 'absolute',
-                    marginBottom: newitem?.marginBottom
-                      ? newitem?.marginBottom + (newitem?.marginBottomUnit ?? 'px')
-                      : '0px',
-                    zIndex: newitem.zIndex
-                  }}
-                  className={`flex justify-center items-center w-fit ${
-                    newitem.position === 'topRight'
-                      ? topRight
-                      : newitem.position === 'topLeft'
-                      ? topLeft
-                      : newitem.position === 'bottomRight'
-                      ? bottomRight
-                      : newitem.position === 'bottomLeft'
-                      ? bottomLeft
-                      : newitem.position == 'top'
-                      ? top
-                      : newitem.position == 'bottom'
-                      ? bottom
-                      : newitem.position == 'left'
-                      ? left
-                      : newitem.position == 'right'
-                      ? right
-                      : newitem.position == 'center'
-                      ? center
-                      : ''
-                  }`}
-                >
-                  <Icon
-                    style={{
-                      color: newitem?.color,
-                      fontSize: newitem?.fontSize ? newitem?.fontSize + (newitem?.fontSizeUnit ?? 'px') : '30px'
-                    }}
-                    icon={newitem?.text_en ? newitem?.text_en : 'ph:binary-duotone'}
-                  />
-                </div>
-              ) : (
-                <div
-                  key={index}
-                  style={{
-                    borderRadius: newitem?.rounded + '%',
-                    background: newitem?.backgroundColor,
-                    marginInlineStart: newitem?.textAlign === 'end' ? 'auto' : 'inherit',
-                    marginInlineEnd: newitem?.textAlign === 'start' ? 'auto' : 'inherit',
-                    marginInline: newitem?.textAlign === 'center' ? 'auto' : 'inherit',
-                    position:
-                      newitem.position === 'auto' ? 'inherit' : newitem.position === 'none' ? 'inherit' : 'absolute',
-                    marginBottom: newitem?.marginBottom
-                      ? newitem?.marginBottom + (newitem?.marginBottomUnit ?? 'px')
-                      : '0px',
-                    zIndex: newitem.zIndex,
-                    display: (newitem?.display ?? 'block') === 'block' ? 'block' : 'none'
-                  }}
-                  className={`flex justify-center items-center w-fit ${
-                    newitem.position === 'topRight'
-                      ? topRight
-                      : newitem.position === 'topLeft'
-                      ? topLeft
-                      : newitem.position === 'bottomRight'
-                      ? bottomRight
-                      : newitem.position === 'bottomLeft'
-                      ? bottomLeft
-                      : newitem.position == 'top'
-                      ? top
-                      : newitem.position == 'bottom'
-                      ? bottom
-                      : newitem.position == 'left'
-                      ? left
-                      : newitem.position == 'right'
-                      ? right
-                      : newitem.position == 'center'
-                      ? center
-                      : ''
-                  }`}
-                >
-                  <Rating
-                    sx={{
-                      color: newitem?.color,
-                      fontSize: newitem?.fontSize ? newitem?.fontSize + (newitem?.fontSizeUnit ?? 'px') : '30px'
-                    }}
-                    readOnly={true}
-                    value={getData(item, newitem.text_en, newitem.text_en) ?? 0}
-                  />
-                </div>
-              ))
+        {/* First section */}
+        <div className='shrink-0 overflow-hidden' style={{ width: firstSectionWidth }}>
+          {renderNewItem(firstItem, 0, item, locale, download)}
+        </div>
+
+        {/* Rest of sections */}
+        <div className='flex flex-col flex-1 py-1'>
+          {restItems.map((newitem, index) =>
+            renderNewItem(newitem, index + 1, item, locale, download)
           )}
         </div>
+      </div>
+    )
+  } else {
+    cardContent = (
+      <div
+        className={`relative overflow-hidden rounded-md border border-gray-200 hover:shadow-lg hover:translate-y-[-5px] transition-all duration-300 flex flex-col w-full h-full ${cardClassName}`}
+      >
+        {validItems.map((newitem, index) =>
+          renderNewItem(newitem, index, item, locale, download)
+        )}
+      </div>
+    )
+  }
+
+  if (hrefValue) {
+    const isFromApi = item && data.hrefKey
+
+    if (isFromApi) {
+      return (
+        <a href={hrefValue} className='block hover:cursor-pointer w-full h-full'>
+          {cardContent}
+        </a>
+      )
+    }
+
+    return (
+      <Link href={`/${locale}${hrefValue}`} className='block hover:cursor-pointer w-full h-full'>
+        {cardContent}
       </Link>
+    )
+  }
+
+  return (
+    <div className='w-full h-full'>
+      {cardContent}
     </div>
   )
 }

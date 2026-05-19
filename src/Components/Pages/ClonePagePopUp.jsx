@@ -1,20 +1,27 @@
 import { LoadingButton } from '@mui/lab'
-import { Button, Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material'
-import React, { useState } from 'react'
+import { Button, Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material'
+import React, { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import { appViewOptions } from 'src/Components/_Shared'
 
 function ClonePagePopUp({ open, setOpen, pageName, onConfirm, loading }) {
   const { messages, locale } = useIntl()
   const [pageTypeId, setPageTypeId] = useState(appViewOptions[0]?.id ?? 1)
+  const [newPageName, setNewPageName] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setNewPageName(pageName ?? '')
+      setPageTypeId(appViewOptions[0]?.id ?? 1)
+    }
+  }, [open, pageName])
 
   const handleClose = () => {
     setOpen(false)
-    setPageTypeId(appViewOptions[0]?.id ?? 1)
   }
 
   const handleConfirm = () => {
-    onConfirm(pageName, pageTypeId)
+    onConfirm(newPageName || pageName, pageTypeId)
   }
 
   return (
@@ -24,13 +31,17 @@ function ClonePagePopUp({ open, setOpen, pageName, onConfirm, loading }) {
       onClose={handleClose}
     >
       <DialogContent>
-        <div className='flex flex-col gap-5 justify-center px-1 py-5 min-w-[280px]'>
+        <div className='flex flex-col gap-5 justify-center px-1 py-5 min-w-[320px]'>
           <Typography variant='h6' id='clone-dialog-title'>
             {messages.dialogs?.clonePage || 'Clone Page'}
           </Typography>
-          <Typography variant='body2' color='text.secondary'>
-            {messages.dialogs?.selectPageType || 'Select page type for the clone'}
-          </Typography>
+          <TextField
+            fullWidth
+            variant='filled'
+            label={locale === 'ar' ? 'اسم الصفحة الجديدة' : 'New Page Name'}
+            value={newPageName}
+            onChange={e => setNewPageName(e.target.value)}
+          />
           <FormControl fullWidth>
             <InputLabel>{messages['appView'] || 'App View'}</InputLabel>
             <Select

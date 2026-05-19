@@ -66,7 +66,7 @@ const BackgroundRenderer = ({ data, children }) => {
   
   return (
     <div
-      className='flex justify-center items-center background-container'
+      className={`flex justify-center items-center background-container${data.backgroundClassName ? ' ' + data.backgroundClassName : ''}`}
       style={{
         backgroundColor: data.backgroundColor || 'transparent',
         backgroundImage: data.backgroundImage

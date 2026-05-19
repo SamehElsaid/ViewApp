@@ -4,12 +4,12 @@
 /node_modules
 /.pnp
 .pnp.js
-.next.config.js
-./next.config.js
 
 # testing
 /coverage
 
+.next.config.js
+./next.config.js
 # next.js
 /.next/
 /out/

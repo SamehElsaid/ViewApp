@@ -10,7 +10,8 @@ import {
   text,
   text_content,
   textarea,
-  progress_bar
+  progress_bar,
+  collapse_section
 } from './FiledesCss'
 
 export const isArabic = (value, locale) => {
@@ -149,7 +150,8 @@ const styleMap = {
   multiple_select,
   tabs,
   text_content,
-  progress_bar
+  progress_bar,
+  collapse_section
 }
 
 export const DefaultStyle = type => {
@@ -260,8 +262,43 @@ export const formatDate = (value, format) => {
   return `${year}-${month}-${day}${time}`
 }
 
+
+const ReturnDataInProduction = (string, dev) => {
+  return process.env.DEV_MODE ? dev : string
+}
+
+export const getAppConfig = () => {
+  const appType = process.env.APP_TYPE
+  const formBuilderClientId = "SINGLECLIC.LOWCODE.UI"
+  const formBuilderClientSecret = "901564A5-E7FE-42CB-B10D-61EF6A8F3658"
+
+
+
+  const clientConfig = {
+    "Form Builder": {
+      "client_id": formBuilderClientId,
+      "client_secret": formBuilderClientSecret,
+      redirect_uri: ReturnDataInProduction("https://form-bulider-seven.vercel.app/", "http://localhost:3000/")
+    },
+    "View as Admin": {
+      "client_id": ReturnDataInProduction(formBuilderClientId, "SINGLECLIC.LOWCODE.INTERNAL.UI"),
+      "client_secret": ReturnDataInProduction(formBuilderClientSecret, "901564A5-E7FE-42CB-B10D-61EF6A8F6654"),
+      redirect_uri: ReturnDataInProduction("https://view-as-admin.vercel.app/", "http://localhost:3000/")
+    },
+    "View as User": {
+      "client_id": ReturnDataInProduction(formBuilderClientId, "VIEW.APP"),
+      "client_secret": ReturnDataInProduction(formBuilderClientSecret, "901564A5-E7FE-42CB-B10D-61EF6A8F3658"),
+      redirect_uri: ReturnDataInProduction("https://view-app-omega.vercel.app/", "http://localhost:3000/")
+    },
+  }
+
+
+
+  return clientConfig[appType] || clientConfig["Form Builder"]
+}
+
 export const getDomain = () => {
-  return process.env.DEV_MODE ? 'http://localhost:3000/' : process.env.DOMAIN
+  return process.env.DEV_MODE ? 'http://localhost:3000/' : getAppConfig().redirect_uri
 }
 
 export const getZIndex = value => {

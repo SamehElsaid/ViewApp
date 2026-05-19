@@ -330,9 +330,7 @@ const ReactPageEditor = ({ pageName, initialData, initialDataApi, handlePrint, s
           <ContentSplitView>
             <div
 
-              style={{
-                background: theme.palette.background.default
-              }}
+    
               className={`duration-300 pdf-container  ${readOnly ? `` : '!bg-white'}`}
             >
               <Editor

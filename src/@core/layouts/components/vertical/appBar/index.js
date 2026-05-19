@@ -70,7 +70,7 @@ const LayoutAppBar = props => {
     <AppBar
       elevation={0}
       color='default'
-      className='layout-navbar !z-[111111]'
+      className='layout-navbar'
       sx={{ ...appBarBlurEffect, ...userAppBarStyle }}
       position={appBar === 'fixed' ? 'sticky' : 'static'}
       {...userAppBarProps}

@@ -284,7 +284,7 @@ function Trigger({
                           }}
                         >
                           <MenuItem value={'Id'}>ID</MenuItem>
-                          {isRowSetting ? null : parentFields.map(field => (
+                          {isRowSetting ? null : currentFields.map(field => (
                             <MenuItem className='capitalize' key={field.key} value={field.key}>
                               {field?.[`name${locale === 'ar' ? 'Ar' : 'En'}`]}
                             </MenuItem>

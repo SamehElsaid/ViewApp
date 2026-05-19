@@ -139,6 +139,11 @@
   "OnUnmount": "On Unmount",
   "Add_Trigger": "Add Trigger",
   "Triggers": "Triggers",
+  "Add_Multi_Trigger": "Add Multi-Trigger",
+  "Multi_Triggers": "Multi Triggers",
+  "Add_Condition": "Add Condition",
+  "Conditions_AND": "Conditions (AND — all must match)",
+  "Any_Value": "any value",
   "Key": "Key",
   "when": "When",
   "Update": "Update",
@@ -191,9 +196,10 @@
   },
   "Api": {
     "addApiData": "Add Api",
+    "editApiData": "Edit API",
     "link": "The Link",
     "invalidLink": "The Link is not valid",
-    "dynamicAPI": "Dynamic API",  
+    "dynamicAPI": "Dynamic API",
     "queryType": "Query Type",
     "DynamicAPI": "Dynamic API",
     "addDynamicAPI": "Add Dynamic API",
@@ -439,7 +445,40 @@
     "red": "Red",
     "purple": "Purple",
     "pink": "Pink",
-    "icon": "Icon"
+    "icon": "Icon",
+    "slide": "Slide",
+    "slidesPerView": "Slides Per View",
+    "spaceBetween": "Space Between (px)",
+    "sectionTitle_ar": "Section Title (AR)",
+    "sectionTitle_en": "Section Title (EN)",
+    "sectionDescription_ar": "Section Description (AR)",
+    "sectionDescription_en": "Section Description (EN)",
+    "seeMore": "See More Button",
+    "seeMoreShow": "Show See More Button",
+    "seeMoreUrl": "See More URL",
+    "seeMoreText_ar": "Button Text (AR)",
+    "seeMoreText_en": "Button Text (EN)",
+    "seeMoreBgColor": "Button Background Color",
+    "seeMoreTextColor": "Button Text Color",
+    "titleDisplay": "Card Title Display",
+    "cardTitle": "Card Title",
+    "itemClassName": "CSS Class",
+    "cardClassName": "Card CSS Class",
+    "imageClassName": "Image CSS Class",
+    "titleClassName": "Title CSS Class",
+    "descriptionClassName": "Description CSS Class",
+    "priceClassName": "Price CSS Class",
+    "navButtons": "Navigation Buttons",
+    "navClassName": "Nav Button CSS Class",
+    "arrowColor": "Arrow Icon Color",
+    "arrowBgColor": "Arrow Background Color",
+    "cardLayout": "Card Layout",
+    "cardLayoutVertical": "Vertical (Image Top)",
+    "cardLayoutHorizontal": "Horizontal (Image Side)",
+    "imagePosition": "Image Position",
+    "imagePositionStart": "Start",
+    "imagePositionEnd": "End",
+    "imageWidthH": "Image Width (Horizontal)"
   },
   "useChart": {
     "title": "Chart",
@@ -500,7 +539,7 @@
   "dialogs": {
     "iFrame": "iFrame",
     "saveAsDraft": "Save As Draft",
-    "printPage": "Print Page",  
+    "printPage": "Print Page",
     "layout": "Layout",
     "noFieldsFound": "No fields found",
     "iFrameDescription": "iFrame",
@@ -982,6 +1021,10 @@
       "oneToMany": "One To Many",
       "manyToMany": "Many To Many"
     },
+    "ministersTimeline": {
+    "title": "تسلسل المسؤولين",
+    "description": "تسلسل زمني تفاعلي أفقي للأشخاص مع السيرة الذاتية والصورة"
+  },
     "selectRelationType": "Select relation type",
     "chooseRelationDescription": "Choose how entities relate to each other.",
     "nameEn": "Name EN",
@@ -994,6 +1037,37 @@
     "stepIndicator": "Step",
     "relationConfigured": "Relation configured",
     "print": "Print"
+  },
+  "portalNav": {
+    "title": "Portal Nav",
+    "description": "Government portal navigation bar with logo, links and login button"
+  },
+  "heroSlider": {
+    "title": "Hero Slider",
+    "description": "Full-width hero slider with dynamic slides from backend API"
+  },
+  "servicesSlider": {
+    "title": "Services Slider",
+    "description": "Horizontal scrollable service cards from backend collection"
+  },
+  "newsGrid": {
+    "title": "News Grid",
+    "description": "1 large + 3 small news cards layout from backend collection"
+  },
+  "logosCarousel": {
+    "title": "Logos Carousel",
+    "description": "Auto-playing partner/affiliate logos carousel"
+  },
+  "itemsPath": "Items Path",
+  "imageUrlPath": "Image URL Path",
+  "titlePath": "Title Path",
+  "subtitlePath": "Subtitle Path",
+  "example": "Example",
+  "ctaLabelPath": "CTA Button Label Path",
+  "ctaUrlPath": "CTA Button URL Path",
+  "portalFooter": {
+    "title": "Portal Footer",
+    "description": "Multi-column footer with links, logo, copyright and social icons"
   },
   "createdAt": "Created At",
   "OneToOne": "One To One",

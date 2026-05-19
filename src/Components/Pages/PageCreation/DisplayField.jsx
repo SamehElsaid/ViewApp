@@ -401,6 +401,84 @@ export default function DisplayField({
   }, [roles, loading, triggerData, reloadValue])
 
 
+  // =============================================
+  // MULTI TRIGGER — AND logic across all conditions
+  // =============================================
+  useEffect(() => {
+    if (loading || !roles?.multiTriggers?.length) return
+
+    const allData = { ...(tabsData || {}), ...dataRef?.current }
+
+    roles.multiTriggers.forEach(multiTrigger => {
+      if (!multiTrigger?.conditions?.length || !multiTrigger?.typeOfValidation) return
+
+      const evaluateCondition = condition => {
+        if (!condition.selectedField) return false
+
+        const currentValue = allData?.[condition.selectedField]
+        if (currentValue === undefined) return false
+
+        const isEqual = condition.isEqual === 'equal'
+        const compare = (a, b) => (isEqual ? a == b : a != b)
+
+        if (!condition.mainValue) {
+          return Array.isArray(currentValue) ? currentValue.length !== 0 : !!currentValue
+        }
+
+        return compare(currentValue, condition.mainValue)
+      }
+
+
+      const useOrLogic = multiTrigger.logicOperator === 'or'
+
+      const allConditionsMet = useOrLogic
+        ? multiTrigger.conditions.some(evaluateCondition)
+        : multiTrigger.conditions.every(evaluateCondition)
+
+      const { typeOfValidation } = multiTrigger
+
+      if (typeOfValidation === 'disable') {
+        setIsDisable(allConditionsMet ? 'disabled' : roles?.onMount?.type === 'hide' ? 'hidden' : null)
+      }
+
+      if (typeOfValidation === 'enable') {
+        setIsDisable(allConditionsMet ? 'enable' : roles?.onMount?.type === 'disable' ? 'disabled' : null)
+      }
+
+      if (typeOfValidation === 'hidden') {
+        setIsDisable(allConditionsMet ? 'hidden' : null)
+      }
+
+      if (typeOfValidation === 'visible') {
+        setIsDisable(allConditionsMet ? null : 'hidden')
+      }
+
+      if (typeOfValidation === 'required') {
+        setValidations(prev => {
+          const next = { ...prev }
+          if (allConditionsMet) next.Required = true
+          else delete next.Required
+
+          return next
+        })
+      }
+
+      if (typeOfValidation === 'optional') {
+        setValidations(prev => {
+          const next = { ...prev }
+          if (allConditionsMet) delete next.Required
+          else next.Required = true
+
+          return next
+        })
+      }
+
+      if (typeOfValidation === 'empty' && allConditionsMet) {
+        setValue(prev => (typeof prev === 'object' ? [] : ''))
+      }
+    })
+  }, [roles, loading, triggerData, reloadValue])
+
 
   useEffect(() => {
     if (!roles?.event?.onUnmount) {
@@ -954,7 +1032,7 @@ export default function DisplayField({
 
   useEffect(() => {
     setTimeout(() => {
-      if (layout && !loading && !from === "table") {
+      if (layout && !loading && from !== "table") {
         if (mainRef.current) {
           setLayout(prev => {
             return prev.map(ele =>
